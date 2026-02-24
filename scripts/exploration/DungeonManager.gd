@@ -159,15 +159,8 @@ func _setup_occlusion_controller() -> void:
 	add_child(oc)
 
 func _setup_player_fog_global() -> void:
-	# Register global shader parameters if not already registered by DungeonBuilder.
-	var existing = RenderingServer.global_shader_parameter_get_list()
-	if not existing.has("player_world_pos"):
-		RenderingServer.global_shader_parameter_add("player_world_pos", RenderingServer.GLOBAL_VAR_TYPE_VEC3, Vector3.ZERO)
-	if not existing.has("fog_start"):
-		RenderingServer.global_shader_parameter_add("fog_start", RenderingServer.GLOBAL_VAR_TYPE_FLOAT, 6.0)
-	if not existing.has("fog_end"):
-		RenderingServer.global_shader_parameter_add("fog_end", RenderingServer.GLOBAL_VAR_TYPE_FLOAT, 10.0)
-	# Set fixed fog values
+	# DungeonBuilder already registered the globals in its _ready() (children run before parent).
+	# We just set the values here.
 	RenderingServer.global_shader_parameter_set("fog_start", 6.0)
 	RenderingServer.global_shader_parameter_set("fog_end", 10.0)
 	# Set initial player pos

@@ -5,7 +5,6 @@ var _battle_controller = null
 
 # UI Nodes
 var _party_stats_container: VBoxContainer = null
-var _enemy_stats_container: VBoxContainer = null
 var _action_menu: VBoxContainer = null
 var _skill_menu: VBoxContainer = null
 var _item_menu: VBoxContainer = null
@@ -14,6 +13,13 @@ var _log_label: RichTextLabel = null
 var _turn_indicator: Label = null
 var _battle_sprites_container: HBoxContainer = null
 var _enemy_sprites_container: HBoxContainer = null
+var _float_overlay: Control = null
+
+# HP bar references: array of { "bar": ColorRect, "combatant": Dictionary, "is_player": bool, "max_width": float }
+var _hp_bars: Array[Dictionary] = []
+
+# Maps combatant id (String) → sprite VBox node (for floating damage numbers)
+var _combatant_sprite_map: Dictionary = {}
 
 # State
 enum MenuState { MAIN, SKILL, ITEM, TARGET_ENEMY, TARGET_ALLY }
@@ -23,6 +29,9 @@ var _pending_action: Dictionary = {}
 var _menu_items: Array[String] = []
 var _target_list: Array[Dictionary] = []
 var _log_lines: Array[String] = []
+var _is_boss: bool = false
+var _current_turn_combatant: Dictionary = {}
+var _current_turn_is_player: bool = false
 
 const MAX_LOG_LINES = 6
 const MENU_OPTIONS = ["Atacar", "Habilidad", "Objeto", "Defender", "Huir"]
@@ -37,6 +46,7 @@ func setup(battle_ctrl) -> void:
 	_battle_controller.turn_changed.connect(_on_turn_changed)
 	_battle_controller.hp_updated.connect(_on_hp_updated)
 	_battle_controller.battle_ended.connect(_on_battle_ended)
+	_battle_controller.damage_dealt.connect(_on_damage_dealt)
 
 func _build_ui() -> void:
 	var root = Control.new()
@@ -54,6 +64,7 @@ func _build_ui() -> void:
 	field.set_anchors_preset(Control.PRESET_TOP_WIDE)
 	field.custom_minimum_size = Vector2(0, 645)
 	field.size = Vector2(1920, 645)
+	field.clip_contents = false
 	root.add_child(field)
 
 	# Party sprites (left side)
@@ -143,10 +154,11 @@ func _build_ui() -> void:
 	_turn_indicator.add_theme_color_override("font_color", Color(1, 0.9, 0.4))
 	field.add_child(_turn_indicator)
 
-	# Enemy stats (above enemy sprites)
-	_enemy_stats_container = VBoxContainer.new()
-	_enemy_stats_container.position = Vector2(1150, 70)
-	field.add_child(_enemy_stats_container)
+	# Floating damage number overlay (on top of everything)
+	_float_overlay = Control.new()
+	_float_overlay.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_float_overlay.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	root.add_child(_float_overlay)
 
 func _unhandled_input(event: InputEvent) -> void:
 	if not _battle_controller or not _battle_controller.is_waiting_for_player():
@@ -165,11 +177,15 @@ func _unhandled_input(event: InputEvent) -> void:
 			_handle_target_input(event)
 
 func _handle_main_menu_input(event: InputEvent) -> void:
+	var max_index = MENU_OPTIONS.size() - 1
+	# In boss fights, cap navigation before "Huir" (index 4)
+	if _is_boss:
+		max_index = 3
 	if event.is_action_pressed("move_up"):
 		_selected_index = maxi(0, _selected_index - 1)
 		_update_menu_highlight(_action_menu)
 	elif event.is_action_pressed("move_down"):
-		_selected_index = mini(MENU_OPTIONS.size() - 1, _selected_index + 1)
+		_selected_index = mini(max_index, _selected_index + 1)
 		_update_menu_highlight(_action_menu)
 	elif event.is_action_pressed("action1"):
 		_select_main_option(_selected_index)
@@ -281,11 +297,27 @@ func _show_target_menu(ally: bool) -> void:
 	_clear_container(_target_menu)
 
 	var group = _battle_controller.get_party() if ally else _battle_controller.get_enemies()
+	# For enemies: count how many share each base name to decide numbering
+	var base_name_counts: Dictionary = {}
+	if not ally:
+		for c in group:
+			if c.get("hp", 0) > 0:
+				var bname = c.get("name", "???")
+				base_name_counts[bname] = base_name_counts.get(bname, 0) + 1
+	var base_name_index: Dictionary = {}
 	for c in group:
 		if c.get("hp", 0) > 0:
 			_target_list.append(c)
 			var label = Label.new()
-			label.text = "%s (HP: %d/%d)" % [c["name"], c["hp"], c["max_hp"]]
+			if ally:
+				label.text = "%s (HP: %d/%d)" % [c["name"], c["hp"], c["max_hp"]]
+			else:
+				var bname = c.get("name", "???")
+				if base_name_counts.get(bname, 1) > 1:
+					base_name_index[bname] = base_name_index.get(bname, 0) + 1
+					label.text = "%s %d" % [bname, base_name_index[bname]]
+				else:
+					label.text = bname
 			label.add_theme_font_size_override("font_size", 42)
 			_target_menu.add_child(label)
 
@@ -345,6 +377,11 @@ func _hide_all_menus() -> void:
 
 func _on_turn_changed(combatant: Dictionary, is_player: bool) -> void:
 	_turn_indicator.text = "Turno: %s" % combatant.get("name", "???")
+	_current_turn_combatant = combatant
+	_current_turn_is_player = is_player
+	# Refresh boss flag (encounter data available after start_battle)
+	if _battle_controller:
+		_is_boss = _battle_controller.is_boss_encounter()
 	if is_player:
 		_show_main_menu()
 	else:
@@ -353,10 +390,14 @@ func _on_turn_changed(combatant: Dictionary, is_player: bool) -> void:
 
 func _show_main_menu() -> void:
 	_clear_container(_action_menu)
-	for option in MENU_OPTIONS:
+	for i in range(MENU_OPTIONS.size()):
+		var option = MENU_OPTIONS[i]
 		var label = Label.new()
 		label.text = option
 		label.add_theme_font_size_override("font_size", 45)
+		# Grey out "Huir" (index 4) in boss fights
+		if i == 4 and _is_boss:
+			label.add_theme_color_override("font_color", Color(0.35, 0.35, 0.35))
 		_action_menu.add_child(label)
 
 	_menu_state = MenuState.MAIN
@@ -371,7 +412,12 @@ func _update_menu_highlight(container: VBoxContainer) -> void:
 	var children = container.get_children()
 	for i in range(children.size()):
 		if children[i] is Label:
-			if i == _selected_index:
+			# Keep greyed-out "Huir" in boss fights regardless of selection
+			var is_disabled = (container == _action_menu and i == 4 and _is_boss)
+			if is_disabled:
+				children[i].add_theme_color_override("font_color", Color(0.35, 0.35, 0.35))
+				children[i].text = "  " + children[i].text.strip_edges().trim_prefix("> ")
+			elif i == _selected_index:
 				children[i].add_theme_color_override("font_color", Color(1, 0.9, 0.3))
 				children[i].text = "> " + children[i].text.strip_edges().trim_prefix("> ")
 			else:
@@ -392,7 +438,7 @@ func _on_battle_ended(result: String) -> void:
 	_hide_all_menus()
 
 func _update_all_stats() -> void:
-	# Party stats
+	# Party stats (text in bottom panel)
 	_clear_container(_party_stats_container)
 	if _battle_controller:
 		for p in _battle_controller.get_party():
@@ -403,66 +449,173 @@ func _update_all_stats() -> void:
 				p["name"], p["hp"], p["max_hp"], p["mp"], p["max_mp"], def_str, status
 			]
 			label.add_theme_font_size_override("font_size", 39)
+			# Color logic:
+			# - Dead: dim gray
+			# - Current turn (only if a player char has the turn): yellow
+			# - HP <= 50%: red
+			# - Otherwise: white
 			if p["hp"] <= 0:
 				label.add_theme_color_override("font_color", Color(0.5, 0.3, 0.3))
+			elif _current_turn_is_player and p == _current_turn_combatant:
+				label.add_theme_color_override("font_color", Color(1.0, 0.9, 0.3))
+			elif float(p["hp"]) / maxf(float(p["max_hp"]), 1.0) <= 0.5:
+				label.add_theme_color_override("font_color", Color(0.9, 0.15, 0.1))
 			else:
-				label.add_theme_color_override("font_color", Color(0.8, 0.9, 1.0))
+				label.add_theme_color_override("font_color", Color(1.0, 1.0, 1.0))
 			_party_stats_container.add_child(label)
 
-	# Enemy stats
-	_clear_container(_enemy_stats_container)
-	if _battle_controller:
-		for e in _battle_controller.get_enemies():
-			var label = Label.new()
-			var status = " [MUERTO]" if e["hp"] <= 0 else ""
-			label.text = "%s  HP:%d/%d%s" % [e["name"], e["hp"], e["max_hp"], status]
-			label.add_theme_font_size_override("font_size", 39)
-			if e["hp"] <= 0:
-				label.add_theme_color_override("font_color", Color(0.5, 0.3, 0.3))
-			else:
-				label.add_theme_color_override("font_color", Color(1.0, 0.6, 0.6))
-			_enemy_stats_container.add_child(label)
+	# Update HP bars above sprites (enemies only)
+	_update_hp_bars()
 
 func _update_battle_sprites() -> void:
-	pass  # Sprites are static placeholders, created once in setup_sprites
+	# Update party sprite colors based on alive/dead state
+	if _battle_controller:
+		var party = _battle_controller.get_party()
+		var party_children = _battle_sprites_container.get_children()
+		for i in range(mini(party.size(), party_children.size())):
+			var vbox = party_children[i]
+			# First child is the ColorRect sprite
+			if vbox.get_child_count() > 0 and vbox.get_child(0) is ColorRect:
+				var rect = vbox.get_child(0) as ColorRect
+				rect.color = Color(0.2, 0.4, 0.9) if party[i]["hp"] > 0 else Color(0.3, 0.3, 0.3)
+	_update_hp_bars()
+
+func _update_hp_bars() -> void:
+	for entry in _hp_bars:
+		var bar: ColorRect = entry["bar"]
+		var c: Dictionary = entry["combatant"]
+		var max_w: float = entry["max_width"]
+		var is_player: bool = entry["is_player"]
+
+		var hp = float(c.get("hp", 0))
+		var max_hp = float(c.get("max_hp", 1))
+		var ratio = clampf(hp / maxf(max_hp, 1.0), 0.0, 1.0)
+
+		bar.custom_minimum_size.x = max_w * ratio
+		bar.size.x = max_w * ratio
+
+		if hp <= 0:
+			bar.color = Color(0.3, 0.3, 0.3)
+		elif ratio <= 0.5:
+			bar.color = Color(0.9, 0.15, 0.1)
+		else:
+			if is_player:
+				bar.color = Color(0.9, 0.9, 0.9)
+			else:
+				bar.color = Color(0.2, 0.85, 0.2)
+
+func _create_hp_bar(combatant: Dictionary, bar_width: float, is_player: bool) -> Control:
+	## Creates an HP bar widget: background (dark) + foreground (colored).
+	## Returns the container Control. Stores the foreground ref in _hp_bars.
+	var container = Control.new()
+	container.custom_minimum_size = Vector2(bar_width, 8)
+
+	# Background
+	var bg = ColorRect.new()
+	bg.custom_minimum_size = Vector2(bar_width, 8)
+	bg.color = Color(0.15, 0.15, 0.15)
+	container.add_child(bg)
+
+	# Foreground
+	var fg = ColorRect.new()
+	fg.custom_minimum_size = Vector2(bar_width, 8)
+	fg.color = Color(0.9, 0.9, 0.9) if is_player else Color(0.2, 0.85, 0.2)
+	container.add_child(fg)
+
+	_hp_bars.append({
+		"bar": fg,
+		"combatant": combatant,
+		"is_player": is_player,
+		"max_width": bar_width,
+	})
+
+	return container
 
 func setup_sprites(party: Array, enemies: Array) -> void:
 	_clear_container(_battle_sprites_container)
 	_clear_container(_enemy_sprites_container)
+	_hp_bars.clear()
+	_combatant_sprite_map.clear()
 
-	# Party sprites (blue squares)
+	# Party sprites (blue squares) — no HP bar (stats shown in HUD panel)
 	for p in party:
 		var vbox = VBoxContainer.new()
 		vbox.alignment = BoxContainer.ALIGNMENT_END
+		var sprite_w := 64.0
+		# Sprite
 		var rect = ColorRect.new()
-		rect.custom_minimum_size = Vector2(64, 80)
+		rect.custom_minimum_size = Vector2(sprite_w, 80)
 		rect.color = Color(0.2, 0.4, 0.9) if p["hp"] > 0 else Color(0.3, 0.3, 0.3)
 		vbox.add_child(rect)
+		# Name
 		var name_label = Label.new()
 		name_label.text = p["name"]
 		name_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		name_label.add_theme_font_size_override("font_size", 33)
 		vbox.add_child(name_label)
 		_battle_sprites_container.add_child(vbox)
+		_combatant_sprite_map[p.get("id", "")] = vbox
 
-	# Enemy sprites (red rectangles)
+	# Enemy sprites (red rectangles) with HP bar above
 	for e in enemies:
 		var vbox = VBoxContainer.new()
 		vbox.alignment = BoxContainer.ALIGNMENT_END
+		var is_boss_sprite = "guardian" in e.get("base_id", e.get("id", ""))
+		var sprite_w := 100.0 if is_boss_sprite else 64.0
+		var sprite_h := 120.0 if is_boss_sprite else 80.0
+		# HP bar
+		var hp_bar = _create_hp_bar(e, sprite_w, false)
+		vbox.add_child(hp_bar)
+		# Sprite
 		var rect = ColorRect.new()
-		# Boss is bigger
-		if "guardian" in e.get("base_id", e.get("id", "")):
-			rect.custom_minimum_size = Vector2(100, 120)
-		else:
-			rect.custom_minimum_size = Vector2(64, 80)
+		rect.custom_minimum_size = Vector2(sprite_w, sprite_h)
 		rect.color = Color(0.8, 0.2, 0.15) if e["hp"] > 0 else Color(0.3, 0.3, 0.3)
 		vbox.add_child(rect)
+		# Name
 		var name_label = Label.new()
 		name_label.text = e["name"]
 		name_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		name_label.add_theme_font_size_override("font_size", 33)
 		vbox.add_child(name_label)
 		_enemy_sprites_container.add_child(vbox)
+		_combatant_sprite_map[e.get("id", "")] = vbox
+
+func _on_damage_dealt(target: Dictionary, amount: int, is_heal: bool) -> void:
+	_spawn_floating_number(target, amount, is_heal)
+
+func _spawn_floating_number(target: Dictionary, amount: int, is_heal: bool) -> void:
+	if not _float_overlay or amount <= 0:
+		return
+	var target_id = target.get("id", "")
+	var vbox = _combatant_sprite_map.get(target_id)
+	if not vbox or not is_instance_valid(vbox):
+		return
+
+	var label = Label.new()
+	label.text = str(amount) if not is_heal else "+" + str(amount)
+	label.add_theme_font_size_override("font_size", 48)
+	if is_heal:
+		label.add_theme_color_override("font_color", Color(0.2, 1.0, 0.3))
+	else:
+		label.add_theme_color_override("font_color", Color(1.0, 1.0, 1.0))
+	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+
+	_float_overlay.add_child(label)
+	# Wait one frame so layout resolves and we can read positions
+	await label.get_tree().process_frame
+	if not is_instance_valid(label):
+		return
+	var vbox_center_x = vbox.global_position.x + vbox.size.x * 0.5
+	var vbox_top_y = vbox.global_position.y
+	label.position = Vector2(vbox_center_x - 30, vbox_top_y - 20)
+
+	var start_y = label.position.y
+	var tween = label.create_tween()
+	tween.set_parallel(true)
+	tween.tween_property(label, "position:y", start_y - 50.0, 0.8).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_QUAD)
+	tween.tween_property(label, "modulate:a", 0.0, 0.8).set_ease(Tween.EASE_IN).set_trans(Tween.TRANS_QUAD)
+	tween.chain().tween_callback(label.queue_free)
 
 func _clear_container(container) -> void:
 	if not container:

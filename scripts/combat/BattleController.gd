@@ -6,6 +6,7 @@ signal battle_ended(result: String)  # "victory", "defeat", "fled"
 signal action_performed(log_text: String)
 signal turn_changed(combatant: Dictionary, is_player: bool)
 signal hp_updated()
+signal damage_dealt(target: Dictionary, amount: int, is_heal: bool)
 
 var _party: Array[Dictionary] = []
 var _enemies: Array[Dictionary] = []
@@ -124,6 +125,7 @@ func _execute_enemy_turn(enemy: Dictionary) -> void:
 				return
 			var dmg = Combatant.calculate_physical_damage(enemy, target)
 			Combatant.apply_damage(target, dmg)
+			damage_dealt.emit(target, dmg, false)
 			action_performed.emit("%s ataca a %s por %d de dano!" % [enemy["name"], target["name"], dmg])
 		"skill":
 			var skill = action.get("skill", {})
@@ -138,6 +140,7 @@ func _execute_enemy_turn(enemy: Dictionary) -> void:
 					return
 				var dmg = Combatant.calculate_physical_damage(enemy, fallback_target)
 				Combatant.apply_damage(fallback_target, dmg)
+				damage_dealt.emit(fallback_target, dmg, false)
 				action_performed.emit("%s no tiene MP! Ataca a %s por %d de dano!" % [enemy["name"], fallback_target["name"], dmg])
 				hp_updated.emit()
 				await get_tree().create_timer(0.8).timeout
@@ -150,6 +153,7 @@ func _execute_enemy_turn(enemy: Dictionary) -> void:
 				for t in targets:
 					var dmg = Combatant.calculate_magical_damage(enemy, t, skill.get("power", 0))
 					Combatant.apply_damage(t, dmg)
+					damage_dealt.emit(t, dmg, false)
 				action_performed.emit("%s usa %s contra todo el grupo!" % [enemy["name"], skill_name])
 			else:
 				var target = action.get("target", {})
@@ -159,6 +163,7 @@ func _execute_enemy_turn(enemy: Dictionary) -> void:
 				if skill.get("effect_type", "") == "heal":
 					var heal = Combatant.calculate_heal(enemy, skill.get("power", 0))
 					Combatant.apply_heal(target, heal)
+					damage_dealt.emit(target, heal, true)
 					action_performed.emit("%s usa %s en %s, cura %d HP!" % [enemy["name"], skill_name, target["name"], heal])
 				else:
 					var dmg: int
@@ -167,6 +172,7 @@ func _execute_enemy_turn(enemy: Dictionary) -> void:
 					else:
 						dmg = Combatant.calculate_magical_damage(enemy, target, skill.get("power", 0))
 					Combatant.apply_damage(target, dmg)
+					damage_dealt.emit(target, dmg, false)
 					action_performed.emit("%s usa %s en %s por %d de dano!" % [enemy["name"], skill_name, target["name"], dmg])
 
 	hp_updated.emit()
@@ -189,6 +195,7 @@ func player_action(action: Dictionary) -> void:
 				return
 			var dmg = Combatant.calculate_physical_damage(current, target)
 			Combatant.apply_damage(target, dmg)
+			damage_dealt.emit(target, dmg, false)
 			action_performed.emit("%s ataca a %s por %d de dano!" % [current["name"], target["name"], dmg])
 
 		"skill":
@@ -203,12 +210,14 @@ func player_action(action: Dictionary) -> void:
 				var target = action.get("target", {})
 				var heal = Combatant.calculate_heal(current, skill.get("power", 0))
 				Combatant.apply_heal(target, heal)
+				damage_dealt.emit(target, heal, true)
 				action_performed.emit("%s usa %s en %s, cura %d HP!" % [current["name"], skill_name, target["name"], heal])
 			elif skill.get("target_type", "") == "all_enemies":
 				for e in _enemies:
 					if e.get("hp", 0) > 0:
 						var dmg = Combatant.calculate_magical_damage(current, e, skill.get("power", 0))
 						Combatant.apply_damage(e, dmg)
+						damage_dealt.emit(e, dmg, false)
 				action_performed.emit("%s usa %s contra todos los enemigos!" % [current["name"], skill_name])
 			else:
 				var target = action.get("target", {})
@@ -218,6 +227,7 @@ func player_action(action: Dictionary) -> void:
 				else:
 					dmg = Combatant.calculate_magical_damage(current, target, skill.get("power", 0))
 				Combatant.apply_damage(target, dmg)
+				damage_dealt.emit(target, dmg, false)
 				action_performed.emit("%s usa %s en %s por %d de dano!" % [current["name"], skill_name, target["name"], dmg])
 
 		"defend":
@@ -228,11 +238,17 @@ func player_action(action: Dictionary) -> void:
 			var item = action.get("item", {})
 			var target = action.get("target", {})
 			if item.get("effect", "") == "heal":
-				Combatant.apply_heal(target, item.get("power", 30))
+				var heal_amount = item.get("power", 30)
+				Combatant.apply_heal(target, heal_amount)
+				damage_dealt.emit(target, heal_amount, true)
 				GameState.remove_item(item["id"])
 				action_performed.emit("%s usa %s en %s!" % [current["name"], item["name"], target["name"]])
 
 		"flee":
+			if is_boss_encounter():
+				action_performed.emit("No se puede huir de este combate!")
+				_waiting_for_player = true
+				return
 			var chance = Combatant.calculate_flee_chance(_party, _enemies)
 			if randf() < chance:
 				action_performed.emit("Huida exitosa!")
@@ -319,3 +335,6 @@ func get_enemies() -> Array:
 
 func is_waiting_for_player() -> bool:
 	return _waiting_for_player
+
+func is_boss_encounter() -> bool:
+	return "boss" in _encounter_data.get("id", "")

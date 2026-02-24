@@ -61,20 +61,20 @@ var _fog_shader_color: Shader = null
 var _fog_shader_textured: Shader = null
 var _fog_shader_textured_alpha: Shader = null  # transparent variant for occlusion fade
 
+static var _fog_globals_registered: bool = false
+
 func _ready() -> void:
 	_init_fog_shaders()
 	_register_fog_globals()
 	_build_dungeon()
 
 func _register_fog_globals() -> void:
-	# Ensure global shader params exist before any shader uses them.
-	# DungeonManager will update player_world_pos and fog values every frame.
-	if not RenderingServer.global_shader_parameter_get_list().has("player_world_pos"):
+	# Register global shader params only once (persists across scene reloads).
+	if not _fog_globals_registered:
 		RenderingServer.global_shader_parameter_add("player_world_pos", RenderingServer.GLOBAL_VAR_TYPE_VEC3, Vector3.ZERO)
-	if not RenderingServer.global_shader_parameter_get_list().has("fog_start"):
 		RenderingServer.global_shader_parameter_add("fog_start", RenderingServer.GLOBAL_VAR_TYPE_FLOAT, 6.0)
-	if not RenderingServer.global_shader_parameter_get_list().has("fog_end"):
 		RenderingServer.global_shader_parameter_add("fog_end", RenderingServer.GLOBAL_VAR_TYPE_FLOAT, 10.0)
+		_fog_globals_registered = true
 
 func _build_dungeon() -> void:
 	_wall_texture = _create_rect_texture(WALL_COLOR, WALL_BORDER, 32, 48)

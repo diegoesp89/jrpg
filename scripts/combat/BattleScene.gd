@@ -3,6 +3,7 @@ extends Node
 
 var _battle_controller = null
 var _battle_ui = null
+var _debug_hud = null
 
 func _ready() -> void:
 	_setup_battle()
@@ -34,6 +35,14 @@ func _setup_battle() -> void:
 	await get_tree().process_frame
 	_battle_ui.setup_sprites(_battle_controller.get_party(), _battle_controller.get_enemies())
 	_battle_ui._update_all_stats()
+
+	# Create DebugBattleHUD
+	var dbg_script = load("res://scripts/ui/DebugBattleHUD.gd")
+	_debug_hud = CanvasLayer.new()
+	_debug_hud.name = "DebugBattleHUD"
+	_debug_hud.set_script(dbg_script)
+	add_child(_debug_hud)
+	_debug_hud.setup(_battle_controller, _battle_ui)
 
 func _on_battle_ended(result: String) -> void:
 	match result:
