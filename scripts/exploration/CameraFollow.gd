@@ -16,7 +16,7 @@ extends Node3D
 @export var fov_level_2: float = 5.0
 ## How much more world area level 2 reveals compared to level 1.
 ## 1.0 = same visible area (just ortho look), 3.0 = 3x wider view.
-@export var level_2_view_scale: float = 3.0
+@export var level_2_view_scale: float = 1.4
 
 ## How fast the zoom transitions between levels (lerp speed per second).
 @export var zoom_transition_speed: float = 3.0
