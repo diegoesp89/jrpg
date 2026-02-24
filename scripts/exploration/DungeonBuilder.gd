@@ -74,7 +74,7 @@ func _register_fog_globals() -> void:
 	if not RenderingServer.global_shader_parameter_get_list().has("fog_start"):
 		RenderingServer.global_shader_parameter_add("fog_start", RenderingServer.GLOBAL_VAR_TYPE_FLOAT, 6.0)
 	if not RenderingServer.global_shader_parameter_get_list().has("fog_end"):
-		RenderingServer.global_shader_parameter_add("fog_end", RenderingServer.GLOBAL_VAR_TYPE_FLOAT, 12.0)
+		RenderingServer.global_shader_parameter_add("fog_end", RenderingServer.GLOBAL_VAR_TYPE_FLOAT, 10.0)
 
 func _build_dungeon() -> void:
 	_wall_texture = _create_rect_texture(WALL_COLOR, WALL_BORDER, 32, 48)

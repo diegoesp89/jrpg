@@ -166,17 +166,13 @@ func _setup_player_fog_global() -> void:
 	if not existing.has("fog_start"):
 		RenderingServer.global_shader_parameter_add("fog_start", RenderingServer.GLOBAL_VAR_TYPE_FLOAT, 6.0)
 	if not existing.has("fog_end"):
-		RenderingServer.global_shader_parameter_add("fog_end", RenderingServer.GLOBAL_VAR_TYPE_FLOAT, 12.0)
+		RenderingServer.global_shader_parameter_add("fog_end", RenderingServer.GLOBAL_VAR_TYPE_FLOAT, 10.0)
+	# Set fixed fog values
+	RenderingServer.global_shader_parameter_set("fog_start", 6.0)
+	RenderingServer.global_shader_parameter_set("fog_end", 10.0)
 	# Set initial player pos
 	RenderingServer.global_shader_parameter_set("player_world_pos", _player.global_position)
 
 func _update_player_fog_pos() -> void:
 	if _player:
 		RenderingServer.global_shader_parameter_set("player_world_pos", _player.global_position)
-	# Dynamically update fog_end to match the camera's visible frustum edge
-	if _camera_rig and _camera_rig.has_method("get_fog_end_for_current_view"):
-		var fog_end_val: float = _camera_rig.get_fog_end_for_current_view()
-		# fog_start is a fraction of fog_end — darkness begins at ~60% of the visible radius
-		var fog_start_val: float = fog_end_val * 0.6
-		RenderingServer.global_shader_parameter_set("fog_start", fog_start_val)
-		RenderingServer.global_shader_parameter_set("fog_end", fog_end_val)
