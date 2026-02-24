@@ -16,9 +16,9 @@ func _ready() -> void:
 func setup() -> void:
 	# Configure panel
 	set_anchors_preset(Control.PRESET_BOTTOM_WIDE)
-	custom_minimum_size = Vector2(0, 160)
-	offset_top = -170
-	offset_bottom = -10
+	custom_minimum_size = Vector2(0, 300)
+	offset_top = -320
+	offset_bottom = -20
 	offset_left = 40
 	offset_right = -40
 
