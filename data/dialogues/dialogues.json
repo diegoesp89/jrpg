@@ -1,0 +1,43 @@
+{
+	"npc_intro": {
+		"id": "npc_intro",
+		"nodes": {
+			"start": {
+				"speaker": "Viejo Ermitano",
+				"text": "Al fin llegas. Este lugar castiga la arrogancia.",
+				"next": "ask"
+			},
+			"ask": {
+				"speaker": "Viejo Ermitano",
+				"text": "Quieres que te marque el camino en el minimapa?",
+				"choices": [
+					{
+						"text": "Si, muestrame.",
+						"next": "yes_response"
+					},
+					{
+						"text": "No, prefiero descubrirlo.",
+						"next": "no_response"
+					}
+				]
+			},
+			"yes_response": {
+				"speaker": "Viejo Ermitano",
+				"text": "Bien. Lo que explores quedara registrado. Ten cuidado ahi dentro.",
+				"next": "end",
+				"set_flag": "minimap_hint"
+			},
+			"no_response": {
+				"speaker": "Viejo Ermitano",
+				"text": "Valiente... entonces confia en tu memoria. No todos regresan.",
+				"next": "end"
+			},
+			"end": {
+				"speaker": "Viejo Ermitano",
+				"text": "Adelante. Que la montana no te devore.",
+				"set_flag": "intro_done"
+			}
+		},
+		"start_node": "start"
+	}
+}

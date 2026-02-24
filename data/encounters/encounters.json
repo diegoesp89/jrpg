@@ -1,0 +1,26 @@
+{
+	"encounter_hallway": {
+		"id": "encounter_hallway",
+		"enemies": ["skeleton", "skeleton"],
+		"rewards": {
+			"xp": 30,
+			"gold": 20
+		}
+	},
+	"encounter_golem": {
+		"id": "encounter_golem",
+		"enemies": ["golem"],
+		"rewards": {
+			"xp": 30,
+			"gold": 20
+		}
+	},
+	"encounter_boss": {
+		"id": "encounter_boss",
+		"enemies": ["flame_guardian"],
+		"rewards": {
+			"xp": 80,
+			"gold": 50
+		}
+	}
+}

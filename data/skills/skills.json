@@ -1,0 +1,50 @@
+{
+	"power_strike": {
+		"id": "power_strike",
+		"name": "Golpe de Poder",
+		"mp_cost": 5,
+		"target_type": "single_enemy",
+		"power": 15,
+		"effect_type": "physical"
+	},
+	"fireball": {
+		"id": "fireball",
+		"name": "Bola de Fuego",
+		"mp_cost": 10,
+		"target_type": "single_enemy",
+		"power": 22,
+		"effect_type": "magical"
+	},
+	"heal": {
+		"id": "heal",
+		"name": "Curar",
+		"mp_cost": 8,
+		"target_type": "single_ally",
+		"power": 30,
+		"effect_type": "heal"
+	},
+	"poison_blade": {
+		"id": "poison_blade",
+		"name": "Hoja Venenosa",
+		"mp_cost": 6,
+		"target_type": "single_enemy",
+		"power": 12,
+		"effect_type": "physical"
+	},
+	"smash": {
+		"id": "smash",
+		"name": "Aplastamiento",
+		"mp_cost": 0,
+		"target_type": "single_enemy",
+		"power": 18,
+		"effect_type": "physical"
+	},
+	"fire_breath": {
+		"id": "fire_breath",
+		"name": "Aliento de Fuego",
+		"mp_cost": 10,
+		"target_type": "all_enemies",
+		"power": 14,
+		"effect_type": "magical"
+	}
+}

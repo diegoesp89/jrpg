@@ -1,0 +1,9 @@
+{
+	"potion": {
+		"id": "potion",
+		"name": "Pocion",
+		"effect": "heal",
+		"power": 30,
+		"description": "Restaura 30 HP a un aliado."
+	}
+}

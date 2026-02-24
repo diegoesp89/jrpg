@@ -1,0 +1,15 @@
+# Godot 4 specific
+.godot/
+
+# macOS
+.DS_Store
+*.swp
+*~
+
+# Export templates
+*.export
+export_presets.cfg
+
+# Mono/.NET
+.mono/
+data_*/

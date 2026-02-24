@@ -1,0 +1,44 @@
+{
+	"warrior": {
+		"id": "warrior",
+		"name": "Kael",
+		"stats": {
+			"hp": 120,
+			"mp": 20,
+			"atk": 18,
+			"def": 14,
+			"mag": 6,
+			"mdef": 8,
+			"spd": 10
+		},
+		"skills": ["power_strike"]
+	},
+	"mage": {
+		"id": "mage",
+		"name": "Lyra",
+		"stats": {
+			"hp": 70,
+			"mp": 60,
+			"atk": 6,
+			"def": 7,
+			"mag": 20,
+			"mdef": 15,
+			"spd": 12
+		},
+		"skills": ["fireball", "heal"]
+	},
+	"rogue": {
+		"id": "rogue",
+		"name": "Voss",
+		"stats": {
+			"hp": 90,
+			"mp": 30,
+			"atk": 15,
+			"def": 10,
+			"mag": 8,
+			"mdef": 10,
+			"spd": 18
+		},
+		"skills": ["poison_blade"]
+	}
+}

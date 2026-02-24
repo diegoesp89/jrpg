@@ -1,0 +1,18 @@
+[gd_scene format=3 uid="uid://kq1tjryn226c"]
+
+[ext_resource type="Script" uid="uid://daqk7ny6ehqva" path="res://scripts/exploration/DungeonBuilder.gd" id="1"]
+[ext_resource type="PackedScene" path="res://scenes/exploration/Player.tscn" id="2"]
+[ext_resource type="PackedScene" path="res://scenes/exploration/CameraRig.tscn" id="3"]
+[ext_resource type="Script" uid="uid://dyr7o6jjgbqmj" path="res://scripts/exploration/DungeonManager.gd" id="4"]
+
+[node name="Dungeon" type="Node3D" unique_id=528016145]
+script = ExtResource("4")
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=442297051]
+
+[node name="DungeonBuilder" type="Node3D" parent="." unique_id=1280598158]
+script = ExtResource("1")
+
+[node name="Player" parent="." unique_id=494618484 instance=ExtResource("2")]
+
+[node name="CameraRig" parent="." unique_id=2040833567 instance=ExtResource("3")]
