@@ -28,11 +28,17 @@ func _ready() -> void:
 func _setup_environment() -> void:
 	var env = Environment.new()
 	env.background_mode = Environment.BG_COLOR
-	env.background_color = Color(0.02, 0.02, 0.05)
+	env.background_color = Color(0.0, 0.0, 0.0)
 	env.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
 	env.ambient_light_color = Color(0.08, 0.08, 0.12)
 	env.ambient_light_energy = 0.3
 	env.tonemap_mode = Environment.TONE_MAPPER_ACES
+	# Fog: fades to black at distance so far-away areas aren't visible
+	env.fog_enabled = true
+	env.fog_light_color = Color(0.0, 0.0, 0.0)
+	env.fog_light_energy = 0.0
+	env.fog_sun_scatter = 0.0
+	env.fog_density = 0.06
 	_world_env.environment = env
 
 func _setup_player_position() -> void:
