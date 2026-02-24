@@ -10,6 +10,7 @@ extends Node3D
 var _hud: CanvasLayer = null
 var _minimap_ui = null
 var _prompt_label: Label = null
+var _debug_label: Label = null
 
 func _ready() -> void:
 	_setup_environment()
@@ -24,6 +25,7 @@ func _ready() -> void:
 	_setup_dialogue_controller()
 	_setup_minimap()
 	_setup_occlusion_controller()
+	_setup_player_fog_global()
 
 func _setup_environment() -> void:
 	var env = Environment.new()
@@ -33,12 +35,6 @@ func _setup_environment() -> void:
 	env.ambient_light_color = Color(0.08, 0.08, 0.12)
 	env.ambient_light_energy = 0.3
 	env.tonemap_mode = Environment.TONE_MAPPER_ACES
-	# Fog: fades to black at distance so far-away areas aren't visible
-	env.fog_enabled = true
-	env.fog_light_color = Color(0.0, 0.0, 0.0)
-	env.fog_light_energy = 0.0
-	env.fog_sun_scatter = 0.0
-	env.fog_density = 0.06
 	_world_env.environment = env
 
 func _setup_player_position() -> void:
@@ -76,8 +72,21 @@ func _setup_hud() -> void:
 	hp_label.add_theme_font_size_override("font_size", 48)
 	_hud.add_child(hp_label)
 
+	# Debug zoom overlay (top-right)
+	_debug_label = Label.new()
+	_debug_label.name = "DebugZoom"
+	_debug_label.set_anchors_preset(Control.PRESET_TOP_RIGHT)
+	_debug_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	_debug_label.position = Vector2(-420, 10)
+	_debug_label.custom_minimum_size = Vector2(410, 100)
+	_debug_label.add_theme_font_size_override("font_size", 36)
+	_debug_label.add_theme_color_override("font_color", Color(0.0, 1.0, 0.0))
+	_hud.add_child(_debug_label)
+
 func _process(_delta: float) -> void:
 	_update_hp_display()
+	_update_debug_zoom()
+	_update_player_fog_pos()
 
 func _update_hp_display() -> void:
 	var hp_label = _hud.get_node_or_null("HPLabel")
@@ -87,6 +96,25 @@ func _update_hp_display() -> void:
 			leader["name"], leader["hp"], leader["max_hp"],
 			leader["mp"], leader["max_mp"]
 		]
+
+func _update_debug_zoom() -> void:
+	if not _debug_label or not _camera_rig:
+		return
+	if not _camera_rig.has_method("get_zoom_debug"):
+		_debug_label.text = "no debug method"
+		return
+	var d = _camera_rig.get_zoom_debug()
+	var mode_str = "Ortho" if d["is_ortho"] else "Perspective"
+	var detail_str: String
+	if d["is_ortho"]:
+		detail_str = "Size: %.1f" % d["ortho_size"]
+	else:
+		detail_str = "FOV: %.1f°" % d["fov"]
+	_debug_label.text = "Cam: %s [Lvl %d/2]\n%s\nDist: %.1f | FogEnd: %.1f" % [
+		mode_str, d["zoom_index"] + 1,
+		detail_str,
+		d["distance"], d["fog_end"],
+	]
 
 func _on_interactable_changed(interactable: Node) -> void:
 	if interactable and interactable.has_method("get_prompt_text"):
@@ -134,3 +162,26 @@ func _setup_occlusion_controller() -> void:
 	oc.name = "OcclusionController"
 	oc.set_script(oc_script)
 	add_child(oc)
+
+func _setup_player_fog_global() -> void:
+	# Register global shader parameters if not already registered by DungeonBuilder.
+	var existing = RenderingServer.global_shader_parameter_get_list()
+	if not existing.has("player_world_pos"):
+		RenderingServer.global_shader_parameter_add("player_world_pos", RenderingServer.GLOBAL_VAR_TYPE_VEC3, Vector3.ZERO)
+	if not existing.has("fog_start"):
+		RenderingServer.global_shader_parameter_add("fog_start", RenderingServer.GLOBAL_VAR_TYPE_FLOAT, 6.0)
+	if not existing.has("fog_end"):
+		RenderingServer.global_shader_parameter_add("fog_end", RenderingServer.GLOBAL_VAR_TYPE_FLOAT, 12.0)
+	# Set initial player pos
+	RenderingServer.global_shader_parameter_set("player_world_pos", _player.global_position)
+
+func _update_player_fog_pos() -> void:
+	if _player:
+		RenderingServer.global_shader_parameter_set("player_world_pos", _player.global_position)
+	# Dynamically update fog_end to match the camera's visible frustum edge
+	if _camera_rig and _camera_rig.has_method("get_fog_end_for_current_view"):
+		var fog_end_val: float = _camera_rig.get_fog_end_for_current_view()
+		# fog_start is a fraction of fog_end — darkness begins at ~60% of the visible radius
+		var fog_start_val: float = fog_end_val * 0.6
+		RenderingServer.global_shader_parameter_set("fog_start", fog_start_val)
+		RenderingServer.global_shader_parameter_set("fog_end", fog_end_val)

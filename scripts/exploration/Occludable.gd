@@ -4,13 +4,18 @@ extends Node
 ## Supports walls with multiple face meshes (WallFace_0, WallFace_1, etc.) and single Sprite3D.
 ##
 ## Walls start OPAQUE (no transparency) for correct depth testing.
-## Transparency is enabled only during fade, and disabled again when fully opaque.
+## For ShaderMaterial walls: swaps shader to transparent variant and sets alpha uniform.
+## For StandardMaterial3D walls: toggles transparency mode (legacy).
 
 var _current_alpha: float = 1.0
 var _fade_speed: float = 4.0  # alpha per second
 var _visuals: Array[Node3D] = []  # MeshInstance3D or Sprite3D nodes
 var _visual_types: Array[bool] = []  # true = MeshInstance3D, false = Sprite3D
 var _transparent: bool = false  # whether transparency mode is currently on
+
+# Cached shader references for opaque/transparent swap
+var _opaque_shader: Shader = null
+var _alpha_shader: Shader = null
 
 enum State { VISIBLE, FADING_OUT, FADING_IN, HIDDEN }
 var _state: State = State.VISIBLE
@@ -19,6 +24,28 @@ func _ready() -> void:
 	# Defer to next frame to ensure all sibling nodes are added
 	await get_tree().process_frame
 	_find_visuals()
+	# Try to get shader references from DungeonBuilder
+	var builder = _find_dungeon_builder()
+	if builder:
+		_opaque_shader = builder._fog_shader_textured
+		_alpha_shader = builder._fog_shader_textured_alpha
+
+func _find_dungeon_builder():
+	# Occludable → Wall → DungeonBuilder
+	var wall = get_parent()
+	if not wall:
+		return null
+	var builder = wall.get_parent()
+	if builder and builder.has_method("get_player_start_position"):
+		return builder
+	# Fallback: search up the tree
+	var node = builder
+	while node:
+		for child in node.get_children():
+			if child.has_method("get_player_start_position"):
+				return child
+		node = node.get_parent()
+	return null
 
 func _process(delta: float) -> void:
 	if _visuals.is_empty():
@@ -44,7 +71,10 @@ func _apply_alpha(alpha: float) -> void:
 		if _visual_types[i]:
 			var mi := _visuals[i] as MeshInstance3D
 			if mi and mi.material_override:
-				mi.material_override.albedo_color.a = alpha
+				if mi.material_override is ShaderMaterial:
+					mi.material_override.set_shader_parameter("alpha", alpha)
+				elif mi.material_override is StandardMaterial3D:
+					mi.material_override.albedo_color.a = alpha
 		else:
 			_visuals[i].modulate.a = alpha
 
@@ -56,11 +86,21 @@ func _set_transparent(enabled: bool) -> void:
 		if _visual_types[i]:
 			var mi := _visuals[i] as MeshInstance3D
 			if mi and mi.material_override:
-				if enabled:
-					mi.material_override.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-				else:
-					mi.material_override.transparency = BaseMaterial3D.TRANSPARENCY_DISABLED
-					mi.material_override.albedo_color.a = 1.0
+				if mi.material_override is ShaderMaterial:
+					# Swap shader between opaque and transparent variant
+					if _opaque_shader and _alpha_shader:
+						if enabled:
+							mi.material_override.shader = _alpha_shader
+							mi.material_override.set_shader_parameter("alpha", _current_alpha)
+						else:
+							mi.material_override.set_shader_parameter("alpha", 1.0)
+							mi.material_override.shader = _opaque_shader
+				elif mi.material_override is StandardMaterial3D:
+					if enabled:
+						mi.material_override.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+					else:
+						mi.material_override.transparency = BaseMaterial3D.TRANSPARENCY_DISABLED
+						mi.material_override.albedo_color.a = 1.0
 
 func fade_out() -> void:
 	if _state != State.FADING_OUT and _state != State.HIDDEN:

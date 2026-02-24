@@ -56,8 +56,25 @@ var _wall_nodes: Array[Node3D] = []
 var _floor_mesh: MeshInstance3D = null
 var _wall_texture: ImageTexture = null
 
+# Shared shader instances (created once, reused)
+var _fog_shader_color: Shader = null
+var _fog_shader_textured: Shader = null
+var _fog_shader_textured_alpha: Shader = null  # transparent variant for occlusion fade
+
 func _ready() -> void:
+	_init_fog_shaders()
+	_register_fog_globals()
 	_build_dungeon()
+
+func _register_fog_globals() -> void:
+	# Ensure global shader params exist before any shader uses them.
+	# DungeonManager will update player_world_pos and fog values every frame.
+	if not RenderingServer.global_shader_parameter_get_list().has("player_world_pos"):
+		RenderingServer.global_shader_parameter_add("player_world_pos", RenderingServer.GLOBAL_VAR_TYPE_VEC3, Vector3.ZERO)
+	if not RenderingServer.global_shader_parameter_get_list().has("fog_start"):
+		RenderingServer.global_shader_parameter_add("fog_start", RenderingServer.GLOBAL_VAR_TYPE_FLOAT, 6.0)
+	if not RenderingServer.global_shader_parameter_get_list().has("fog_end"):
+		RenderingServer.global_shader_parameter_add("fog_end", RenderingServer.GLOBAL_VAR_TYPE_FLOAT, 12.0)
 
 func _build_dungeon() -> void:
 	_wall_texture = _create_rect_texture(WALL_COLOR, WALL_BORDER, 32, 48)
@@ -92,13 +109,13 @@ func _create_floor_tile(col: int, row: int) -> void:
 	plane_mesh.size = Vector2(TILE_SIZE - 0.05, TILE_SIZE - 0.05)
 	mesh_instance.mesh = plane_mesh
 
-	var mat = StandardMaterial3D.new()
-	# Checkerboard pattern
+	# Checkerboard pattern with fog shader
+	var color: Color
 	if (col + row) % 2 == 0:
-		mat.albedo_color = FLOOR_COLOR
+		color = FLOOR_COLOR
 	else:
-		mat.albedo_color = FLOOR_ALT_COLOR
-	mesh_instance.material_override = mat
+		color = FLOOR_ALT_COLOR
+	mesh_instance.material_override = _make_fog_color_material(color)
 
 	mesh_instance.position = Vector3(col * TILE_SIZE, 0, row * TILE_SIZE)
 	add_child(mesh_instance)
@@ -145,11 +162,8 @@ func _create_wall(pos: Vector3, col: int, row: int) -> void:
 	wall.collision_mask = 0
 
 	# Material per wall (own instance so Occludable fade is independent)
-	# Start OPAQUE — only switch to alpha when fading (Occludable handles this)
-	var mat = StandardMaterial3D.new()
-	mat.albedo_texture = _wall_texture
-	mat.cull_mode = BaseMaterial3D.CULL_DISABLED
-	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	# Uses fog textured shader — already cull_disabled + unshaded
+	var mat = _make_fog_textured_material(_wall_texture)
 
 	# Create one vertical quad per exposed face (adjacent to non-wall)
 	var face_idx := 0
@@ -183,10 +197,7 @@ func _create_wall(pos: Vector3, col: int, row: int) -> void:
 		var plane = PlaneMesh.new()
 		plane.size = Vector2(TILE_SIZE - 0.05, TILE_SIZE - 0.05)
 		cap.mesh = plane
-		var cap_mat = StandardMaterial3D.new()
-		cap_mat.albedo_color = WALL_COLOR * 0.8
-		cap_mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-		cap.material_override = cap_mat
+		cap.material_override = _make_fog_color_material(WALL_COLOR * 0.8)
 		cap.position = Vector3(0, 3.0, 0)
 		wall.add_child(cap)
 
@@ -334,9 +345,7 @@ func _create_trap(pos: Vector3) -> void:
 	var plane = PlaneMesh.new()
 	plane.size = Vector2(TILE_SIZE - 0.1, TILE_SIZE - 0.1)
 	mesh.mesh = plane
-	var mat = StandardMaterial3D.new()
-	mat.albedo_color = Color(0.5, 0.15, 0.1)
-	mesh.material_override = mat
+	mesh.material_override = _make_fog_color_material(Color(0.5, 0.15, 0.1))
 	mesh.position = Vector3(0, 0.01, 0)
 	trap.add_child(mesh)
 
@@ -387,12 +396,7 @@ func _create_exit(pos: Vector3) -> void:
 	var plane = PlaneMesh.new()
 	plane.size = Vector2(TILE_SIZE - 0.1, TILE_SIZE - 0.1)
 	mesh.mesh = plane
-	var mat = StandardMaterial3D.new()
-	mat.albedo_color = Color(0.9, 0.85, 0.5)
-	mat.emission_enabled = true
-	mat.emission = Color(0.9, 0.85, 0.5)
-	mat.emission_energy_multiplier = 0.5
-	mesh.material_override = mat
+	mesh.material_override = _make_fog_color_material(Color(0.9, 0.85, 0.5))
 	mesh.position = Vector3(0, 0.02, 0)
 	exit_area.add_child(mesh)
 
@@ -491,6 +495,96 @@ func _unhandled_input(event: InputEvent) -> void:
 	if _exit_triggered and event.is_action_pressed("action1"):
 		get_viewport().set_input_as_handled()
 		SceneFlow.change_scene("res://scenes/boot/Boot.tscn")
+
+# --- Fog shader helpers ---
+
+func _init_fog_shaders() -> void:
+	_fog_shader_color = Shader.new()
+	_fog_shader_color.code = """
+shader_type spatial;
+render_mode unshaded, cull_disabled;
+
+global uniform vec3 player_world_pos;
+global uniform float fog_start;
+global uniform float fog_end;
+
+uniform vec4 base_color : source_color = vec4(1.0);
+
+varying vec3 world_pos;
+
+void vertex() {
+	world_pos = (MODEL_MATRIX * vec4(VERTEX, 1.0)).xyz;
+}
+
+void fragment() {
+	float dist_xz = length(world_pos.xz - player_world_pos.xz);
+	float fog = smoothstep(fog_start, fog_end, dist_xz);
+	ALBEDO = mix(base_color.rgb, vec3(0.0), fog);
+}
+"""
+	_fog_shader_textured = Shader.new()
+	_fog_shader_textured.code = """
+shader_type spatial;
+render_mode unshaded, cull_disabled;
+
+global uniform vec3 player_world_pos;
+global uniform float fog_start;
+global uniform float fog_end;
+
+uniform sampler2D base_texture : source_color;
+
+varying vec3 world_pos;
+
+void vertex() {
+	world_pos = (MODEL_MATRIX * vec4(VERTEX, 1.0)).xyz;
+}
+
+void fragment() {
+	vec4 tex = texture(base_texture, UV);
+	float dist_xz = length(world_pos.xz - player_world_pos.xz);
+	float fog = smoothstep(fog_start, fog_end, dist_xz);
+	ALBEDO = mix(tex.rgb, vec3(0.0), fog);
+}
+"""
+	# Transparent variant — same as textured but writes ALPHA for occlusion fade
+	_fog_shader_textured_alpha = Shader.new()
+	_fog_shader_textured_alpha.code = """
+shader_type spatial;
+render_mode unshaded, cull_disabled, depth_draw_always;
+
+global uniform vec3 player_world_pos;
+global uniform float fog_start;
+global uniform float fog_end;
+
+uniform sampler2D base_texture : source_color;
+uniform float alpha : hint_range(0.0, 1.0) = 1.0;
+
+varying vec3 world_pos;
+
+void vertex() {
+	world_pos = (MODEL_MATRIX * vec4(VERTEX, 1.0)).xyz;
+}
+
+void fragment() {
+	vec4 tex = texture(base_texture, UV);
+	float dist_xz = length(world_pos.xz - player_world_pos.xz);
+	float fog = smoothstep(fog_start, fog_end, dist_xz);
+	ALBEDO = mix(tex.rgb, vec3(0.0), fog);
+	ALPHA = alpha;
+}
+"""
+
+func _make_fog_color_material(color: Color) -> ShaderMaterial:
+	var mat = ShaderMaterial.new()
+	mat.shader = _fog_shader_color
+	mat.set_shader_parameter("base_color", color)
+	return mat
+
+func _make_fog_textured_material(texture: Texture2D) -> ShaderMaterial:
+	var mat = ShaderMaterial.new()
+	mat.shader = _fog_shader_textured
+	mat.set_shader_parameter("base_texture", texture)
+	return mat
 
 # --- Texture helpers ---
 
