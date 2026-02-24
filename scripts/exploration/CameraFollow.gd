@@ -43,7 +43,7 @@ func _ready() -> void:
 		_camera.projection = Camera3D.PROJECTION_PERSPECTIVE
 		_camera.fov = _get_fov_for_zoom(_zoom_factor)
 		_camera.near = 0.1
-		_camera.far = 200.0
+		_camera.far = 500.0
 	if _target:
 		global_position = _target.global_position + offset
 		_apply_fixed_rotation()
@@ -64,6 +64,20 @@ func _get_fov_for_zoom(zoom: float) -> float:
 	# t=0 → close (perspective), t=1 → far (ortho-like)
 	return lerpf(fov_at_zoom_min, fov_at_zoom_max, t)
 
+func _get_distance_for_zoom(zoom: float) -> float:
+	# The base distance at zoom_factor=1.0 corresponds to fov_at_zoom_min (reference).
+	# When FOV shrinks (zoom out), the camera must pull back proportionally
+	# to keep (and expand) the visible area.
+	# Visible half-width at distance d with fov f: d * tan(f/2)
+	# To expand view when FOV shrinks: d = base_dist * tan(ref_fov/2) / tan(current_fov/2)
+	var current_fov = _get_fov_for_zoom(zoom)
+	var ref_fov = fov_at_zoom_min
+	var ref_tan = tan(deg_to_rad(ref_fov * 0.5))
+	var cur_tan = tan(deg_to_rad(current_fov * 0.5))
+	# Also apply the linear zoom factor for the user-controlled distance
+	var base_dist = offset.length() * zoom
+	return base_dist * ref_tan / cur_tan
+
 func _process(delta: float) -> void:
 	if not _target:
 		return
@@ -80,7 +94,8 @@ func _process(delta: float) -> void:
 		_camera.fov = lerpf(_camera.fov, target_fov, clampf(8.0 * delta, 0.0, 1.0))
 
 	# --- Detect if player is moving ---
-	var current_offset = _offset_dir * (offset.length() * _zoom_factor)
+	var current_dist = _get_distance_for_zoom(_zoom_factor)
+	var current_offset = _offset_dir * current_dist
 	var target_pos = _target.global_position + current_offset
 	var distance = global_position.distance_to(target_pos)
 
@@ -110,6 +125,6 @@ func _process(delta: float) -> void:
 func set_target(node: Node3D) -> void:
 	_target = node
 	if _target:
-		var current_offset = _offset_dir * (offset.length() * _zoom_factor)
-		global_position = _target.global_position + current_offset
+		var current_dist = _get_distance_for_zoom(_zoom_factor)
+		global_position = _target.global_position + _offset_dir * current_dist
 		_apply_fixed_rotation()
