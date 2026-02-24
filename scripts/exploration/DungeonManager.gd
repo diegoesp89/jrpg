@@ -104,15 +104,10 @@ func _update_debug_zoom() -> void:
 		_debug_label.text = "no debug method"
 		return
 	var d = _camera_rig.get_zoom_debug()
-	var mode_str = "Ortho" if d["is_ortho"] else "Perspective"
-	var detail_str: String
-	if d["is_ortho"]:
-		detail_str = "Size: %.1f" % d["ortho_size"]
-	else:
-		detail_str = "FOV: %.1f°" % d["fov"]
-	_debug_label.text = "Cam: %s [Lvl %d/2]\n%s\nDist: %.1f | FogEnd: %.1f" % [
+	var mode_str = "Quasi-Ortho" if d["zoom_index"] == 1 else "Perspective"
+	_debug_label.text = "Cam: %s [Lvl %d/2]\nFOV: %.1f° → %.1f°\nDist: %.1f | FogEnd: %.1f" % [
 		mode_str, d["zoom_index"] + 1,
-		detail_str,
+		d["fov"], d["fov_target"],
 		d["distance"], d["fog_end"],
 	]
 
