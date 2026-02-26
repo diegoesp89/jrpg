@@ -78,3 +78,6 @@ func is_round_over() -> bool:
 
 func get_round_number() -> int:
 	return _round_number
+
+func get_turn_queue() -> Array:
+	return _turn_queue

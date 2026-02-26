@@ -92,9 +92,11 @@ func _update_hp_display() -> void:
 	var hp_label = _hud.get_node_or_null("HPLabel")
 	if hp_label and GameState.party.size() > 0:
 		var leader = GameState.party[0]
+		var mp = leader.get("mp", 0)
+		var max_mp = leader.get("max_mp", 0)
 		hp_label.text = "%s  HP: %d/%d  MP: %d/%d" % [
 			leader["name"], leader["hp"], leader["max_hp"],
-			leader["mp"], leader["max_mp"]
+			mp, max_mp
 		]
 
 func _update_debug_zoom() -> void:

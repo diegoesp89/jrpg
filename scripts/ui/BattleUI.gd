@@ -16,6 +16,10 @@ var _battle_sprites_container: HBoxContainer = null
 var _enemy_sprites_container: HBoxContainer = null
 var _float_overlay: Control = null
 
+# Initiative panel reference
+var _initiative_panel: PanelContainer = null
+var _initiative_list: VBoxContainer = null
+
 # HP bar references: array of { "bar": ColorRect, "combatant": Dictionary, "is_player": bool, "max_width": float }
 var _hp_bars: Array[Dictionary] = []
 
@@ -154,6 +158,28 @@ func _build_ui() -> void:
 	_turn_indicator.add_theme_font_size_override("font_size", 54)
 	_turn_indicator.add_theme_color_override("font_color", Color(1, 0.9, 0.4))
 	field.add_child(_turn_indicator)
+	
+	# Initiative list (top-right)
+	var init_panel = PanelContainer.new()
+	init_panel.name = "InitiativePanel"
+	init_panel.set_anchors_preset(Control.PRESET_TOP_RIGHT)
+	init_panel.offset_left = -220
+	init_panel.offset_top = 10
+	init_panel.offset_right = -10
+	init_panel.offset_bottom = 200
+	var init_style = StyleBoxFlat.new()
+	init_style.bg_color = Color(0.05, 0.05, 0.12, 0.8)
+	init_style.border_color = Color(0.3, 0.3, 0.3)
+	init_style.set_border_width_all(1)
+	init_panel.add_theme_stylebox_override("panel", init_style)
+	root.add_child(init_panel)
+	_initiative_panel = init_panel
+	
+	var init_vbox = VBoxContainer.new()
+	init_vbox.name = "InitiativeList"
+	init_vbox.add_theme_constant_override("separation", 2)
+	init_panel.add_child(init_vbox)
+	_initiative_list = init_vbox
 
 	# Floating damage number overlay (on top of everything)
 	_float_overlay = Control.new()
@@ -388,6 +414,7 @@ func _on_turn_changed(combatant: Dictionary, is_player: bool) -> void:
 	else:
 		_hide_all_menus()
 	_update_all_stats()
+	_update_initiative_list()
 
 func _show_main_menu() -> void:
 	_clear_container(_action_menu)
@@ -446,8 +473,10 @@ func _update_all_stats() -> void:
 			var label = Label.new()
 			var status = " [MUERTO]" if p["hp"] <= 0 else ""
 			var def_str = " [DEF]" if p.get("defending", false) else ""
+			var mp = p.get("mp", 0)
+			var max_mp = p.get("max_mp", 0)
 			label.text = "%s  HP:%d/%d  MP:%d/%d%s%s" % [
-				p["name"], p["hp"], p["max_hp"], p["mp"], p["max_mp"], def_str, status
+				p["name"], p["hp"], p["max_hp"], mp, max_mp, def_str, status
 			]
 			label.add_theme_font_size_override("font_size", 39)
 			# Color logic:
@@ -467,6 +496,49 @@ func _update_all_stats() -> void:
 
 	# Update HP bars above sprites (enemies only)
 	_update_hp_bars()
+
+func _update_initiative_list() -> void:
+	if not _battle_controller:
+		return
+	
+	if not _initiative_panel or not _initiative_list:
+		return
+	
+	for child in _initiative_list.get_children():
+		child.queue_free()
+	
+	var turn_system = _battle_controller.get_turn_system()
+	if not turn_system:
+		return
+	
+	var queue = turn_system.get_turn_queue()
+	var current_id = _current_turn_combatant.get("id", "")
+	
+	var title = Label.new()
+	title.text = "Iniciativa"
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	title.add_theme_font_size_override("font_size", 14)
+	title.add_theme_color_override("font_color", Color(0.6, 0.6, 0.6))
+	_initiative_list.add_child(title)
+	
+	for entry in queue:
+		var combatant = entry.get("combatant", {})
+		if combatant.get("hp", 0) <= 0:
+			continue
+		
+		var name = combatant.get("name", "???")
+		var is_current = combatant.get("id", "") == current_id
+		
+		var label = Label.new()
+		label.text = name
+		label.add_theme_font_size_override("font_size", 12)
+		if is_current:
+			label.add_theme_color_override("font_color", Color(1, 0.9, 0.2))
+		elif combatant.get("is_player", false):
+			label.add_theme_color_override("font_color", Color(0.4, 0.7, 1.0))
+		else:
+			label.add_theme_color_override("font_color", Color(0.9, 0.5, 0.5))
+		_initiative_list.add_child(label)
 
 func _update_battle_sprites() -> void:
 	# Update party sprite colors based on alive/dead state

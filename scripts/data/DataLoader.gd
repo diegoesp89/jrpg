@@ -59,6 +59,9 @@ func get_skill(skill_id: String) -> Dictionary:
 func get_item(item_id: String) -> Dictionary:
 	return _items.get(item_id, {})
 
+func get_all_items() -> Array:
+	return _items.values()
+
 func get_encounter(encounter_id: String) -> Dictionary:
 	return _encounters.get(encounter_id, {})
 

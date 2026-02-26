@@ -94,6 +94,8 @@ static func attack_roll(attacker: Dictionary, defender: Dictionary) -> Dictionar
 	var is_crit = roll == 20
 	var is_fumble = roll == 1
 	
+	var damage_dice = get_damage_dice(attacker)
+	
 	var result = {
 		"roll": roll,
 		"bonus": attack_bonus,
@@ -101,6 +103,7 @@ static func attack_roll(attacker: Dictionary, defender: Dictionary) -> Dictionar
 		"hit": false,
 		"crit": false,
 		"damage": 0,
+		"damage_dice": damage_dice,
 		"message": ""
 	}
 	
@@ -153,6 +156,8 @@ static func enemy_attack(enemy: Dictionary, defender: Dictionary) -> Dictionary:
 	var is_crit = roll == 20
 	var is_fumble = roll == 1
 	
+	var damage_dice = enemy.get("damage", "1d6")
+	
 	var result = {
 		"roll": roll,
 		"bonus": enemy_attack_bonus,
@@ -160,6 +165,7 @@ static func enemy_attack(enemy: Dictionary, defender: Dictionary) -> Dictionary:
 		"hit": false,
 		"crit": false,
 		"damage": 0,
+		"damage_dice": damage_dice,
 		"message": ""
 	}
 	
@@ -207,3 +213,29 @@ static func use_mp(caster: Dictionary, amount: int) -> bool:
 
 static func is_dead(combatant: Dictionary) -> bool:
 	return combatant.get("hp", 0) <= 0
+
+static func calculate_physical_damage(attacker: Dictionary, defender: Dictionary, power: int = 0) -> int:
+	var result = attack_roll(attacker, defender)
+	if power > 0:
+		return result.damage + power
+	return result.damage
+
+static func calculate_magical_damage(attacker: Dictionary, defender: Dictionary, power: int) -> int:
+	var attrs = attacker.get("attributes", {})
+	var int_mod = _get_modifier(attrs.get("inteligencia", 10))
+	var wis_mod = _get_modifier(attrs.get("sabiduria", 10))
+	var stat_mod = max(int_mod, wis_mod)
+	var damage = power + stat_mod
+	return max(1, damage)
+
+static func calculate_heal(caster: Dictionary, power: int) -> int:
+	var attrs = caster.get("attributes", {})
+	var wis_mod = _get_modifier(attrs.get("sabiduria", 10))
+	var int_mod = _get_modifier(attrs.get("inteligencia", 10))
+	var stat_mod = max(wis_mod, int_mod)
+	return power + stat_mod
+
+static func calculate_flee_chance(party: Array, enemies: Array) -> int:
+	var base = 50
+	var party_size = party.size()
+	return base + (party_size * 10)

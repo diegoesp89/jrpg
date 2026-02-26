@@ -172,10 +172,15 @@ func _create_character_card(index: int) -> PanelContainer:
 	var int_val = attrs.get("inteligencia", 10)
 	var cha_val = attrs.get("carisma", 10)
 	
-	var hit_die = char.get("hit_die", 8)
-	var clase = char.get("class", "")
+	var str_mod = _get_modifier(str_val)
 	var dex_mod = _get_modifier(dex_val)
 	var con_mod = _get_modifier(con_val)
+	var wis_mod = _get_modifier(wis_val)
+	var int_mod = _get_modifier(int_val)
+	var cha_mod = _get_modifier(cha_val)
+	
+	var hit_die = char.get("hit_die", 8)
+	var clase = char.get("class", "")
 	var hp = hit_die + con_mod
 	if hp < 1:
 		hp = 1
@@ -186,17 +191,24 @@ func _create_character_card(index: int) -> PanelContainer:
 	var stats = [
 		["HP", hp],
 		["CA", ca],
-		["FUE", str_val],
-		["AGI", dex_val],
-		["CON", con_val],
-		["SAB", wis_val],
-		["INT", int_val],
-		["CAR", cha_val],
+		["FUE", str_mod],
+		["AGI", dex_mod],
+		["CON", con_mod],
+		["SAB", wis_mod],
+		["INT", int_mod],
+		["CAR", cha_mod],
 	]
 	
 	for stat in stats:
 		var stat_label = Label.new()
-		stat_label.text = "%s: %d" % [stat[0], stat[1]]
+		var val = stat[1]
+		var stat_name = stat[0]
+		if stat_name == "CA" or stat_name == "HP":
+			stat_label.text = "%s: %d" % [stat_name, val]
+		elif val >= 0:
+			stat_label.text = "%s: +%d" % [stat_name, val]
+		else:
+			stat_label.text = "%s: %d" % [stat_name, val]
 		stat_label.add_theme_font_size_override("font_size", 12)
 		stat_label.add_theme_color_override("font_color", Color(0.75, 0.75, 0.75))
 		stats_container.add_child(stat_label)

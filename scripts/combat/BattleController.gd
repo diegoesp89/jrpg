@@ -127,9 +127,10 @@ func _execute_enemy_turn(enemy: Dictionary) -> void:
 			if result.hit:
 				Combatant.apply_damage(target, result.damage)
 				damage_dealt.emit(target, result.damage, false)
-				action_performed.emit("%s %s - %d dano!" % [enemy["name"], result.message, result.damage])
+				var dmg_str = "daño!" if not result.crit else "daño CRÍTICO!"
+				action_performed.emit("%s: %d(1d20)+%d = %d vs %d CA -> Golpe! Dañó %d a %s" % [enemy["name"], result.roll, result.bonus, result.total, target.get("ca", 10), result.damage, target["name"]])
 			else:
-				action_performed.emit("%s %s" % [enemy["name"], result.message])
+				action_performed.emit("%s: %d(1d20)+%d = %d vs %d CA -> %s" % [enemy["name"], result.roll, result.bonus, result.total, target.get("ca", 10), result.message])
 		"skill":
 			var skill = action.get("skill", {})
 			var skill_name = skill.get("name", "???")
@@ -144,7 +145,7 @@ func _execute_enemy_turn(enemy: Dictionary) -> void:
 				var dmg = Combatant.calculate_physical_damage(enemy, fallback_target)
 				Combatant.apply_damage(fallback_target, dmg)
 				damage_dealt.emit(fallback_target, dmg, false)
-				action_performed.emit("%s no tiene MP! Ataca a %s por %d de dano!" % [enemy["name"], fallback_target["name"], dmg])
+				action_performed.emit("%s no tiene MP! Ataca a %s por %d de daño!" % [enemy["name"], fallback_target["name"], dmg])
 				hp_updated.emit()
 				await get_tree().create_timer(0.8).timeout
 				_next_turn()
@@ -176,7 +177,7 @@ func _execute_enemy_turn(enemy: Dictionary) -> void:
 						dmg = Combatant.calculate_magical_damage(enemy, target, skill.get("power", 0))
 					Combatant.apply_damage(target, dmg)
 					damage_dealt.emit(target, dmg, false)
-					action_performed.emit("%s usa %s en %s por %d de dano!" % [enemy["name"], skill_name, target["name"], dmg])
+					action_performed.emit("%s usa %s en %s por %d de daño!" % [enemy["name"], skill_name, target["name"], dmg])
 
 	hp_updated.emit()
 	await get_tree().create_timer(0.8).timeout
@@ -202,9 +203,10 @@ func player_action(action: Dictionary) -> void:
 			if result.hit:
 				Combatant.apply_damage(target, result.damage)
 				damage_dealt.emit(target, result.damage, false)
-				action_performed.emit("%s: %s %s por %d dano!" % [current["name"], result.message, target["name"], result.damage])
+				var dmg_str = "daño!" if not result.crit else "daño CRÍTICO!"
+				action_performed.emit("%s: %d(1d20)+%d(Fue) = %d vs %d CA -> Golpe! Dañó %d a %s" % [current["name"], result.roll, result.bonus, result.total, target.get("ca", 10), result.damage, target["name"]])
 			else:
-				action_performed.emit("%s: %s" % [current["name"], result.message])
+				action_performed.emit("%s: %d(1d20)+%d(Fue) = %d vs %d CA -> %s" % [current["name"], result.roll, result.bonus, result.total, target.get("ca", 10), result.message])
 
 		"skill":
 			var skill = action.get("skill", {})
@@ -236,7 +238,7 @@ func player_action(action: Dictionary) -> void:
 					dmg = Combatant.calculate_magical_damage(current, target, skill.get("power", 0))
 				Combatant.apply_damage(target, dmg)
 				damage_dealt.emit(target, dmg, false)
-				action_performed.emit("%s usa %s en %s por %d de dano!" % [current["name"], skill_name, target["name"], dmg])
+				action_performed.emit("%s usa %s en %s por %d de daño!" % [current["name"], skill_name, target["name"], dmg])
 
 		"defend":
 			current["defending"] = true
@@ -331,7 +333,7 @@ func _sync_party_to_gamestate() -> void:
 		party_state.append({
 			"id": p["id"],
 			"hp": p["hp"],
-			"mp": p["mp"],
+			"mp": p.get("mp", 0),
 		})
 	GameState.restore_party_from_combat(party_state)
 
@@ -340,6 +342,9 @@ func get_party() -> Array:
 
 func get_enemies() -> Array:
 	return _enemies
+
+func get_turn_system() -> Node:
+	return _turn_system
 
 func is_waiting_for_player() -> bool:
 	return _waiting_for_player

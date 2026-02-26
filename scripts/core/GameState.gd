@@ -208,3 +208,13 @@ func reset() -> void:
 	return_position = Vector3.ZERO
 	current_encounter_id = ""
 	_init_inventory()
+
+func _init_inventory() -> void:
+	inventory.clear()
+	var items = DataLoader.get_all_items()
+	for item in items:
+		inventory.append({
+			"id": item["id"],
+			"name": item["name"],
+			"quantity": 3
+		})
