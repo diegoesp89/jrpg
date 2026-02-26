@@ -37,6 +37,22 @@ static func _roll_dice(dice_str: String) -> int:
 			total += part.to_int()
 	return total
 
+static func _max_roll_dice(dice_str: String) -> int:
+	var total = 0
+	var parts = dice_str.split("+")
+	for part in parts:
+		part = part.strip_edges()
+		if part.find("d") != -1:
+			var dice_parts = part.split("d")
+			var num_dice = 1
+			if dice_parts[0].is_valid_int():
+				num_dice = dice_parts[0].to_int()
+			var die_size = dice_parts[1].to_int()
+			total += num_dice * die_size
+		elif part.is_valid_int():
+			total += part.to_int()
+	return total
+
 static func get_attack_modifier(attacker: Dictionary) -> int:
 	var clase = attacker.get("class", "")
 	var attrs = attacker.get("attributes", {})
@@ -76,7 +92,7 @@ static func attack_roll(attacker: Dictionary, defender: Dictionary) -> Dictionar
 	
 	var defender_ca = defender.get("ca", 10)
 	var is_crit = roll == 20
-	var is_miss = roll == 1
+	var is_fumble = roll == 1
 	
 	var result = {
 		"roll": roll,
@@ -88,11 +104,11 @@ static func attack_roll(attacker: Dictionary, defender: Dictionary) -> Dictionar
 		"message": ""
 	}
 	
-	if is_miss:
+	if is_fumble:
 		result.message = "FALLO CRITICO!"
-	elif is_crit or total_attack >= defender_ca:
+	elif is_crit:
 		result.hit = true
-		result.crit = is_crit
+		result.crit = true
 		
 		var damage_dice = get_damage_dice(attacker)
 		var attrs = attacker.get("attributes", {})
@@ -104,15 +120,25 @@ static func attack_roll(attacker: Dictionary, defender: Dictionary) -> Dictionar
 		if clase == "Monje" or clase == "Gunslinger":
 			stat_mod = _get_modifier(dex_val)
 		
-		var base_damage = _roll_dice(damage_dice)
-		result.damage = base_damage + stat_mod
+		var max_damage = _max_roll_dice(damage_dice) + stat_mod
+		var extra_damage = _roll_dice(damage_dice) + stat_mod
+		result.damage = max_damage + extra_damage
+		result.message = "GOLPE CRITICO!"
+	elif total_attack >= defender_ca:
+		result.hit = true
 		
-		if is_crit:
-			var crit_damage = _roll_dice(damage_dice) + stat_mod
-			result.damage += crit_damage
-			result.message = "GOLPE CRITICO!"
-		else:
-			result.message = "Golpe!"
+		var damage_dice = get_damage_dice(attacker)
+		var attrs = attacker.get("attributes", {})
+		var str_val = attrs.get("fuerza", 10)
+		var dex_val = attrs.get("agilidad", 10)
+		var clase = attacker.get("class", "")
+		
+		var stat_mod = _get_modifier(str_val)
+		if clase == "Monje" or clase == "Gunslinger":
+			stat_mod = _get_modifier(dex_val)
+		
+		result.damage = _roll_dice(damage_dice) + stat_mod
+		result.message = "Golpe!"
 	else:
 		result.message = "Fallo (AC: %d)" % defender_ca
 	
@@ -125,7 +151,7 @@ static func enemy_attack(enemy: Dictionary, defender: Dictionary) -> Dictionary:
 	
 	var defender_ca = defender.get("ca", 10)
 	var is_crit = roll == 20
-	var is_miss = roll == 1
+	var is_fumble = roll == 1
 	
 	var result = {
 		"roll": roll,
@@ -137,26 +163,31 @@ static func enemy_attack(enemy: Dictionary, defender: Dictionary) -> Dictionary:
 		"message": ""
 	}
 	
-	if is_miss:
-		result.message = "El enemigo falla!"
-	elif is_crit or total_attack >= defender_ca:
+	if is_fumble:
+		result.message = "El enemigo falla criticamente!"
+	elif is_crit:
 		result.hit = true
-		result.crit = is_crit
+		result.crit = true
 		
 		var damage_dice = enemy.get("damage", "1d6")
 		var attrs = enemy.get("attributes", {})
 		var str_val = attrs.get("fuerza", 10)
 		var stat_mod = _get_modifier(str_val)
 		
-		var base_damage = _roll_dice(damage_dice)
-		result.damage = base_damage + stat_mod
+		var max_damage = _max_roll_dice(damage_dice) + stat_mod
+		var extra_damage = _roll_dice(damage_dice) + stat_mod
+		result.damage = max_damage + extra_damage
+		result.message = "Golpe critico del enemigo!"
+	elif total_attack >= defender_ca:
+		result.hit = true
 		
-		if is_crit:
-			var crit_damage = _roll_dice(damage_dice) + stat_mod
-			result.damage += crit_damage
-			result.message = "Golpe critico del enemigo!"
-		else:
-			result.message = "El enemigo golpea!"
+		var damage_dice = enemy.get("damage", "1d6")
+		var attrs = enemy.get("attributes", {})
+		var str_val = attrs.get("fuerza", 10)
+		var stat_mod = _get_modifier(str_val)
+		
+		result.damage = _roll_dice(damage_dice) + stat_mod
+		result.message = "El enemigo golpea!"
 	else:
 		result.message = "El enemigo falla (AC: %d)" % defender_ca
 	

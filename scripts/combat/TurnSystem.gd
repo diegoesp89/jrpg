@@ -33,7 +33,7 @@ func _get_initiative(c: Dictionary) -> int:
 	var attrs = c.get("attributes", {})
 	var dex = attrs.get("agilidad", 10)
 	var dex_mod = _get_modifier(dex)
-	return LEVEL + dex_mod + randi_range(0, 5)
+	return LEVEL + dex_mod + randi_range(1, 20)
 
 func setup(combatants: Array[Dictionary]) -> void:
 	_combatants = combatants
