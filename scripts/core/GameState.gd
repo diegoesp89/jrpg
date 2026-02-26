@@ -12,31 +12,101 @@ var return_scene_path: String = ""
 var return_position: Vector3 = Vector3.ZERO
 var current_encounter_id: String = ""
 
+const LEVEL: int = 1
+
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
-	_init_party()
 	_init_inventory()
 
-func _init_party() -> void:
-	var chars = DataLoader.get_all_characters()
-	for c in chars:
-		party.append({
-			"id": c["id"],
-			"name": c["name"],
-			"hp": c["stats"]["hp"],
-			"max_hp": c["stats"]["hp"],
-			"mp": c["stats"]["mp"],
-			"max_mp": c["stats"]["mp"],
-			"atk": c["stats"]["atk"],
-			"def": c["stats"]["def"],
-			"mag": c["stats"]["mag"],
-			"mdef": c["stats"]["mdef"],
-			"spd": c["stats"]["spd"],
-			"skills": c["skills"].duplicate(),
-		})
+func _get_modifier(attribute_value: int) -> int:
+	if attribute_value >= 18:
+		return +4
+	elif attribute_value >= 16:
+		return +3
+	elif attribute_value >= 14:
+		return +2
+	elif attribute_value >= 12:
+		return +1
+	elif attribute_value >= 10:
+		return 0
+	elif attribute_value >= 8:
+		return -1
+	else:
+		return -2
 
-func _init_inventory() -> void:
-	inventory.append({ "id": "potion", "name": "Pocion", "quantity": 3 })
+func _calculate_stats(char_data: Dictionary) -> Dictionary:
+	var attrs = char_data.get("attributes", {})
+	var hit_die = char_data.get("hit_die", 8)
+	var clase = char_data.get("class", "")
+	
+	var str_mod = _get_modifier(attrs.get("fuerza", 10))
+	var dex_mod = _get_modifier(attrs.get("agilidad", 10))
+	var con_mod = _get_modifier(attrs.get("constitucion", 10))
+	var wis_mod = _get_modifier(attrs.get("sabiduria", 10))
+	var int_mod = _get_modifier(attrs.get("inteligencia", 10))
+	var cha_mod = _get_modifier(attrs.get("carisma", 10))
+	
+	var con_bonus = con_mod * LEVEL
+	var max_hp = hit_die + con_bonus
+	if max_hp < 1:
+		max_hp = 1
+	
+	var ca = 10 + dex_mod
+	
+	if clase == "Barbaro":
+		ca += 2
+	elif clase == "Clerigo":
+		ca += 2
+	elif clase == "Gunslinger":
+		ca += 2
+	
+	return {
+		"class": clase,
+		"race": char_data.get("race", ""),
+		"hit_die": hit_die,
+		"attributes": attrs,
+		"str_mod": str_mod,
+		"dex_mod": dex_mod,
+		"con_mod": con_mod,
+		"wis_mod": wis_mod,
+		"int_mod": int_mod,
+		"cha_mod": cha_mod,
+		"hp": max_hp,
+		"max_hp": max_hp,
+		"ca": ca,
+		"atk": 0,
+		"def": 0,
+		"mag": 0,
+		"mdef": 0,
+		"spd": 10 + dex_mod,
+	}
+
+func create_party_member(char_data: Dictionary) -> Dictionary:
+	var stats = _calculate_stats(char_data)
+	return {
+		"id": char_data["id"],
+		"name": char_data["name"],
+		"class": stats["class"],
+		"race": stats["race"],
+		"level": LEVEL,
+		"hit_die": stats["hit_die"],
+		"attributes": stats["attributes"],
+		"str_mod": stats["str_mod"],
+		"dex_mod": stats["dex_mod"],
+		"con_mod": stats["con_mod"],
+		"wis_mod": stats["wis_mod"],
+		"int_mod": stats["int_mod"],
+		"cha_mod": stats["cha_mod"],
+		"hp": stats["hp"],
+		"max_hp": stats["max_hp"],
+		"ca": stats["ca"],
+		"atk": stats["atk"],
+		"def": stats["def"],
+		"mag": stats["mag"],
+		"mdef": stats["mdef"],
+		"spd": stats["spd"],
+		"skills": char_data.get("skills", []).duplicate(),
+	}
 
 # --- Flag helpers ---
 func set_flag(flag_name: String, value: bool = true) -> void:
@@ -125,7 +195,6 @@ func restore_party_from_combat(party_state: Array) -> void:
 		var m = get_party_member(ps["id"])
 		if m.size() > 0:
 			m["hp"] = ps["hp"]
-			m["mp"] = ps["mp"]
 
 # --- Full reset (used on defeat to restart cleanly) ---
 func reset() -> void:

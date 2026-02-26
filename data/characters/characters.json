@@ -2,99 +2,113 @@
 	"barbara": {
 		"id": "barbara",
 		"name": "Barbara",
-		"stats": {
-			"hp": 110,
-			"mp": 35,
-			"atk": 14,
-			"def": 12,
-			"mag": 14,
-			"mdef": 12,
-			"spd": 11
+		"race": "Goliat",
+		"class": "Barbaro",
+		"hit_die": 12,
+		"attributes": {
+			"fuerza": 14,
+			"agilidad": 8,
+			"constitucion": 14,
+			"sabiduria": 10,
+			"inteligencia": 12,
+			"carisma": 8
 		},
-		"skills": ["power_strike", "heal"]
+		"skills": []
 	},
 	"huguito": {
 		"id": "huguito",
 		"name": "Huguito",
-		"stats": {
-			"hp": 120,
-			"mp": 20,
-			"atk": 18,
-			"def": 14,
-			"mag": 6,
-			"mdef": 8,
-			"spd": 10
+		"race": "Owlin",
+		"class": "Monje",
+		"hit_die": 8,
+		"attributes": {
+			"fuerza": 12,
+			"agilidad": 14,
+			"constitucion": 10,
+			"sabiduria": 14,
+			"inteligencia": 8,
+			"carisma": 12
 		},
-		"skills": ["power_strike"]
+		"skills": []
 	},
 	"rosa": {
 		"id": "rosa",
 		"name": "Rosa",
-		"stats": {
-			"hp": 85,
-			"mp": 45,
-			"atk": 8,
-			"def": 8,
-			"mag": 18,
-			"mdef": 16,
-			"spd": 13
+		"race": "Tiefling",
+		"class": "Gunslinger",
+		"hit_die": 8,
+		"attributes": {
+			"fuerza": 10,
+			"agilidad": 14,
+			"constitucion": 8,
+			"sabiduria": 12,
+			"inteligencia": 14,
+			"carisma": 12
 		},
-		"skills": ["fireball", "heal"]
+		"skills": []
 	},
 	"azafran": {
 		"id": "azafran",
 		"name": "Azafran",
-		"stats": {
-			"hp": 95,
-			"mp": 30,
-			"atk": 15,
-			"def": 11,
-			"mag": 10,
-			"mdef": 10,
-			"spd": 16
+		"race": "Humano",
+		"class": "Warlock",
+		"hit_die": 8,
+		"attributes": {
+			"fuerza": 12,
+			"agilidad": 10,
+			"constitucion": 8,
+			"sabiduria": 14,
+			"inteligencia": 14,
+			"carisma": 12
 		},
-		"skills": ["poison_blade"]
+		"skills": []
 	},
 	"lulu": {
 		"id": "lulu",
 		"name": "Lulu",
-		"stats": {
-			"hp": 75,
-			"mp": 55,
-			"atk": 6,
-			"def": 7,
-			"mag": 20,
-			"mdef": 14,
-			"spd": 14
+		"race": "Catfolk",
+		"class": "Monje",
+		"hit_die": 8,
+		"attributes": {
+			"fuerza": 10,
+			"agilidad": 14,
+			"constitucion": 8,
+			"sabiduria": 12,
+			"inteligencia": 12,
+			"carisma": 14
 		},
-		"skills": ["thunder"]
+		"skills": []
 	},
 	"daragat": {
 		"id": "daragat",
 		"name": "Daragat",
-		"stats": {
-			"hp": 130,
-			"mp": 15,
-			"atk": 16,
-			"def": 16,
-			"mag": 4,
-			"mdef": 6,
-			"spd": 8
+		"race": "Grung",
+		"class": "Clerigo",
+		"hit_die": 8,
+		"attributes": {
+			"fuerza": 12,
+			"agilidad": 8,
+			"constitucion": 14,
+			"sabiduria": 14,
+			"inteligencia": 10,
+			"carisma": 12
 		},
-		"skills": ["power_strike", "defend"]
+		"skills": []
 	},
 	"solana": {
 		"id": "solana",
 		"name": "Solana",
-		"stats": {
-			"hp": 80,
-			"mp": 40,
-			"atk": 12,
-			"def": 9,
-			"mag": 12,
-			"mdef": 12,
-			"spd": 17
+		"race": "Vistani",
+		"class": "Hechicera",
+		"hit_die": 6,
+		"attributes": {
+			"fuerza": 8,
+			"agilidad": 12,
+			"constitucion": 10,
+			"sabiduria": 12,
+			"inteligencia": 10,
+			"carisma": 14
 		},
-		"skills": ["heal", "thunder"]
+		"skills": []
 	}
 }

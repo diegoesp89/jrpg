@@ -25,6 +25,22 @@ func _load_characters() -> void:
 	for c in chars:
 		_available_characters.append(c)
 
+func _get_modifier(attribute_value: int) -> int:
+	if attribute_value >= 18:
+		return +4
+	elif attribute_value >= 16:
+		return +3
+	elif attribute_value >= 14:
+		return +2
+	elif attribute_value >= 12:
+		return +1
+	elif attribute_value >= 10:
+		return 0
+	elif attribute_value >= 8:
+		return -1
+	else:
+		return -2
+
 func _build_ui() -> void:
 	_root = Control.new()
 	_root.set_anchors_preset(Control.PRESET_FULL_RECT)
@@ -114,7 +130,7 @@ func _create_character_card(index: int) -> PanelContainer:
 	var char = _available_characters[index]
 	
 	var panel = PanelContainer.new()
-	panel.custom_minimum_size = Vector2(100, 110)
+	panel.custom_minimum_size = Vector2(80, 160)
 	panel.mouse_filter = Control.MOUSE_FILTER_STOP
 	
 	var style = StyleBoxFlat.new()
@@ -137,15 +153,45 @@ func _create_character_card(index: int) -> PanelContainer:
 	name_label.add_theme_color_override("font_color", Color(0.9, 0.85, 0.5))
 	vbox.add_child(name_label)
 	
+	var class_label = Label.new()
+	class_label.text = char["class"]
+	class_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	class_label.add_theme_font_size_override("font_size", 12)
+	class_label.add_theme_color_override("font_color", Color(0.5, 0.7, 0.9))
+	vbox.add_child(class_label)
+	
 	var stats_container = VBoxContainer.new()
 	stats_container.add_theme_constant_override("separation", 0)
 	vbox.add_child(stats_container)
 	
+	var attrs = char.get("attributes", {})
+	var str_val = attrs.get("fuerza", 10)
+	var dex_val = attrs.get("agilidad", 10)
+	var con_val = attrs.get("constitucion", 10)
+	var wis_val = attrs.get("sabiduria", 10)
+	var int_val = attrs.get("inteligencia", 10)
+	var cha_val = attrs.get("carisma", 10)
+	
+	var hit_die = char.get("hit_die", 8)
+	var clase = char.get("class", "")
+	var dex_mod = _get_modifier(dex_val)
+	var con_mod = _get_modifier(con_val)
+	var hp = hit_die + con_mod
+	if hp < 1:
+		hp = 1
+	var ca = 10 + dex_mod
+	if clase == "Barbaro" or clase == "Clerigo" or clase == "Gunslinger":
+		ca += 2
+	
 	var stats = [
-		["HP", char["stats"]["hp"]],
-		["MP", char["stats"]["mp"]],
-		["ATQ", char["stats"]["atk"]],
-		["DEF", char["stats"]["def"]],
+		["HP", hp],
+		["CA", ca],
+		["FUE", str_val],
+		["AGI", dex_val],
+		["CON", con_val],
+		["SAB", wis_val],
+		["INT", int_val],
+		["CAR", cha_val],
 	]
 	
 	for stat in stats:
@@ -263,19 +309,7 @@ func _on_start_pressed() -> void:
 	GameState.party.clear()
 	for i in _selected_indices:
 		var c = _available_characters[i]
-		GameState.party.append({
-			"id": c["id"],
-			"name": c["name"],
-			"hp": c["stats"]["hp"],
-			"max_hp": c["stats"]["hp"],
-			"mp": c["stats"]["mp"],
-			"max_mp": c["stats"]["mp"],
-			"atk": c["stats"]["atk"],
-			"def": c["stats"]["def"],
-			"mag": c["stats"]["mag"],
-			"mdef": c["stats"]["mdef"],
-			"spd": c["stats"]["spd"],
-			"skills": c["skills"].duplicate() if "skills" in c else [],
-		})
+		var member = GameState.create_party_member(c)
+		GameState.party.append(member)
 	
 	SceneFlow.change_scene("res://scenes/exploration/Dungeon.tscn")
