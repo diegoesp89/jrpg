@@ -1,69 +1,166 @@
 class_name Combatant
 extends Node
-## Combatant — Represents a fighter in battle (party member or enemy).
-## This is a utility class with static functions for combat calculations.
+## Combatant — Utility class for combat calculations with D&D-style system.
 
-# --- Damage formulas ---
+const LEVEL: int = 1
 
-static func calculate_physical_damage(attacker: Dictionary, defender: Dictionary, skill_power: int = 0) -> int:
-	var atk = attacker.get("atk", 1)
-	var def_val = defender.get("def", 0)
-	var base_damage: int
-
-	if skill_power > 0:
-		base_damage = atk + skill_power - def_val / 2
+static func _get_modifier(attribute_value: int) -> int:
+	if attribute_value >= 18:
+		return +4
+	elif attribute_value >= 16:
+		return +3
+	elif attribute_value >= 14:
+		return +2
+	elif attribute_value >= 12:
+		return +1
+	elif attribute_value >= 10:
+		return 0
+	elif attribute_value >= 8:
+		return -1
 	else:
-		base_damage = atk - def_val / 2
+		return -2
 
-	# Check if defender is defending
-	if defender.get("defending", false):
-		base_damage = base_damage / 2
+static func _roll_dice(dice_str: String) -> int:
+	var total = 0
+	var parts = dice_str.split("+")
+	for part in parts:
+		part = part.strip_edges()
+		if part.find("d") != -1:
+			var dice_parts = part.split("d")
+			var num_dice = 1
+			if dice_parts[0].is_valid_int():
+				num_dice = dice_parts[0].to_int()
+			var die_size = dice_parts[1].to_int()
+			for i in range(num_dice):
+				total += randi_range(1, die_size)
+		elif part.is_valid_int():
+			total += part.to_int()
+	return total
 
-	# Random variance (+/- 10%)
-	var variance = randf_range(0.9, 1.1)
-	base_damage = int(base_damage * variance)
+static func get_attack_modifier(attacker: Dictionary) -> int:
+	var clase = attacker.get("class", "")
+	var attrs = attacker.get("attributes", {})
+	var str_val = attrs.get("fuerza", 10)
+	var dex_val = attrs.get("agilidad", 10)
+	
+	var base = LEVEL
+	
+	if clase == "Monje" or clase == "Gunslinger":
+		return base + _get_modifier(dex_val)
+	else:
+		return base + _get_modifier(str_val)
 
-	return maxi(1, base_damage)
+static func get_damage_dice(attacker: Dictionary) -> String:
+	var clase = attacker.get("class", "")
+	
+	match clase:
+		"Barbaro":
+			return "1d12"
+		"Monje":
+			return "1d8"
+		"Gunslinger":
+			return "1d8"
+		"Warlock":
+			return "1d10"
+		"Clerigo":
+			return "1d8"
+		"Hechicera":
+			return "1d6"
+		_:
+			return "1d8"
 
-static func calculate_magical_damage(attacker: Dictionary, defender: Dictionary, skill_power: int) -> int:
-	var mag = attacker.get("mag", 1)
-	var mdef = defender.get("mdef", 0)
-	var base_damage = skill_power + mag - mdef / 2
+static func attack_roll(attacker: Dictionary, defender: Dictionary) -> Dictionary:
+	var attack_bonus = get_attack_modifier(attacker)
+	var roll = randi_range(1, 20)
+	var total_attack = roll + attack_bonus
+	
+	var defender_ca = defender.get("ca", 10)
+	var is_crit = roll == 20
+	var is_miss = roll == 1
+	
+	var result = {
+		"roll": roll,
+		"bonus": attack_bonus,
+		"total": total_attack,
+		"hit": false,
+		"crit": false,
+		"damage": 0,
+		"message": ""
+	}
+	
+	if is_miss:
+		result.message = "FALLO CRITICO!"
+	elif is_crit or total_attack >= defender_ca:
+		result.hit = true
+		result.crit = is_crit
+		
+		var damage_dice = get_damage_dice(attacker)
+		var attrs = attacker.get("attributes", {})
+		var str_val = attrs.get("fuerza", 10)
+		var dex_val = attrs.get("agilidad", 10)
+		var clase = attacker.get("class", "")
+		
+		var stat_mod = _get_modifier(str_val)
+		if clase == "Monje" or clase == "Gunslinger":
+			stat_mod = _get_modifier(dex_val)
+		
+		var base_damage = _roll_dice(damage_dice)
+		result.damage = base_damage + stat_mod
+		
+		if is_crit:
+			var crit_damage = _roll_dice(damage_dice) + stat_mod
+			result.damage += crit_damage
+			result.message = "GOLPE CRITICO!"
+		else:
+			result.message = "Golpe!"
+	else:
+		result.message = "Fallo (AC: %d)" % defender_ca
+	
+	return result
 
-	if defender.get("defending", false):
-		base_damage = base_damage / 2
-
-	var variance = randf_range(0.9, 1.1)
-	base_damage = int(base_damage * variance)
-
-	return maxi(1, base_damage)
-
-static func calculate_heal(caster: Dictionary, skill_power: int) -> int:
-	var mag = caster.get("mag", 1)
-	var heal = skill_power + mag / 2
-	var variance = randf_range(0.9, 1.1)
-	return maxi(1, int(heal * variance))
-
-static func calculate_flee_chance(party: Array, enemies: Array) -> float:
-	var party_spd = 0.0
-	var party_count = 0
-	for p in party:
-		if p.get("hp", 0) > 0:
-			party_spd += p.get("spd", 1)
-			party_count += 1
-
-	var enemy_spd = 0.0
-	var enemy_count = 0
-	for e in enemies:
-		if e.get("hp", 0) > 0:
-			enemy_spd += e.get("spd", 1)
-			enemy_count += 1
-
-	var avg_party = party_spd / maxf(1, party_count)
-	var avg_enemy = enemy_spd / maxf(1, enemy_count)
-
-	var chance = 0.5 + (avg_party - avg_enemy) * 0.05
-	return clampf(chance, 0.1, 0.9)
+static func enemy_attack(enemy: Dictionary, defender: Dictionary) -> Dictionary:
+	var enemy_attack_bonus = enemy.get("attack_bonus", 0)
+	var roll = randi_range(1, 20)
+	var total_attack = roll + enemy_attack_bonus
+	
+	var defender_ca = defender.get("ca", 10)
+	var is_crit = roll == 20
+	var is_miss = roll == 1
+	
+	var result = {
+		"roll": roll,
+		"bonus": enemy_attack_bonus,
+		"total": total_attack,
+		"hit": false,
+		"crit": false,
+		"damage": 0,
+		"message": ""
+	}
+	
+	if is_miss:
+		result.message = "El enemigo falla!"
+	elif is_crit or total_attack >= defender_ca:
+		result.hit = true
+		result.crit = is_crit
+		
+		var damage_dice = enemy.get("damage", "1d6")
+		var attrs = enemy.get("attributes", {})
+		var str_val = attrs.get("fuerza", 10)
+		var stat_mod = _get_modifier(str_val)
+		
+		var base_damage = _roll_dice(damage_dice)
+		result.damage = base_damage + stat_mod
+		
+		if is_crit:
+			var crit_damage = _roll_dice(damage_dice) + stat_mod
+			result.damage += crit_damage
+			result.message = "Golpe critico del enemigo!"
+		else:
+			result.message = "El enemigo golpea!"
+	else:
+		result.message = "El enemigo falla (AC: %d)" % defender_ca
+	
+	return result
 
 static func apply_damage(target: Dictionary, damage: int) -> void:
 	target["hp"] = maxi(0, target.get("hp", 0) - damage)

@@ -1,6 +1,6 @@
 class_name TurnSystem
 extends Node
-## TurnSystem — Manages turn order based on speed + random factor.
+## TurnSystem — Manages turn order based on dexterity + random factor.
 
 signal turn_order_ready(order: Array)
 signal turn_started(combatant: Dictionary)
@@ -10,6 +10,30 @@ var _combatants: Array[Dictionary] = []
 var _turn_queue: Array[Dictionary] = []
 var _current_turn_index: int = 0
 var _round_number: int = 0
+
+const LEVEL: int = 1
+
+func _get_modifier(attribute_value: int) -> int:
+	if attribute_value >= 18:
+		return +4
+	elif attribute_value >= 16:
+		return +3
+	elif attribute_value >= 14:
+		return +2
+	elif attribute_value >= 12:
+		return +1
+	elif attribute_value >= 10:
+		return 0
+	elif attribute_value >= 8:
+		return -1
+	else:
+		return -2
+
+func _get_initiative(c: Dictionary) -> int:
+	var attrs = c.get("attributes", {})
+	var dex = attrs.get("agilidad", 10)
+	var dex_mod = _get_modifier(dex)
+	return LEVEL + dex_mod + randi_range(0, 5)
 
 func setup(combatants: Array[Dictionary]) -> void:
 	_combatants = combatants
@@ -26,12 +50,11 @@ func _calculate_turn_order() -> void:
 	_turn_queue.clear()
 	for c in _combatants:
 		if c.get("hp", 0) > 0:
-			var initiative = c.get("spd", 1) + randi_range(0, 5)
+			var initiative = _get_initiative(c)
 			_turn_queue.append({
 				"combatant": c,
 				"initiative": initiative
 			})
-	# Sort descending by initiative
 	_turn_queue.sort_custom(func(a, b): return a["initiative"] > b["initiative"])
 
 func get_current_combatant() -> Dictionary:

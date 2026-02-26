@@ -2,31 +2,59 @@
 	"skeleton": {
 		"id": "skeleton",
 		"name": "Esqueleto",
-		"stats": {
-			"hp": 40,
-			"mp": 0,
-			"atk": 10,
-			"def": 6,
-			"mag": 2,
-			"mdef": 4,
-			"spd": 8
+		"attributes": {
+			"fuerza": 10,
+			"agilidad": 10,
+			"constitucion": 10,
+			"sabiduria": 8,
+			"inteligencia": 8,
+			"carisma": 8
 		},
+		"hit_die": 8,
+		"hp": 13,
+		"ca": 13,
+		"attack_bonus": 2,
+		"damage": "1d6",
 		"skills": [],
 		"xp_reward": 15,
 		"gold_reward": 10
 	},
+	"goblin": {
+		"id": "goblin",
+		"name": "Goblin",
+		"attributes": {
+			"fuerza": 8,
+			"agilidad": 14,
+			"constitucion": 10,
+			"sabiduria": 8,
+			"inteligencia": 10,
+			"carisma": 8
+		},
+		"hit_die": 6,
+		"hp": 7,
+		"ca": 15,
+		"attack_bonus": 4,
+		"damage": "1d6",
+		"skills": [],
+		"xp_reward": 10,
+		"gold_reward": 5
+	},
 	"golem": {
 		"id": "golem",
 		"name": "Golem de Piedra",
-		"stats": {
-			"hp": 80,
-			"mp": 0,
-			"atk": 14,
-			"def": 18,
-			"mag": 2,
-			"mdef": 10,
-			"spd": 4
+		"attributes": {
+			"fuerza": 18,
+			"agilidad": 6,
+			"constitucion": 18,
+			"sabiduria": 6,
+			"inteligencia": 6,
+			"carisma": 4
 		},
+		"hit_die": 10,
+		"hp": 33,
+		"ca": 17,
+		"attack_bonus": 7,
+		"damage": "2d8+4",
 		"skills": ["smash"],
 		"xp_reward": 30,
 		"gold_reward": 20
@@ -34,15 +62,19 @@
 	"flame_guardian": {
 		"id": "flame_guardian",
 		"name": "Guardian de Llamas",
-		"stats": {
-			"hp": 180,
-			"mp": 40,
-			"atk": 16,
-			"def": 14,
-			"mag": 18,
-			"mdef": 16,
-			"spd": 10
+		"attributes": {
+			"fuerza": 16,
+			"agilidad": 12,
+			"constitucion": 16,
+			"sabiduria": 10,
+			"inteligencia": 10,
+			"carisma": 10
 		},
+		"hit_die": 10,
+		"hp": 60,
+		"ca": 15,
+		"attack_bonus": 6,
+		"damage": "2d6+3",
 		"skills": ["fire_breath", "smash"],
 		"xp_reward": 80,
 		"gold_reward": 50

@@ -63,15 +63,13 @@ func _setup_enemies() -> void:
 			"id": enemy_data["id"] + "_" + str(i),
 			"base_id": enemy_data["id"],
 			"name": enemy_data["name"],
-			"hp": enemy_data["stats"]["hp"],
-			"max_hp": enemy_data["stats"]["hp"],
-			"mp": enemy_data["stats"].get("mp", 0),
-			"max_mp": enemy_data["stats"].get("mp", 0),
-			"atk": enemy_data["stats"]["atk"],
-			"def": enemy_data["stats"]["def"],
-			"mag": enemy_data["stats"].get("mag", 0),
-			"mdef": enemy_data["stats"].get("mdef", 0),
-			"spd": enemy_data["stats"]["spd"],
+			"hp": enemy_data.get("hp", 10),
+			"max_hp": enemy_data.get("hp", 10),
+			"ca": enemy_data.get("ca", 10),
+			"attributes": enemy_data.get("attributes", {}),
+			"hit_die": enemy_data.get("hit_die", 8),
+			"attack_bonus": enemy_data.get("attack_bonus", 0),
+			"damage": enemy_data.get("damage", "1d6"),
 			"skills": enemy_data.get("skills", []).duplicate(),
 			"is_player": false,
 			"defending": false,
@@ -123,10 +121,15 @@ func _execute_enemy_turn(enemy: Dictionary) -> void:
 			if target.is_empty():
 				_next_turn()
 				return
-			var dmg = Combatant.calculate_physical_damage(enemy, target)
-			Combatant.apply_damage(target, dmg)
-			damage_dealt.emit(target, dmg, false)
-			action_performed.emit("%s ataca a %s por %d de dano!" % [enemy["name"], target["name"], dmg])
+			
+			var result = Combatant.enemy_attack(enemy, target)
+			
+			if result.hit:
+				Combatant.apply_damage(target, result.damage)
+				damage_dealt.emit(target, result.damage, false)
+				action_performed.emit("%s %s - %d dano!" % [enemy["name"], result.message, result.damage])
+			else:
+				action_performed.emit("%s %s" % [enemy["name"], result.message])
 		"skill":
 			var skill = action.get("skill", {})
 			var skill_name = skill.get("name", "???")
@@ -193,10 +196,15 @@ func player_action(action: Dictionary) -> void:
 			if target.is_empty():
 				_waiting_for_player = true
 				return
-			var dmg = Combatant.calculate_physical_damage(current, target)
-			Combatant.apply_damage(target, dmg)
-			damage_dealt.emit(target, dmg, false)
-			action_performed.emit("%s ataca a %s por %d de dano!" % [current["name"], target["name"], dmg])
+			
+			var result = Combatant.attack_roll(current, target)
+			
+			if result.hit:
+				Combatant.apply_damage(target, result.damage)
+				damage_dealt.emit(target, result.damage, false)
+				action_performed.emit("%s: %s %s por %d dano!" % [current["name"], result.message, target["name"], result.damage])
+			else:
+				action_performed.emit("%s: %s" % [current["name"], result.message])
 
 		"skill":
 			var skill = action.get("skill", {})
