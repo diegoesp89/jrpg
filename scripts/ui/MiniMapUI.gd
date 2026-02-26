@@ -1,5 +1,6 @@
 extends Control
-## MiniMapUI — Draws the minimap with fog-of-war and player marker.
+class_name MiniMapUI
+## MiniMapUI — Draws the minimap
 
 const CELL_SIZE: int = 5
 const MAP_SIZE: int = 130  # pixels

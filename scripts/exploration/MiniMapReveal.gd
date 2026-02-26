@@ -1,5 +1,6 @@
 extends Node
-## MiniMapReveal — Converts player world position to grid cell and reveals nearby cells.
+class_name MiniMapReveal
+## MiniMapReveal — Converts player world position
 
 const TILE_SIZE: float = 2.0
 const REVEAL_RADIUS: int = 3

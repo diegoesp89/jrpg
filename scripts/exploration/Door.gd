@@ -1,5 +1,6 @@
 extends StaticBody3D
-## Door — Opens/closes on interaction, toggling collision.
+class_name Door
+## Door — Opens/closes on interaction
 
 var is_open: bool = false
 var door_id: String = "door_sala3"

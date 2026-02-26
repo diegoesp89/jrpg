@@ -1,5 +1,6 @@
 extends Area3D
-## CombatTrigger — Initiates a battle encounter when player enters the area.
+class_name CombatTrigger
+## CombatTrigger — Initiates a battle encounter
 
 @export var encounter_id: String = ""
 var _triggered: bool = false

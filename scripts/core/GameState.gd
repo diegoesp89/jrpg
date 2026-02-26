@@ -2,33 +2,18 @@ extends Node
 ## GameState — Autoload singleton
 ## Manages party, inventory, dungeon flags, minimap state, combat return info.
 
-# --- Party ---
 var party: Array[Dictionary] = []
-# Each entry: { id, name, hp, max_hp, mp, max_mp, atk, def, mag, mdef, spd, skills }
-
-# --- Inventory ---
 var inventory: Array[Dictionary] = []
-# Each entry: { id, name, quantity }
-
-# --- Gold / XP ---
 var gold: int = 0
 var total_xp: int = 0
-
-# --- Dungeon flags ---
 var flags: Dictionary = {}
-# e.g. "intro_done": true, "chest_sala3_opened": true
-
-# --- Minimap revealed cells ---
 var revealed_cells: Dictionary = {}
-# Key: "x,y" string -> true
-
-# --- Combat return ---
 var return_scene_path: String = ""
 var return_position: Vector3 = Vector3.ZERO
 var current_encounter_id: String = ""
 
-# --- Initialization ---
 func _ready() -> void:
+	process_mode = Node.PROCESS_MODE_ALWAYS
 	_init_party()
 	_init_inventory()
 
@@ -153,5 +138,4 @@ func reset() -> void:
 	return_scene_path = ""
 	return_position = Vector3.ZERO
 	current_encounter_id = ""
-	_init_party()
 	_init_inventory()

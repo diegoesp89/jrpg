@@ -1,6 +1,6 @@
 extends CharacterBody3D
-## PlayerController — Handles player movement, interaction detection, and prompt display.
-## Uses a spritesheet with walk animations (4 directions x 3 frames).
+class_name PlayerController
+## PlayerController — Handles player movement
 
 const MOVE_SPEED: float = 5.0
 const INTERACTION_RANGE: float = 2.0

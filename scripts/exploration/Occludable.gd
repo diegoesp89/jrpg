@@ -1,8 +1,6 @@
 extends Node
-## Occludable — Attached to walls/props that should fade when blocking camera-to-player line.
-## Works in conjunction with OcclusionController.
-## Supports walls with multiple face meshes (WallFace_0, WallFace_1, etc.) and single Sprite3D.
-##
+class_name Occludable
+## Occludable — Attached to walls
 ## Walls start OPAQUE (no transparency) for correct depth testing.
 ## For ShaderMaterial walls: swaps shader to transparent variant and sets alpha uniform.
 ## For StandardMaterial3D walls: toggles transparency mode (legacy).

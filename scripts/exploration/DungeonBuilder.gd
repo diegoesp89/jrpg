@@ -1,6 +1,6 @@
 extends Node3D
-## DungeonBuilder — Generates the dungeon layout procedurally from a tile map definition.
-## This approach is more robust than hand-crafting .tscn nodes for walls/floor.
+class_name DungeonBuilder
+## DungeonBuilder — Generates the dungeon layout
 
 const TILE_SIZE: float = 2.0
 

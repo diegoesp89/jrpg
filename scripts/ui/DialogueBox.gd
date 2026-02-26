@@ -1,5 +1,6 @@
 extends PanelContainer
-## DialogueBox — UI for showing dialogue text and choices.
+class_name DialogueBox
+## DialogueBox — UI for showing dialogue
 
 var _speaker_label: Label = null
 var _text_label: RichTextLabel = null

@@ -1,7 +1,21 @@
 {
-	"warrior": {
-		"id": "warrior",
-		"name": "Kael",
+	"barbara": {
+		"id": "barbara",
+		"name": "Barbara",
+		"stats": {
+			"hp": 110,
+			"mp": 35,
+			"atk": 14,
+			"def": 12,
+			"mag": 14,
+			"mdef": 12,
+			"spd": 11
+		},
+		"skills": ["power_strike", "heal"]
+	},
+	"huguito": {
+		"id": "huguito",
+		"name": "Huguito",
 		"stats": {
 			"hp": 120,
 			"mp": 20,
@@ -13,32 +27,74 @@
 		},
 		"skills": ["power_strike"]
 	},
-	"mage": {
-		"id": "mage",
-		"name": "Lyra",
+	"rosa": {
+		"id": "rosa",
+		"name": "Rosa",
 		"stats": {
-			"hp": 70,
-			"mp": 60,
-			"atk": 6,
-			"def": 7,
-			"mag": 20,
-			"mdef": 15,
-			"spd": 12
+			"hp": 85,
+			"mp": 45,
+			"atk": 8,
+			"def": 8,
+			"mag": 18,
+			"mdef": 16,
+			"spd": 13
 		},
 		"skills": ["fireball", "heal"]
 	},
-	"rogue": {
-		"id": "rogue",
-		"name": "Voss",
+	"azafran": {
+		"id": "azafran",
+		"name": "Azafran",
 		"stats": {
-			"hp": 90,
+			"hp": 95,
 			"mp": 30,
 			"atk": 15,
-			"def": 10,
-			"mag": 8,
+			"def": 11,
+			"mag": 10,
 			"mdef": 10,
-			"spd": 18
+			"spd": 16
 		},
 		"skills": ["poison_blade"]
+	},
+	"lulu": {
+		"id": "lulu",
+		"name": "Lulu",
+		"stats": {
+			"hp": 75,
+			"mp": 55,
+			"atk": 6,
+			"def": 7,
+			"mag": 20,
+			"mdef": 14,
+			"spd": 14
+		},
+		"skills": ["thunder"]
+	},
+	"daragat": {
+		"id": "daragat",
+		"name": "Daragat",
+		"stats": {
+			"hp": 130,
+			"mp": 15,
+			"atk": 16,
+			"def": 16,
+			"mag": 4,
+			"mdef": 6,
+			"spd": 8
+		},
+		"skills": ["power_strike", "defend"]
+	},
+	"solana": {
+		"id": "solana",
+		"name": "Solana",
+		"stats": {
+			"hp": 80,
+			"mp": 40,
+			"atk": 12,
+			"def": 9,
+			"mag": 12,
+			"mdef": 12,
+			"spd": 17
+		},
+		"skills": ["heal", "thunder"]
 	}
 }

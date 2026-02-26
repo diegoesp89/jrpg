@@ -1,8 +1,6 @@
 extends Node3D
-## CameraFollow — Smooth isometric camera that follows the player.
-## Fixed rotation (no tilt). Delayed engage on movement start, smooth settle on stop.
-## 2 discrete zoom levels cycled with Q/E:
-##   Level 1 (default): Perspective — wide FOV, fog edge matches camera frustum edge.
+class_name CameraFollow
+## CameraFollow — Smooth isometric camera
 ##   Level 2: Quasi-orthographic — very low FOV + far distance, reveals much more dungeon.
 ## Both levels stay in PROJECTION_PERSPECTIVE (low FOV approximates ortho perfectly).
 ## FOV and distance are interpolated independently to avoid nonlinear spikes.

@@ -1,6 +1,6 @@
 extends CanvasLayer
-## DebugBattleHUD — Toggle with F1 during combat.
-## Allows setting HP/MP, dealing damage, healing, killing, reviving combatants.
+class_name DebugBattleHUD
+## DebugBattleHUD — Toggle with F1 during combat
 
 var _battle_controller = null
 var _battle_ui = null

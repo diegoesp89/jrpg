@@ -19,6 +19,7 @@ config/features=PackedStringArray("4.6", "Forward Plus")
 DataLoader="*res://scripts/data/DataLoader.gd"
 GameState="*res://scripts/core/GameState.gd"
 SceneFlow="*res://scripts/core/SceneFlow.gd"
+EventBus="*res://scripts/core/EventBus.gd"
 
 [display]
 

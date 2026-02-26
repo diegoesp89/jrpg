@@ -1,5 +1,6 @@
 extends Node3D
-## OcclusionController — Raycasts from camera to player, fades occluding walls.
+class_name OcclusionController
+## OcclusionController — Raycasts from camera to player
 
 var _camera: Camera3D = null
 var _player: Node3D = null

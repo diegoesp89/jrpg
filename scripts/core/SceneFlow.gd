@@ -7,6 +7,7 @@ var _fade_layer: CanvasLayer
 var _is_transitioning: bool = false
 
 func _ready() -> void:
+	process_mode = Node.PROCESS_MODE_ALWAYS
 	_setup_fade_overlay()
 
 func _setup_fade_overlay() -> void:

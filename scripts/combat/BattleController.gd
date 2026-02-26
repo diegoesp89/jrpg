@@ -1,6 +1,6 @@
 extends Node
-## BattleController — Orchestrates the entire battle flow.
-## Loaded as part of Battle.tscn.
+class_name BattleController
+## BattleController — Orchestrates the entire battle flow
 
 signal battle_ended(result: String)  # "victory", "defeat", "fled"
 signal action_performed(log_text: String)

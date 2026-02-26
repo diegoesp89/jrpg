@@ -1,6 +1,6 @@
 extends Node
-## DialogueController — Manages dialogue flow, choices, and signals.
-## Add to "dialogue_controller" group.
+class_name DialogueController
+## DialogueController — Manages dialogue flow
 
 signal dialogue_finished(dialogue_id: String)
 

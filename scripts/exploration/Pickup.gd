@@ -1,5 +1,6 @@
 extends StaticBody3D
-## Pickup — Chest/item pickup. Adds item to inventory on interaction.
+class_name Pickup
+## Pickup — Chest/item pickup
 
 @export var item_id: String = "potion"
 @export var item_quantity: int = 1

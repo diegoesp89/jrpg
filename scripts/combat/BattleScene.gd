@@ -1,5 +1,6 @@
 extends Node
-## BattleScene — Root script for the battle scene. Wires up controller and UI.
+class_name BattleScene
+## BattleScene — Root script for the battle scene
 
 var _battle_controller = null
 var _battle_ui = null
@@ -47,7 +48,6 @@ func _setup_battle() -> void:
 func _on_battle_ended(result: String) -> void:
 	match result:
 		"victory":
-			# Mark encounter as completed so it won't re-trigger
 			var flag_id = "combat_" + GameState.current_encounter_id + "_done"
 			GameState.set_flag(flag_id)
 			await get_tree().create_timer(1.0).timeout
@@ -57,7 +57,5 @@ func _on_battle_ended(result: String) -> void:
 			SceneFlow.end_battle()
 		"defeat":
 			await get_tree().create_timer(1.5).timeout
-			# Reset all game state so party is alive and flags are cleared
 			GameState.reset()
-			# Restart from boot on defeat
-			SceneFlow.change_scene("res://scenes/boot/Boot.tscn")
+			SceneFlow.change_scene("res://scenes/boot/CharacterSelection.tscn")

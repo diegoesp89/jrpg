@@ -1,5 +1,6 @@
 extends StaticBody3D
-## NPCIntro — The introductory NPC with dialogue and branching choice.
+class_name NPCIntro
+## NPCIntro — The introductory NPC
 
 var dialogue_id: String = "npc_intro"
 

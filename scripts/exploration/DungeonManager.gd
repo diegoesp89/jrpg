@@ -1,6 +1,6 @@
 extends Node3D
-## DungeonManager — Top-level manager for the dungeon exploration scene.
-## Wires up player, camera, HUD, and dungeon builder.
+class_name DungeonManager
+## DungeonManager — Top-level manager
 
 @onready var _player: CharacterBody3D = $Player
 @onready var _camera_rig = $CameraRig

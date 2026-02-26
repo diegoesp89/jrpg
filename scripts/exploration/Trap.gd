@@ -1,5 +1,6 @@
 extends Area3D
-## Trap — Damages the party leader when stepped on.
+class_name Trap
+## Trap — Damages the party leader
 
 var _triggered: bool = false
 

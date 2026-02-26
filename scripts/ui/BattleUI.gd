@@ -1,5 +1,6 @@
 extends CanvasLayer
-## BattleUI — The complete battle UI with menus, stats, sprites, and action log.
+class_name BattleUI
+## BattleUI — The complete battle UI
 
 var _battle_controller = null
 

@@ -10,6 +10,7 @@ var _encounters: Dictionary = {}
 var _dialogues: Dictionary = {}
 
 func _ready() -> void:
+	process_mode = Node.PROCESS_MODE_ALWAYS
 	_load_all()
 
 func _load_all() -> void:
