@@ -37,6 +37,7 @@ var _entities: Dictionary = {}
 
 var _current_tool: Dictionary = TOOLS[0]
 var _drag_start_cell: Vector2i = Vector2i(-1, -1)
+var _editing_existing_zone: bool = false
 
 var _selected_kind: String = ""
 var _selected_list_key: String = ""
@@ -250,11 +251,40 @@ func _build_palette() -> void:
 	for tool in TOOLS:
 		var btn = Button.new()
 		btn.text = tool["label"]
+		btn.icon = _make_color_icon(_tool_color(tool))
+		btn.expand_icon = true
+		btn.add_theme_constant_override("icon_max_width", 18)
 		btn.toggle_mode = true
 		btn.button_pressed = (tool["id"] == _current_tool["id"])
 		btn.pressed.connect(_select_tool.bind(tool, btn))
 		_palette_container.add_child(btn)
 		_tool_buttons.append(btn)
+
+## The exact color this tool paints on the grid, so the palette doubles as a legend.
+func _tool_color(tool: Dictionary) -> Color:
+	if tool.has("tile"):
+		return MapEditorGrid.TILE_COLORS.get(tool["tile"], Color.WHITE)
+	match tool.get("id", ""):
+		"player_start":
+			return MapEditorGrid.PLAYER_START_COLOR
+		"zone":
+			return MapEditorGrid.ZONE_BORDER_COLOR
+		"story_trigger":
+			return MapEditorGrid.STORY_TRIGGER_COLOR
+		_:
+			return Color.WHITE
+
+func _make_color_icon(color: Color, size: int = 16) -> ImageTexture:
+	var img = Image.create(size, size, false, Image.FORMAT_RGBA8)
+	img.fill(color)
+	var border = Color(1, 1, 1, 0.6)
+	for x in range(size):
+		img.set_pixel(x, 0, border)
+		img.set_pixel(x, size - 1, border)
+	for y in range(size):
+		img.set_pixel(0, y, border)
+		img.set_pixel(size - 1, y, border)
+	return ImageTexture.create_from_image(img)
 
 func _select_tool(tool: Dictionary, btn: Button) -> void:
 	_current_tool = tool
@@ -288,12 +318,22 @@ func _on_grid_drag_started(row: int, col: int) -> void:
 			_set_player_start(row, col)
 		"story":
 			_place_or_select_entity({"id": "story_trigger", "list": "story_triggers"}, row, col)
+		"zone":
+			# Clicking inside an already-placed zone selects it for editing/deletion instead
+			# of always stamping a new one on top — otherwise there was no way to get back
+			# to an existing zone once you'd clicked past it.
+			var existing = _find_zone_at(row, col)
+			_editing_existing_zone = not existing.is_empty()
+			if _editing_existing_zone:
+				_open_property_panel("zone", "random_encounter_zones", existing)
 
 func _on_grid_drag_moved(row: int, col: int) -> void:
 	match _tool_category(_current_tool):
 		"tile":
 			_paint_tile(row, col)
 		"zone":
+			if _editing_existing_zone:
+				return
 			var min_c = mini(_drag_start_cell.x, col)
 			var max_c = maxi(_drag_start_cell.x, col)
 			var min_r = mini(_drag_start_cell.y, row)
@@ -303,9 +343,25 @@ func _on_grid_drag_moved(row: int, col: int) -> void:
 
 func _on_grid_drag_ended(row: int, col: int) -> void:
 	if _tool_category(_current_tool) == "zone":
-		_place_zone(_drag_start_cell, Vector2i(col, row))
+		if not _editing_existing_zone:
+			_place_zone(_drag_start_cell, Vector2i(col, row))
 		_grid.highlight_rect = Rect2i(-1, -1, 0, 0)
 		_grid.queue_redraw()
+
+## Returns the zone entry (if any) whose rectangle contains (row, col), for click-to-select.
+func _find_zone_at(row: int, col: int) -> Dictionary:
+	for zone in _entities.get("random_encounter_zones", []):
+		var zr = float(zone.get("row", 0))
+		var zc = float(zone.get("col", 0))
+		var w = float(zone.get("width", 1))
+		var h = float(zone.get("height", 1))
+		var min_c = zc - (w - 1.0) / 2.0
+		var max_c = zc + (w - 1.0) / 2.0
+		var min_r = zr - (h - 1.0) / 2.0
+		var max_r = zr + (h - 1.0) / 2.0
+		if col >= min_c - 0.01 and col <= max_c + 0.01 and row >= min_r - 0.01 and row <= max_r + 0.01:
+			return zone
+	return {}
 
 ## Middle-click-drag or right-click-drag pans the view (grab-and-drag: content follows
 ## the cursor, so the scroll offset moves opposite the mouse delta).

@@ -1,0 +1,457 @@
+[
+  {
+    "id": "WP1A_01",
+    "scene": "1.A",
+    "party": ["Barbara", "Huguito", "Rosa", "Azafran"],
+    "leader": "Rosa",
+    "mood": "happy",
+    "dialogue": [
+      "Rosa: ¡La Luna! Qué romántico que la entrada a la Montaña del Penacho Blanco se abra con algo tan bello.",
+      "Azafran: Menos mal que recordaste el patrón astral, Rosa. No quería gastar munición tan pronto.",
+      "Barbara: Noble respuesta para una criatura antigua. Aunque me hubiera gustado romper ese pedestal.",
+      "Huguito: ¡Huguito, el chiquito, prefiere las palabras a los golpes! ¡Entremos antes de que cambie de opinión!"
+    ]
+  },
+  {
+    "id": "WP1A_02",
+    "scene": "1.A",
+    "party": ["Barbara", "Huguito", "Rosa", "Lulu"],
+    "leader": "Lulu",
+    "mood": "curious",
+    "dialogue": [
+      "Lulu: La Luna brilla en el cielo y abre puertas en la roca, miau. ¿Habrá ratones lunares dentro?",
+      "Rosa: Si los hay, serán mágicos, pequeña. Mystra nos sonríe hoy.",
+      "Barbara: La Esfinge tuvo suerte. Mi furia estaba a un segundo de estallar si no nos dejaba pasar.",
+      "Huguito: ¡No asustes a la piedra, Barbara! ¡Huguito, el chiquito, celebra que seguimos enteros!"
+    ]
+  },
+  {
+    "id": "WP1A_03",
+    "scene": "1.A",
+    "party": ["Barbara", "Huguito", "Rosa", "Daragat"],
+    "leader": "Daragat",
+    "mood": "sarcastic",
+    "dialogue": [
+      "Daragat: 'La Luna'. Vaya, la Montaña del Penacho Blanco tiene contraseñas de nivel principiante.",
+      "Rosa: No seas cínico, niño. Fue un momento heroico. ¿Verdad, Adirem?",
+      "Huguito: ¡Cínico o no, funcionó! ¡Huguito, el chiquito, no tendrá que pelear contra una estatua!",
+      "Barbara: Hubiera sido una pelea corta. Pero avancemos, mi abuela no está en esta puerta."
+    ]
+  },
+  {
+    "id": "WP1A_04",
+    "scene": "1.A",
+    "party": ["Barbara", "Huguito", "Rosa", "Solana"],
+    "leader": "Solana",
+    "mood": "mysterious",
+    "dialogue": [
+      "Solana: La Luna rige los caminos ocultos de los Vistani. No es coincidencia que sea la clave aquí.",
+      "Rosa: Sabía que tu misterio nos serviría de algo, Solana. Casi tanto como mi puntería.",
+      "Barbara: Mientras el camino nos lleve al fondo de la montaña, aceptaré sus juegos de palabras.",
+      "Huguito: ¡Huguito, el chiquito, solo espera que dentro no necesitemos saber el nombre del sol!"
+    ]
+  },
+  {
+    "id": "WP1A_05",
+    "scene": "1.A",
+    "party": ["Barbara", "Huguito", "Azafran", "Lulu"],
+    "leader": "Azafran",
+    "mood": "focused",
+    "dialogue": [
+      "Azafran: Acertijo resuelto. La Montaña del Penacho Blanco permite el paso. Mantengan la formación.",
+      "Lulu: Huele a polvo y a éxito, miau. Mis garras estaban listas por si acaso.",
+      "Barbara: Un éxito sin sangre es aburrido, pero eficiente. Busquemos algo que sí se pueda romper.",
+      "Huguito: ¡No busques eso! ¡Huguito, el chiquito, quiere una excursión tranquila y gratuita!"
+    ]
+  },
+  {
+    "id": "WP1A_06",
+    "scene": "1.A",
+    "party": ["Barbara", "Huguito", "Azafran", "Daragat"],
+    "leader": "Huguito",
+    "mood": "happy",
+    "dialogue": [
+      "Huguito: ¡Huguito, el chiquito, es un genio de los puzzles! ¡La Luna nos dio el paso!",
+      "Daragat: Bueno, en realidad Azafrán lo dijo primero, pero te dejaremos el crédito para que no llores.",
+      "Azafran: (Sorbiendo café) Mientras la puerta esté abierta, no me importa quién se lleve el mérito.",
+      "Barbara: Mi abuela decía que la Luna guía a los perdidos. Espero que tenga razón hoy."
+    ]
+  },
+  {
+    "id": "WP1A_07",
+    "scene": "1.A",
+    "party": ["Barbara", "Huguito", "Azafran", "Solana"],
+    "leader": "Barbara",
+    "mood": "noble",
+    "dialogue": [
+      "Barbara: Hemos honrado el acertijo de la Esfinge. Entramos a la Montaña del Penacho Blanco con honor.",
+      "Solana: El honor es una carga, pero la palabra clave fue un alivio para el alma de Dago.",
+      "Azafran: Analicen el entorno. Si la entrada fue un puzzle, el interior será una trampa constante.",
+      "Huguito: ¡Huguito, el chiquito, se mantendrá cerca de la maga por si las moscas!"
+    ]
+  },
+  {
+    "id": "WP1A_08",
+    "scene": "1.A",
+    "party": ["Barbara", "Huguito", "Lulu", "Daragat"],
+    "leader": "Lulu",
+    "mood": "playful",
+    "dialogue": [
+      "Lulu: ¡La Luna! ¡Como el juguete de plata que tenía de pequeña, miau!",
+      "Daragat: Si Llave la rana pudiera hablar, diría que ese acertijo fue demasiado fácil para nosotros.",
+      "Huguito: ¡Fácil es bueno! ¡Huguito, el chiquito, ama las cosas que no intentan morderlo!",
+      "Barbara: No se confíen. La montaña nos deja pasar solo para devorarnos más adentro."
+    ]
+  },
+  {
+    "id": "WP1A_09",
+    "scene": "1.A",
+    "party": ["Barbara", "Huguito", "Lulu", "Solana"],
+    "leader": "Solana",
+    "mood": "mysterious",
+    "dialogue": [
+      "Solana: La Luna revela lo que el día oculta. Barovia me enseñó a temerle, pero aquí nos abre camino.",
+      "Lulu: A mí me gusta la noche, miau. Se ve mejor el peligro.",
+      "Huguito: ¡Huguito, el chiquito, prefiere no ver el peligro en absoluto, gracias!",
+      "Barbara: Si el peligro aparece, lo romperé. Sea bajo la luna o bajo el sol."
+    ]
+  },
+  {
+    "id": "WP1A_10",
+    "scene": "1.A",
+    "party": ["Barbara", "Huguito", "Daragat", "Solana"],
+    "leader": "Daragat",
+    "mood": "sarcastic",
+    "dialogue": [
+      "Daragat: Genial, entramos. Lathander debe estar riéndose de que 'La Luna' sea la llave de un volcán.",
+      "Solana: El equilibrio cósmico no entiende de bromas, niño. Dago necesita que nos concentremos.",
+      "Barbara: Basta de cháchara. Mis pies arden por avanzar y mis manos por golpear algo.",
+      "Huguito: ¡Huguito, el chiquito, sugiere que usemos esa energía para caminar rápido y no para romper cosas!"
+    ]
+  },
+  {
+    "id": "WP1A_11",
+    "scene": "1.A",
+    "party": ["Barbara", "Rosa", "Azafran", "Lulu"],
+    "leader": "Rosa",
+    "mood": "heroic",
+    "dialogue": [
+      "Rosa: Una entrada triunfal. La Montaña del Penacho Blanco se rinde ante nuestra agudeza mental.",
+      "Azafran: No se ha rendido, Rosa. Solo nos ha dejado pasar el primer filtro. Estén alertas.",
+      "Lulu: Mis bigotes vibran con el aire del interior, miau. Es emocionante.",
+      "Barbara: Noble victoria. Pero mi furia sigue ahí, esperando el momento de protegerlas."
+    ]
+  },
+  {
+    "id": "WP1A_12",
+    "scene": "1.A",
+    "party": ["Barbara", "Rosa", "Azafran", "Daragat"],
+    "leader": "Azafran",
+    "mood": "focused",
+    "dialogue": [
+      "Azafran: Objetivo uno completado. La Esfinge se retira. No bajen la guardia al entrar.",
+      "Rosa: Siempre tan fría, exploradora. ¿Ni siquiera un cumplido por resolverlo?",
+      "Daragat: Lathander dice que la humildad es virtud, pero un 'buen trabajo' no mataría a nadie.",
+      "Barbara: Los cumplidos no encuentran a mi abuela. Caminar sí. ¡Muevan esas piernas!"
+    ]
+  },
+  {
+    "id": "WP1A_13",
+    "scene": "1.A",
+    "party": ["Barbara", "Rosa", "Azafran", "Solana"],
+    "leader": "Solana",
+    "mood": "determined",
+    "dialogue": [
+      "Solana: La Luna ha hablado. No volveremos a ver el cielo hasta que Dago recupere su alma.",
+      "Rosa: Qué dramática, Solana. Con mis disparos y tu magia, esto será un paseo.",
+      "Azafran: Un paseo por un volcán lleno de trampas. Tomen su café y vigilen el suelo.",
+      "Barbara: Si el suelo intenta tragarnos, le daré un motivo para escupirnos."
+    ]
+  },
+  {
+    "id": "WP1A_14",
+    "scene": "1.A",
+    "party": ["Barbara", "Rosa", "Lulu", "Daragat"],
+    "leader": "Rosa",
+    "mood": "protective",
+    "dialogue": [
+      "Rosa: Pasamos, pequeños. Manténganse cerca de mí y de Adirem mientras exploramos este agujero.",
+      "Daragat: ¡Tengo un dragón, Rosa! Puedo cuidarme solo, aunque Lathander agradece el gesto.",
+      "Lulu: Yo vigilaré las sombras por si algo salta, miau.",
+      "Barbara: Mi cuerpo será su escudo. Entremos a la Montaña del Penacho Blanco como guerreras."
+    ]
+  },
+  {
+    "id": "WP1A_15",
+    "scene": "1.A",
+    "party": ["Barbara", "Rosa", "Lulu", "Solana"],
+    "leader": "Lulu",
+    "mood": "tense",
+    "dialogue": [
+      "Lulu: La puerta se abrió muy silenciosa, miau. No me gusta la Montaña del Penacho Blanco.",
+      "Solana: El silencio es el preludio de la tormenta. Prepárense para lo que acecha.",
+      "Rosa: No temas, gatita. Mis balas brillan más que cualquier luna.",
+      "Barbara: Si el miedo te paraliza, Lulu, yo te abriré camino rompiendo la oscuridad."
+    ]
+  },
+  {
+    "id": "WP1A_16",
+    "scene": "1.A",
+    "party": ["Barbara", "Rosa", "Daragat", "Solana"],
+    "leader": "Daragat",
+    "mood": "curious",
+    "dialogue": [
+      "Daragat: ¿Ustedes creen que la Esfinge se aburre de decir siempre lo de 'La Luna'?",
+      "Solana: Las criaturas eternas no conocen el aburrimiento, solo el deber.",
+      "Rosa: Como mi deber de proteger a esta party y verme bien mientras lo hago.",
+      "Barbara: Mi único deber es encontrar a mi abuela. ¡Muévanse antes de que pierda la paciencia!"
+    ]
+  },
+  {
+    "id": "WP1A_17",
+    "scene": "1.A",
+    "party": ["Barbara", "Azafran", "Lulu", "Daragat"],
+    "leader": "Azafran",
+    "mood": "analytical",
+    "dialogue": [
+      "Azafran: Patrón confirmado. La palabra era 'La Luna'. El mecanismo de la entrada es hidráulico.",
+      "Lulu: ¿Hidra-qué? Yo solo sé que el camino está libre, miau.",
+      "Daragat: Significa que hay agua cerca. Lathander nos libre de morir ahogados en un volcán.",
+      "Barbara: Si hay agua, la beberé. Si hay muros, los romperé. ¡Adelante!"
+    ]
+  },
+  {
+    "id": "WP1A_18",
+    "scene": "1.A",
+    "party": ["Barbara", "Azafran", "Lulu", "Solana"],
+    "leader": "Solana",
+    "mood": "focused",
+    "dialogue": [
+      "Solana: La Montaña del Penacho Blanco nos ha aceptado. Pero es una aceptación hostil.",
+      "Azafran: Siempre lo es. Revisen sus suministros, esto no será un viaje corto.",
+      "Lulu: Mis garras están afiladas para cualquier cosa que no sea una luna, miau.",
+      "Barbara: Que venga la hostilidad. Mi nobleza se crece ante el castigo."
+    ]
+  },
+  {
+    "id": "WP1A_19",
+    "scene": "1.A",
+    "party": ["Barbara", "Azafran", "Daragat", "Solana"],
+    "leader": "Daragat",
+    "mood": "sarcastic",
+    "dialogue": [
+      "Daragat: ¡Bravo! Resolvimos un puzzle. Ahora solo nos faltan mil trampas mortales más.",
+      "Solana: Tu pesimismo es agotador, Daragat. Piensa en el alma de Dago.",
+      "Azafran: El niño tiene razón en algo: no es momento de celebrar. Tomen café y avancen.",
+      "Barbara: Yo celebraré cuando mi hacha esté enterrada en el corazón del mal de este lugar."
+    ]
+  },
+  {
+    "id": "WP1A_20",
+    "scene": "1.A",
+    "party": ["Barbara", "Lulu", "Daragat", "Solana"],
+    "leader": "Lulu",
+    "mood": "shy",
+    "dialogue": [
+      "Lulu: La Luna nos dejó pasar... ¿creen que la montaña sea buena con nosotros, miau?",
+      "Barbara: La bondad no existe aquí, Lulu. Pero mi protección sí. Camina tras de mí.",
+      "Daragat: Lathander dice que la luz siempre vence, pero por si acaso, Chispita está listo.",
+      "Solana: No busquen bondad en la piedra. Busquen la salida y el alma que vinimos a salvar."
+    ]
+  },
+  {
+    "id": "WP1A_21",
+    "scene": "1.A",
+    "party": ["Huguito", "Rosa", "Azafran", "Lulu"],
+    "leader": "Huguito",
+    "mood": "happy",
+    "dialogue": [
+      "Huguito: ¡Huguito, el chiquito, sabía que 'La Luna' era la clave! ¡Soy un experto!",
+      "Rosa: Lo hiciste bien, cosita. Pero ahora deja que las armas grandes tomen el relevo.",
+      "Azafran: No te confíes, Huguito. La Esfinge fue solo el saludo de bienvenida.",
+      "Lulu: ¡Entremos saltando antes de que la puerta se canse de nosotros, miau!"
+    ]
+  },
+  {
+    "id": "WP1A_22",
+    "scene": "1.A",
+    "party": ["Huguito", "Rosa", "Azafran", "Daragat"],
+    "leader": "Azafran",
+    "mood": "serious",
+    "dialogue": [
+      "Azafran: Puerta abierta. Objetivo: Explorar la Montaña del Penacho Blanco sin bajas.",
+      "Rosa: Con este equipo de héroes, las bajas son imposibles. ¿Verdad, Azafrán?",
+      "Huguito: ¡Huguito, el chiquito, está de acuerdo! ¡Cero violencia, cien por ciento éxito!",
+      "Daragat: Lathander bendiga tu optimismo, Huguito. Llave y yo vigilaremos los flancos."
+    ]
+  },
+  {
+    "id": "WP1A_23",
+    "scene": "1.A",
+    "party": ["Huguito", "Rosa", "Azafran", "Solana"],
+    "leader": "Solana",
+    "mood": "determined",
+    "dialogue": [
+      "Solana: La Luna nos abre el paso al inframundo. No hay marcha atrás para nosotros.",
+      "Rosa: Mientras haya una salida y un espejo para retocarme, me basta.",
+      "Azafran: (Suspirando) Menos vanidad y más atención. El aire aquí dentro es viciado.",
+      "Huguito: ¡Huguito, el chiquito, sugiere que Solana guíe con su magia brillante!"
+    ]
+  },
+  {
+    "id": "WP1A_24",
+    "scene": "1.A",
+    "party": ["Huguito", "Rosa", "Lulu", "Daragat"],
+    "leader": "Rosa",
+    "mood": "happy",
+    "dialogue": [
+      "Rosa: ¡Miren! La Montaña del Penacho Blanco nos recibe con los brazos abiertos gracias a 'La Luna'.",
+      "Huguito: ¡Y sin romper nada! ¡Huguito, el chiquito, ama cuando las cosas no explotan!",
+      "Lulu: Hay olores nuevos ahí dentro, miau. ¿Será comida o monstruos?",
+      "Daragat: Con nuestra suerte, monstruos que huelen a comida. Lathander nos proteja."
+    ]
+  },
+  {
+    "id": "WP1A_25",
+    "scene": "1.A",
+    "party": ["Huguito", "Rosa", "Lulu", "Solana"],
+    "leader": "Huguito",
+    "mood": "anxious",
+    "dialogue": [
+      "Huguito: ¡Huguito, el chiquito, dice que pasemos rápido antes de que la Esfinge pida otra palabra!",
+      "Rosa: Nadie te va a comer, Huguito. Al menos no mientras yo tenga balas.",
+      "Lulu: La Luna ya no nos ve desde aquí adentro, miau. Todo está oscuro.",
+      "Solana: La oscuridad es solo la ausencia de luz, pero la presencia del destino es constante."
+    ]
+  },
+  {
+    "id": "WP1A_26",
+    "scene": "1.A",
+    "party": ["Huguito", "Rosa", "Daragat", "Solana"],
+    "leader": "Daragat",
+    "mood": "sarcastic",
+    "dialogue": [
+      "Daragat: Entramos. Felicidades a todos por saber conceptos básicos de astronomía.",
+      "Solana: Tu lengua será tu perdición, niño. Respeta los misterios de la montaña.",
+      "Rosa: Deja que hable, Solana. Le da ambiente a esta cueva tan gris.",
+      "Huguito: ¡Huguito, el chiquito, prefiere el ambiente de una posada con pastel!"
+    ]
+  },
+  {
+    "id": "WP1A_27",
+    "scene": "1.A",
+    "party": ["Huguito", "Azafran", "Lulu", "Daragat"],
+    "leader": "Azafran",
+    "mood": "focused",
+    "dialogue": [
+      "Azafran: Entrada asegurada. Registren el tiempo de apertura. La Montaña del Penacho Blanco nos espera.",
+      "Lulu: Yo registraré los rincones con mi nariz, miau.",
+      "Daragat: Lathander dice que el tiempo es oro, así que no nos quedemos aquí parados.",
+      "Huguito: ¡Huguito, el chiquito, liderará el camino... desde el medio para estar seguro!"
+    ]
+  },
+  {
+    "id": "WP1A_28",
+    "scene": "1.A",
+    "party": ["Huguito", "Azafran", "Lulu", "Solana"],
+    "leader": "Solana",
+    "mood": "grim",
+    "dialogue": [
+      "Solana: El umbral ha sido cruzado. La Luna nos ha entregado a las entrañas del volcán.",
+      "Azafran: Menos misticismo y más pies en la tierra. Estén atentos a los cambios de presión.",
+      "Lulu: El aire está caliente, miau. No me gusta para mi pelaje.",
+      "Huguito: ¡Huguito, el chiquito, se ofrece a llevar el ventilador si alguien tiene uno!"
+    ]
+  },
+  {
+    "id": "WP1A_29",
+    "scene": "1.A",
+    "party": ["Huguito", "Azafran", "Daragat", "Solana"],
+    "leader": "Daragat",
+    "mood": "hopeful",
+    "dialogue": [
+      "Daragat: ¡Miren el lado bueno! Resolvimos el puzzle y no tuvimos que usar a Huguito como carnada.",
+      "Solana: Por ahora. El destino tiene formas crueles de usar a los curiosos.",
+      "Azafran: Ignoren al niño. Revisen sus armas. La Montaña del Penacho Blanco no perdona errores.",
+      "Huguito: ¡Huguito, el chiquito, promete no ser carnada nunca!"
+    ]
+  },
+  {
+    "id": "WP1A_30",
+    "scene": "1.A",
+    "party": ["Huguito", "Lulu", "Daragat", "Solana"],
+    "leader": "Lulu",
+    "mood": "curious",
+    "dialogue": [
+      "Lulu: ¡Entramos, miau! ¿Creen que la Esfinge sea amiga de la Luna?",
+      "Solana: Son sirvientes de las mismas leyes antiguas. Nada es azaroso aquí.",
+      "Daragat: Llave dice que la Esfinge solo quería una excusa para volver a dormir.",
+      "Huguito: ¡Huguito, el chiquito, también quiere dormir! Pero en una cama, no en un volcán."
+    ]
+  },
+  {
+    "id": "WP1A_31",
+    "scene": "1.A",
+    "party": ["Rosa", "Azafran", "Lulu", "Daragat"],
+    "leader": "Rosa",
+    "mood": "flirty",
+    "dialogue": [
+      "Rosa: Entramos bajo el signo de la Luna. ¿No te parece una señal de que deberías hacerme caso, Azafrán?",
+      "Azafran: La única señal que veo es que la puerta está abierta y perdemos tiempo. Camina.",
+      "Lulu: El amor es más difícil que el acertijo, miau.",
+      "Daragat: Lathander dice que la perseverancia es clave, Rosa. Pero tal vez no con Azafrán."
+    ]
+  },
+  {
+    "id": "WP1A_32",
+    "scene": "1.A",
+    "party": ["Rosa", "Azafran", "Lulu", "Solana"],
+    "leader": "Solana",
+    "mood": "determined",
+    "dialogue": [
+      "Solana: El acertijo es solo el primer velo que cae. La Montaña del Penacho Blanco oculta mucho más.",
+      "Azafran: Y yo lo descubriré todo. Mantengan el orden y no se distraigan.",
+      "Rosa: Es difícil no distraerse con tanta aventura... y con este calor.",
+      "Lulu: ¡Miau! Siento que algo nos observa desde el techo."
+    ]
+  },
+  {
+    "id": "WP1A_33",
+    "scene": "1.A",
+    "party": ["Rosa", "Azafran", "Daragat", "Solana"],
+    "leader": "Azafran",
+    "mood": "serious",
+    "dialogue": [
+      "Azafran: 'La Luna'. Código aceptado. Procedan con cautela hacia el sector primario de la montaña.",
+      "Rosa: Eres tan técnica que me asustas. Pero me encanta.",
+      "Daragat: Yo solo espero que haya tesoros. Lathander dice que la fe es suficiente, pero el oro ayuda.",
+      "Solana: El único tesoro que importa está atrapado en una bolsa en tu hombro, niño."
+    ]
+  },
+  {
+    "id": "WP1A_34",
+    "scene": "1.A",
+    "party": ["Rosa", "Lulu", "Daragat", "Solana"],
+    "leader": "Rosa",
+    "mood": "heroic",
+    "dialogue": [
+      "Rosa: Por Mystra, hemos superado el primer desafío. La Montaña del Penacho Blanco temblará ante nosotros.",
+      "Lulu: ¡Y ante mis garras, miau!",
+      "Daragat: ¡Y ante Chispita! Bueno, quizás Chispita solo eche un poco de humo.",
+      "Solana: No canten victoria. El destino apenas está empezando a jugar sus cartas."
+    ]
+  },
+  {
+    "id": "WP1A_35",
+    "scene": "1.A",
+    "party": ["Azafran", "Lulu", "Daragat", "Solana"],
+    "leader": "Azafran",
+    "mood": "analytical",
+    "dialogue": [
+      "Azafran: La Esfinge ha sido neutralizada mediante lógica. Eficiencia del 100%. Avancemos.",
+      "Lulu: ¡Miau! La lógica sabe a victoria.",
+      "Daragat: Lathander bendiga los cerebros de este equipo. Sin ellos, ya seríamos comida de gato.",
+      "Solana: Mi magia y tu café, Azafrán. Esa es la verdadera clave para salir de aquí con Dago."
+    ]
+  }
+]

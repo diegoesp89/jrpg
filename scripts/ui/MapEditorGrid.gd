@@ -30,6 +30,13 @@ const TILE_COLORS := {
 	10: Color(0.6, 0.3, 0.8),
 }
 
+# Marker/zone colors — shared with MapEditor's palette legend so the swatches always match
+# what's actually drawn on the grid.
+const PLAYER_START_COLOR := Color(1, 1, 0)
+const STORY_TRIGGER_COLOR := Color(1, 0.4, 0.8)
+const ZONE_FILL_COLOR := Color(0.2, 0.4, 0.9, 0.35)
+const ZONE_BORDER_COLOR := Color(0.3, 0.6, 1.0, 0.9)
+
 var tiles: Array = []
 var entities: Dictionary = {}
 var highlight_rect: Rect2i = Rect2i(-1, -1, 0, 0)
@@ -58,16 +65,22 @@ func _draw() -> void:
 		var col = float(zone.get("col", 0))
 		var w = float(zone.get("width", 1))
 		var h = float(zone.get("height", 1))
-		var r = Rect2((col - w / 2.0) * cell_size, (row - h / 2.0) * cell_size, w * cell_size, h * cell_size)
-		draw_rect(r, Color(0.2, 0.4, 0.9, 0.35))
-		draw_rect(r, Color(0.3, 0.6, 1.0, 0.9), false, 2.0)
+		# "row"/"col" are the CENTER of the zone; a zone of width w spans w cells whose
+		# leftmost edge is (w-1)/2 cells to the left of center — not w/2, which is off by
+		# half a cell (that's the "not centered" bug: it always drew half a cell too far
+		# up-left).
+		var left = (col - (w - 1.0) / 2.0) * cell_size
+		var top = (row - (h - 1.0) / 2.0) * cell_size
+		var r = Rect2(left, top, w * cell_size, h * cell_size)
+		draw_rect(r, ZONE_FILL_COLOR)
+		draw_rect(r, ZONE_BORDER_COLOR, false, 2.0)
 
 	for st in entities.get("story_triggers", []):
-		_draw_marker(int(st.get("row", -1)), int(st.get("col", -1)), Color(1, 0.4, 0.8))
+		_draw_marker(int(st.get("row", -1)), int(st.get("col", -1)), STORY_TRIGGER_COLOR)
 
 	var start = entities.get("player_start", {})
 	if start.has("row"):
-		_draw_marker(int(start["row"]), int(start["col"]), Color(1, 1, 0))
+		_draw_marker(int(start["row"]), int(start["col"]), PLAYER_START_COLOR)
 
 	if highlight_rect.size.x > 0:
 		var hr = Rect2(highlight_rect.position.x * cell_size, highlight_rect.position.y * cell_size, highlight_rect.size.x * cell_size, highlight_rect.size.y * cell_size)

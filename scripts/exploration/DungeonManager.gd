@@ -10,7 +10,6 @@ class_name DungeonManager
 var _hud: CanvasLayer = null
 var _minimap_ui = null
 var _prompt_label: Label = null
-var _debug_label: Label = null
 var _map_editor = null
 
 func _ready() -> void:
@@ -75,20 +74,8 @@ func _setup_hud() -> void:
 	hp_label.add_theme_font_size_override("font_size", 48)
 	_hud.add_child(hp_label)
 
-	# Debug zoom overlay (top-right)
-	_debug_label = Label.new()
-	_debug_label.name = "DebugZoom"
-	_debug_label.set_anchors_preset(Control.PRESET_TOP_RIGHT)
-	_debug_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-	_debug_label.position = Vector2(-420, 10)
-	_debug_label.custom_minimum_size = Vector2(410, 100)
-	_debug_label.add_theme_font_size_override("font_size", 36)
-	_debug_label.add_theme_color_override("font_color", Color(0.0, 1.0, 0.0))
-	_hud.add_child(_debug_label)
-
 func _process(_delta: float) -> void:
 	_update_hp_display()
-	_update_debug_zoom()
 	_update_player_fog_pos()
 
 func _update_hp_display() -> void:
@@ -101,20 +88,6 @@ func _update_hp_display() -> void:
 			leader["name"], leader["hp"], leader["max_hp"],
 			mp, max_mp
 		]
-
-func _update_debug_zoom() -> void:
-	if not _debug_label or not _camera_rig:
-		return
-	if not _camera_rig.has_method("get_zoom_debug"):
-		_debug_label.text = "no debug method"
-		return
-	var d = _camera_rig.get_zoom_debug()
-	var mode_str = "Quasi-Ortho" if d["zoom_index"] == 1 else "Perspective"
-	_debug_label.text = "Cam: %s [Lvl %d/2]\nFOV: %.1f° → %.1f°\nDist: %.1f | FogEnd: %.1f" % [
-		mode_str, d["zoom_index"] + 1,
-		d["fov"], d["fov_target"],
-		d["distance"], d["fog_end"],
-	]
 
 func _on_interactable_changed(interactable: Node) -> void:
 	if interactable and interactable.has_method("get_prompt_text"):

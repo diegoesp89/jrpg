@@ -205,13 +205,35 @@ func get_all_item_ids() -> Array:
 func get_all_encounter_ids() -> Array:
 	return _encounters.keys()
 
+func get_all_enemy_ids() -> Array:
+	return _enemies.keys()
+
+const ENEMIES_PATH := "res://data/enemies/enemies.json"
+const ITEMS_PATH := "res://data/items/items.json"
+
+## Updates one enemy's definition in memory and writes the whole enemies.json back to disk
+## (used by the map editor's enemy stat/drop editor — this is global game data, not part of
+## any one .map, so it saves immediately rather than waiting on the map's own Guardar button).
+func update_enemy(enemy_id: String, data: Dictionary) -> void:
+	_enemies[enemy_id] = data
+	_write_json_file(ENEMIES_PATH, _enemies)
+
+## Adds or overwrites one item definition (e.g. an auto-generated door key) and writes
+## items.json back to disk, same rationale as update_enemy.
+func add_item_definition(item_id: String, data: Dictionary) -> void:
+	_items[item_id] = data
+	_write_json_file(ITEMS_PATH, _items)
+
 ## Writes map_data as the .map at path (used by the in-game map editor). Only works when
 ## running from the Godot editor / a local dev environment — res:// is read-only once exported.
 func save_map(path: String, map_data: Dictionary) -> bool:
+	return _write_json_file(path, map_data)
+
+func _write_json_file(path: String, data: Dictionary) -> bool:
 	var file = FileAccess.open(path, FileAccess.WRITE)
 	if file == null:
-		push_error("DataLoader: could not open map for writing: %s" % path)
+		push_error("DataLoader: could not open file for writing: %s" % path)
 		return false
-	file.store_string(JSON.stringify(map_data, "\t"))
+	file.store_string(JSON.stringify(data, "\t"))
 	file.close()
 	return true

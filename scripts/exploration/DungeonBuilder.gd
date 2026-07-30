@@ -5,7 +5,7 @@ class_name DungeonBuilder
 const TILE_SIZE: float = 2.0
 
 # Tile types
-enum Tile { EMPTY = 0, FLOOR = 1, WALL = 2, DOOR = 3, NPC = 4, CHEST = 5, COMBAT_TRIGGER = 6, TRAP = 7, BOSS_TRIGGER = 8, EXIT = 9, RIDDLE_GATE = 10 }
+enum Tile { EMPTY = 0, FLOOR = 1, WALL = 2, DOOR = 3, NPC = 4, CHEST = 5, COMBAT_TRIGGER = 6, TRAP = 7, BOSS_TRIGGER = 8, EXIT = 9, RIDDLE_GATE = 10, FLOOR_ITEM = 11 }
 
 # Colors for placeholder sprites
 const WALL_COLOR = Color(0.4, 0.4, 0.45)
@@ -16,6 +16,8 @@ const CHEST_COLOR = Color(0.85, 0.7, 0.1)
 const CHEST_BORDER = Color(0.6, 0.5, 0.05)
 const DOOR_COLOR = Color(0.55, 0.35, 0.15)
 const DOOR_BORDER = Color(0.35, 0.2, 0.05)
+const FLOOR_ITEM_COLOR = Color(0.3, 0.9, 0.8)
+const FLOOR_ITEM_BORDER = Color(0.1, 0.6, 0.55)
 const FLOOR_COLOR = Color(0.25, 0.22, 0.2)
 const FLOOR_ALT_COLOR = Color(0.28, 0.25, 0.22)
 
@@ -157,7 +159,7 @@ func _build_walls_and_entities() -> void:
 				Tile.WALL:
 					_create_wall(pos, col, row)
 				Tile.DOOR:
-					_create_door(pos)
+					_create_door(pos, _get_entity_at("doors", row, col))
 				Tile.NPC:
 					_create_npc(pos, _get_entity_at("npcs", row, col))
 				Tile.CHEST:
@@ -172,6 +174,8 @@ func _build_walls_and_entities() -> void:
 					_create_exit(pos, row, col)
 				Tile.RIDDLE_GATE:
 					_create_riddle_gate(pos, _get_entity_at("riddle_gates", row, col))
+				Tile.FLOOR_ITEM:
+					_create_floor_item(pos, _get_entity_at("floor_items", row, col))
 
 func _create_wall(pos: Vector3, col: int, row: int) -> void:
 	var wall = StaticBody3D.new()
@@ -237,7 +241,7 @@ func _create_wall(pos: Vector3, col: int, row: int) -> void:
 	add_child(wall)
 	_wall_nodes.append(wall)
 
-func _create_door(pos: Vector3) -> void:
+func _create_door(pos: Vector3, config: Dictionary = {}) -> void:
 	var door_scene_script = load("res://scripts/exploration/Door.gd")
 	var door = StaticBody3D.new()
 	door.name = "Door"
@@ -263,6 +267,9 @@ func _create_door(pos: Vector3) -> void:
 
 	if door_scene_script:
 		door.set_script(door_scene_script)
+		door.door_id = config.get("door_id", "")
+		door.locked = bool(config.get("locked", false))
+		door.required_item_id = config.get("required_item_id", "")
 
 	add_child(door)
 
@@ -332,6 +339,43 @@ func _create_chest(pos: Vector3, config: Dictionary = {}) -> void:
 
 	add_child(chest)
 
+## An item lying directly on the floor (no chest) — same Pickup.gd logic as a chest, just a
+## smaller, differently-colored sprite so it reads as a loose item rather than a container.
+func _create_floor_item(pos: Vector3, config: Dictionary = {}) -> void:
+	var pickup_script = load("res://scripts/exploration/Pickup.gd")
+	var item = StaticBody3D.new()
+	item.name = "FloorItem"
+	item.position = pos
+	item.collision_layer = 1 | 4  # world (blocks player) + interactable
+	item.collision_mask = 0
+
+	var col_shape = CollisionShape3D.new()
+	var box = BoxShape3D.new()
+	box.size = Vector3(0.4, 0.4, 0.4)
+	col_shape.shape = box
+	col_shape.position = Vector3(0, 0.2, 0)
+	item.add_child(col_shape)
+
+	var sprite = Sprite3D.new()
+	sprite.name = "Sprite3D"
+	sprite.pixel_size = 0.03
+	sprite.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	sprite.alpha_cut = SpriteBase3D.ALPHA_CUT_OPAQUE_PREPASS
+	sprite.texture = _create_rect_texture(FLOOR_ITEM_COLOR, FLOOR_ITEM_BORDER, 16, 16)
+	sprite.position = Vector3(0, 0.3, 0)
+	item.add_child(sprite)
+
+	if pickup_script:
+		item.set_script(pickup_script)
+		if config.has("item_id"):
+			item.item_id = config["item_id"]
+		if config.has("quantity"):
+			item.item_quantity = int(config["quantity"])
+		if config.has("chest_id"):
+			item.chest_id = config["chest_id"]
+
+	add_child(item)
+
 func _create_combat_trigger(pos: Vector3, config: Dictionary = {}) -> void:
 	var trigger_script = load("res://scripts/exploration/CombatTrigger.gd")
 	var trigger = Area3D.new()
@@ -351,6 +395,8 @@ func _create_combat_trigger(pos: Vector3, config: Dictionary = {}) -> void:
 	if trigger_script:
 		trigger.set_script(trigger_script)
 		trigger.encounter_id = encounter_id
+		trigger.intro_message = config.get("intro_message", "")
+		trigger.death_message = config.get("death_message", "")
 
 	add_child(trigger)
 
@@ -470,6 +516,8 @@ func _create_boss_trigger(pos: Vector3, config: Dictionary = {}) -> void:
 	if trigger_script:
 		trigger.set_script(trigger_script)
 		trigger.encounter_id = encounter_id
+		trigger.intro_message = config.get("intro_message", "")
+		trigger.death_message = config.get("death_message", "")
 
 	add_child(trigger)
 

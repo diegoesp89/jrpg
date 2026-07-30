@@ -1,0 +1,352 @@
+[
+  { "id": "WP30_01", "party": ["Barbara", "Huguito", "Rosa", "Azafran"], "leader": "Barbara", "mood": "bittersweet", "dialogue": [
+    "Barbara: He recorrido cada rincón de este maldito calabozo y Violeta no está; mi abuela sigue perdida en alguna otra sombra del mundo.",
+    "Huguito: ¡Huguito, el chiquito, dice que al menos no somos estatuas de brujas! Daragat, Dago y yo salvamos a Zybilna en el Feywild, así que esto es solo otro paso material.",
+    "Rosa: ¡Mirad qué resplandor! Adirem, mira cómo brilla la luz sobre la misión que Mystra me encomendó al ponerte bajo mi cuidado heróico.",
+    "Azafran: Misión cumplida, pero el rastro de los licántropos que busco no termina aquí. Vamos a Barovia; los secretos de los hombres lobo no se revelarán solos.",
+    "Barbara: Si vosotros lograsteis salir victoriosos de aquellas tierras feéricas, mi hacha noble encontrará el rastro de mi abuela tarde o temprano.",
+    "Huguito: Espero que el maestro Rilae me vea desde Prismalia y se sienta orgulloso. Ser aventurero es agotador para mi túnica de lino.",
+    "Rosa: Me hubiera gustado ver ese Feywild para darles una lección de estilo a esas brujas. Adirem, te cuidaré en las nieblas como si fueras mi sangre.",
+    "Azafran: Las tres reliquias están aseguradas, pero el alma de Dago sigue en manos de Strahd. La verdadera anomalía táctica nos espera en Barovia."
+  ]},
+  { "id": "WP30_02", "party": ["Barbara", "Huguito", "Rosa", "Lulu"], "leader": "Lulu", "mood": "happy", "dialogue": [
+    "Lulu: ¡Miau! ¡Aire fresco! ¡Huguito, cuéntame otra vez cómo Daragat y tú despertaron a la Archfey Zybilna! ¡Quiero saber si tenía un gato mágico!",
+    "Rosa: Estuviste divina, pequeña. El glamour de Mystra nos protegerá en las nieblas y Adirem verá que su cuidadora es la más heróica de todas.",
+    "Barbara: Busqué en cada pasillo y la montaña me mintió; Violeta no está aquí. Pero mi nobleza no se rinde ante un volcán vacío.",
+    "Huguito: ¡Huguito, el chiquito, prefiere no hablar de tiempos materiales! Daragat, Basal y yo lo pasamos peor con las tres brujas que aquí dentro.",
+    "Lulu: ¡Barbara, no estés triste! ¡Exploraremos Barovia con mi curiosidad de gato hasta encontrar a la abuela Violeta y muchos tesoros!",
+    "Rosa: ¡Exacto! Adirem, el deber que tengo contigo es tan sagrado como mi estilo. Rosa y su equipo emergen de la ceniza con gloria heróica.",
+    "Barbara: Persistiré. El honor de mi linaje me obliga a seguir el rastro de mi sangre, aunque deba cruzar el dominio del terror para encontrarla.",
+    "Huguito: Pobre Basal, atrapado en ese plano extraño... espero que al menos haya agua para un hombre cactus. ¡Vámonos de aquí de una vez!"
+  ]},
+  { "id": "WP30_03", "party": ["Barbara", "Huguito", "Rosa", "Daragat"], "leader": "Daragat", "mood": "hopeful", "dialogue": [
+    "Daragat: ¡Lathander nos sonríe! Tras vencer a las brujas en el Feywild, siento que estoy un paso más cerca de conocer al Señor del Alba en persona.",
+    "Rosa: Es el resplandor de mi heroísmo lo que ves, niño. Adirem, la bendición de Mystra me hace tu guardiana, y no dejaré que ninguna sombra te toque.",
+    "Barbara: He mirado en cada rincón de este lugar y mi abuela no está. El rastro de Violeta se enfría aquí, pero mi furia noble se aviva.",
+    "Huguito: ¡Huguito, el chiquito, dice que su mundo material ideal termina en la salida de este dungeon! El Feywild era hermoso pero nos dejó sin Basal.",
+    "Daragat: ¡No te preocupes, Barbara! ¡Mi luz heróica te ayudará a buscar a Violeta por toda Barovia mientras recuperamos el alma de Dago!",
+    "Rosa: ¡Qué tierno! Salir de Prismalia fue un reto, pero Barovia será la mejor prueba de mi labor como cuidadora divina.",
+    "Barbara: Si Daragat y tú pudisteis con tres brujas, yo podré con este calabozo y mil más. Encontraré a Violeta aunque deba romper las nieblas.",
+    "Huguito: Llave y yo estamos de acuerdo: queremos un descanso que no incluya dimensiones extrañas ni hombres cactus perdidos. ¡A caminar!"
+  ]},
+  { "id": "WP30_04", "party": ["Barbara", "Huguito", "Rosa", "Solana"], "leader": "Solana", "mood": "anxious", "dialogue": [
+    "Solana: El aire de la libertad es amargo mientras el alma de Dago siga en Barovia. No perdamos tiempo, las nieblas reclaman su tributo.",
+    "Barbara: Mi corazón noble está herido porque Violeta no estaba en estas salas... este calabozo fue un callejón sin salida. Pero mi búsqueda no termina.",
+    "Huguito: ¡Huguito, el chiquito, dice que su alma está lista para la jubilación material! Daragat y yo ya cumplimos salvando a Zybilna antes.",
+    "Rosa: ¡Ay, Solana! Un minuto de gloria heróica no le hace daño a nadie. Adirem, aunque Mystra me ordenó cuidarte, te he tomado un cariño heróico.",
+    "Solana: El destino de Dago es un hilo que se corta. ¡Vámonos ya! No quiero que acabe perdido en un plano extraño como el pobre Basal.",
+    "Barbara: Buscaré en el norte y en el sur. Si lograsteis escapar de las redes de las hadas, yo encontraré a mi abuela Violeta cueste lo que cueste.",
+    "Huguito: El maestro Rilae me dijo que creciera, pero no me dijo que tuviera que ir a un sitio lleno de vampiros. ¡Qué miedo material!",
+    "Rosa: Barovia será testigo del mayor despliegue de heroísmo. Adirem, mi mandato es protegerte, pero mi placer es verte sonreír."
+  ]},
+  { "id": "WP30_05", "party": ["Barbara", "Huguito", "Azafran", "Lulu"], "leader": "Azafran", "mood": "analytical", "dialogue": [
+    "Azafran: Las reliquias están aseguradas. Ahora toca Barovia; tengo una investigación pendiente sobre licantropía que no puede esperar más tiempo.",
+    "Lulu: ¡Miau! ¡Azafrán es muy ruda! ¡Debería estar feliz como cuando Daragat y Huguito salvaron a Zybilna de las brujas!",
+    "Barbara: Violeta no estaba en este complejo, Lulu... este sitio estaba vacío de mi sangre. Mi nobleza se siente sola, pero mi furia sigue intacta.",
+    "Huguito: ¡Huguito, el chiquito, dice que prefiere el vacío material absoluto si eso significa paz! Basal siempre decía que los problemas nos perseguirían.",
+    "Azafran: Mi café se terminó hace tres salas y los secretos de los hombres lobo me quitan el sueño. Movámonos antes de que el volcán colapse.",
+    "Lulu: ¡Barbara, yo usaré mi curiosidad para encontrar cualquier pista de la abuela Violeta en las tierras oscuras! ¡Lo prometo!",
+    "Barbara: Si el Feywild no os retuvo a vosotros, nada me detendrá a mí. Encontraré a mi abuela aunque deba sacudir cada castillo.",
+    "Huguito: Espero que el maestro Rilae esté orgulloso de mi resistencia. ¡De Prismalia al Penacho Blanco y de ahí al terror de las nieblas!"
+  ]},
+  { "id": "WP30_06", "party": ["Barbara", "Huguito", "Azafran", "Daragat"], "leader": "Daragat", "mood": "hopeful", "dialogue": [
+    "Daragat: ¡Ya casi somos libres! Huguito, ¿crees que Lathander nos espere tras las nieblas o tendremos que pelear con brujas de nuevo?",
+    "Azafran: El optimismo no es una variable táctica, Daragat. Barovia requiere mentes frías para descifrar los secretos de sus hombres lobo.",
+    "Barbara: No encontré a Violeta aquí dentro... mi abuela sigue lejos. Pero mi nobleza se forja en la adversidad y no descansará.",
+    "Huguito: ¡Huguito, el chiquito, dice que su única variable material es el hambre! Daragat y yo ya tuvimos suficiente magia con Zybilna.",
+    "Daragat: ¡No digas eso! ¡Basal nos está mirando desde su plano extraño y nos desea lo mejor bajo la luz del sol!",
+    "Azafran: Menos misticismo y más marcha. Aseguren las armas; si las perdemos, el alma de Dago se quedará en Barovia para siempre.",
+    "Barbara: Si lograsteis liberar a la Archfey, el rastro de mi abuela aparecerá. El honor de mi linaje me guiará a través de cualquier niebla.",
+    "Huguito: ¡El maestro Rilae solía decir que la paciencia es una virtud, pero mi paciencia material se agotó en la sala de los ghouls!"
+  ]},
+  { "id": "WP30_07", "party": ["Barbara", "Huguito", "Azafran", "Solana"], "leader": "Solana", "mood": "grim", "dialogue": [
+    "Solana: Las nieblas ya están llamando. Dago no tiene más tiempo y Barovia es un laberinto del que pocos escapan.",
+    "Barbara: Violeta no estaba en este lugar... mi búsqueda se vuelve global. Mi nobleza exige que no deje una piedra sin remover.",
+    "Huguito: ¡Huguito, el chiquito, espera que en Barovia la ropa no se manche de sangre! Prismalia parece un sueño lejano ahora.",
+    "Azafran: Mi prioridad es la conexión entre los licántropos y Strahd. Los secretos que busco están enterrados bajo ese suelo maldito.",
+    "Solana: El alma de Dago es lo único que importa. ¡Muevan los pies! No quiero que termine como Basal, perdido en lo desconocido.",
+    "Barbara: Si vosotros salisteis del Feywild con vida, yo encontraré a mi abuela Violeta aunque deba enfrentarme a mil vampiros.",
+    "Huguito: El maestro Rilae estaría orgulloso de mi valentía... aunque sea una valentía estrictamente involuntaria y llena de temblores.",
+    "Azafran: Revisen los suministros. Necesitamos café y munición para lo que nos espera. La logística en Barovia será un desafío."
+  ]},
+  { "id": "WP30_08", "party": ["Barbara", "Huguito", "Lulu", "Daragat"], "leader": "Lulu", "mood": "playful", "dialogue": [
+    "Lulu: ¡Miau! ¡Barbara, mira! ¡Podemos correr por el prado como cuando Daragat y Huguito escaparon del Feywild!",
+    "Daragat: ¡Sí! ¡Y esta vez Lathander nos ha dado juguetes nuevos que brillan mucho! ¡Es una aventura heróica completa!",
+    "Barbara: Disfrutad, pequeños. Mi alma está inquieta porque Violeta no estaba en este calabozo; mi abuela sigue en manos del destino.",
+    "Huguito: ¡Huguito, el chiquito, dice que prefiere los juguetes que no intentan comerse su alma! Basal tenía razón sobre los peligros.",
+    "Lulu: ¡Exploraremos todo Barovia, Barbara! ¡Mi curiosidad de gato encontrará a tu abuela bajo cualquier piedra!",
+    "Daragat: ¡Y mi luz iluminará tu rastro! Llave y yo estamos listos para conocer a Lathander después de salvar a Dago.",
+    "Barbara: Mi nobleza se fortalece con vuestro apoyo. Si pudisteis liberar a Zybilna, las sombras de Barovia también caerán.",
+    "Huguito: ¡Espero que el maestro Rilae me mande un paquete de galletas materialmente reconfortantes antes de entrar en las nieblas!"
+  ]},
+  { "id": "WP30_09", "party": ["Barbara", "Huguito", "Lulu", "Solana"], "leader": "Solana", "mood": "mysterious", "dialogue": [
+    "Solana: El ciclo de esta montaña se cierra, pero el de Barovia se abre. El alma de Dago nos arrastra hacia el este.",
+    "Lulu: ¡Miau! ¡Solana, siempre tan seria! ¿Daragat me contará historias de las tres brujas mientras caminamos hacia las nieblas?",
+    "Barbara: He mirado en cada sombra de este sitio y Violeta no estaba... mi abuela sigue lejos del alcance de mi mano noble.",
+    "Huguito: ¡Huguito, el chiquito, dice que su único destino material es una cama caliente! Basal se burlaría de mi cansancio.",
+    "Solana: No hay tiempo para camas. Barovia es un lugar de vigilia constante. Debemos recuperar la esencia de Dago ya.",
+    "Lulu: ¡Barbara, yo te cuidaré! ¡Si alguien sabe dónde está la abuela Violeta, yo le haré hablar con mis garras!",
+    "Barbara: Si salisteis de las redes feéricas, el mundo se me quedará pequeño hasta encontrarla. Mi nobleza no conoce fronteras.",
+    "Huguito: El maestro Rilae me enseñó a ser fuerte, pero no me preparó para la falta de higiene de este viaje material."
+  ]},
+  { "id": "WP30_10", "party": ["Barbara", "Huguito", "Daragat", "Solana"], "leader": "Daragat", "mood": "hopeful", "dialogue": [
+    "Daragat: ¡Miren esa luz! ¡Lathander nos abre el camino tras la victoria! Huguito, ¿el Feywild era así de brillante?",
+    "Solana: No es brillo, es el inicio de la verdadera pesadilla. Barovia reclama el alma de Dago y no espera.",
+    "Barbara: Fracasé en encontrar a Violeta aquí... este calabozo estaba vacío de mi sangre. Mi corazón noble está inquieto.",
+    "Huguito: ¡Huguito, el chiquito, dice que el Feywild tenía luces de colores y brujas muy malas! Basal estaría de acuerdo.",
+    "Daragat: ¡No te rindas, Barbara! ¡Seguiremos buscando a tu abuela mientras yo busco al Señor del Alba por todo el mundo!",
+    "Solana: El tiempo corre. ¡Muevan las piernas! No quiero que el alma de Dago se desvanezca como le pasó al pobre Basal.",
+    "Barbara: Si vosotros pudisteis vencer a las hadas, encontraré a Violeta donde sea que el destino la oculte. Mi furia es eterna.",
+    "Huguito: El maestro Rilae estaría orgulloso de que no me haya desmayado... todavía. ¡Hacia las nieblas materiales vamos!"
+  ]},
+  { "id": "WP30_11", "party": ["Barbara", "Rosa", "Azafran", "Lulu"], "leader": "Rosa", "mood": "heroic", "dialogue": [
+    "Rosa: ¡Salida triunfal! Rosa y su equipo de leyendas emergen con gloria. Adirem, mamá está aquí para cumplir lo que Mystra mandó.",
+    "Azafran: Misión del Penacho Blanco: Finalizada. Ahora, a Barovia; los secretos de los hombres lobo son mi próxima prioridad científica.",
+    "Lulu: ¡Miau! ¡Estamos fuera! ¿Daragat y Huguito lo pasaron así de bien cuando salvaron a Zybilna?",
+    "Barbara: Mi nobleza se siente pesada... busqué a Violeta en cada rincón de este calabozo y no la encontré.",
+    "Rosa: ¡No estés triste! Barovia será nuestra pasarela heróica y, aunque no seas mi hija, Adirem, mi protección por ti es divina.",
+    "Azafran: Mantengan el enfoque. Barovia es una anomalía logística. Necesitamos café y raciones antes de cruzar la frontera.",
+    "Lulu: ¡Yo usaré mi curiosidad para oler a la abuela Violeta desde lejos! ¡Ningún hombre lobo podrá detenernos!",
+    "Barbara: Si lograsteis salir de las tierras feéricas, encontraré a mi familia cueste lo que cueste. Mi furia noble no descansa."
+  ]},
+  { "id": "WP30_12", "party": ["Barbara", "Rosa", "Azafran", "Daragat"], "leader": "Azafran", "mood": "serious", "dialogue": [
+    "Azafran: Análisis final: Éxito táctico. Ahora, transporte seguro hacia Barovia para salvar el alma de Dago.",
+    "Daragat: ¡Sí! ¡Y después de eso, conoceré a Lathander! ¿Huguito te contó cómo vencimos a las tres brujas?",
+    "Rosa: ¡Exacto! Rosa cuidará de Adirem bajo el resplandor de Mystra. Pequeña, mi misión de cuidarte es el regalo más divino.",
+    "Barbara: Violeta no estaba en este complejo... mi búsqueda se vuelve global. Mi nobleza exige que no deje una piedra sin remover.",
+    "Azafran: Mi objetivo en las nieblas son los licántropos. Sus secretos biológicos son la clave de mi investigación personal.",
+    "Daragat: ¡Te ayudaré con mi luz, Azafrán! ¡Y también a Barbara a buscar a su abuela Violeta!",
+    "Rosa: Me habría gustado ver ese palacio de Zybilna, seguro que su guardiana tenía tanto glamour como yo.",
+    "Barbara: Si Daragat y Huguito no fueron retenidos por las hadas, encontraré a mi abuela donde sea. Mi honor es mi brújula."
+  ]},
+  { "id": "WP30_13", "party": ["Barbara", "Rosa", "Azafran", "Solana"], "leader": "Solana", "mood": "determined", "dialogue": [
+    "Solana: Barovia nos llama y el alma de Dago no puede esperar más tiempo en el vacío de estas armas.",
+    "Barbara: Mi corazón noble está herido... busqué a Violeta en cada pasillo de este antro y no la encontré. Mi abuela no está aquí.",
+    "Rosa: ¡Ay, Solana! Un poco de glamour heróico no mata a nadie. Adirem, aunque solo soy tu cuidadora, mi alma ya te pertenece.",
+    "Azafran: El viaje será largo. Los secretos de los hombres lobo que busco están enterrados en esas tierras de niebla.",
+    "Solana: El destino es un hilo tenso. ¡Vámonos! No quiero que Dago termine como el pobre Basal.",
+    "Barbara: Si lograsteis escapar de las garras feéricas, encontraré a mi abuela Violeta en cualquier otro lugar del mundo.",
+    "Rosa: Adirem, mamá te protegerá con el mandato sagrado de Mystra y con mi propia pistola heróica.",
+    "Azafran: Necesito café real y una ducha. La ceniza de este volcán es un residuo material inaceptable para mi uniforme."
+  ]},
+  { "id": "WP30_14", "party": ["Barbara", "Rosa", "Lulu", "Daragat"], "leader": "Rosa", "mood": "protective", "dialogue": [
+    "Rosa: ¡Ya estamos fuera, mis valientes! Rosa os ha sacado del volcán con su carisma heróico. Adirem, mira qué victoria divina.",
+    "Daragat: ¡Lathander nos bendice! Huguito me dijo que el Feywild era peligroso, ¡pero Barovia suena a leyenda mayor!",
+    "Lulu: ¡Miau! ¡Barbara, no llores! ¡La abuela Violeta debe estar en un sitio con más flores!",
+    "Barbara: Busqué en cada sombra de este calabozo y Violeta no estaba... mi abuela sigue lejos del alcance de mi mano noble.",
+    "Rosa: ¡La encontraremos, te lo juro por Mystra! Mi deber como tu protectora, Adirem, es asegurarme de que el mal no te toque.",
+    "Daragat: ¡Y conoceremos al Señor del Alba juntos! ¡Mi luz siempre estará a tu lado, Barbara!",
+    "Lulu: ¡Yo usaré mi curiosidad de gato para encontrar su rastro! ¡Ningún vampiro podrá esconderse de mí!",
+    "Barbara: Si Daragat y Huguito vencieron a las brujas, las sombras de Barovia también caerán ante mi furia."
+  ]},
+  { "id": "WP30_15", "party": ["Barbara", "Rosa", "Lulu", "Solana"], "leader": "Lulu", "mood": "tense", "dialogue": [
+    "Lulu: ¡Miau! El sol quema un poco, pero es mejor que el fuego del volcán. ¿Había sol en el Feywild, Daragat?",
+    "Solana: El sol de allí era una mentira, Lulu. Dago nos necesita en Barovia para encontrar la verdadera luz.",
+    "Rosa: ¡Qué heróicamente dramática eres! Disfruta de la victoria, que nos la ganamos como cuando ellos salvaron a Zybilna.",
+    "Barbara: Mi nobleza se siente sola... Violeta no estaba aquí. Mi abuela sigue perdida en el rastro del mundo.",
+    "Lulu: ¡Barbara, yo te cuidaré! ¡Exploraremos cada castillo de Barovia hasta que encontremos a tu abuela!",
+    "Solana: No miren hacia atrás. No quiero que el alma de Dago se pierda en el vacío como le pasó a Basal.",
+    "Rosa: Adirem, aunque Mystra me ordenó cuidarte, te has vuelto mi accesorio divino favorito. ¡Mira qué pose tengo!",
+    "Barbara: Si escapasteis de los caprichos feéricos, encontraré a mi abuela aunque deba mover montañas con mi hacha."
+  ]},
+  { "id": "WP30_16", "party": ["Barbara", "Rosa", "Daragat", "Solana"], "leader": "Daragat", "mood": "curious", "dialogue": [
+    "Daragat: ¿En Barovia nos darán una bienvenida heróica? Tras el Feywild, siento que mi fe puede iluminar hasta a Strahd.",
+    "Rosa: ¡Rosa será la reina de las nieblas! Adirem, pequeña, mamá te cuidará bajo el mandato sagrado de la diosa.",
+    "Barbara: He mirado en cada rincón de este sitio y Violeta no estaba... mi abuela sigue lejos de mi corazón noble.",
+    "Solana: En Barovia solo recibirás sospechas, niño. Dago es el único motivo para cruzar la frontera ahora.",
+    "Daragat: ¡Pues iluminaré hasta el último rincón para que Barbara encuentre a su abuela Violeta!",
+    "Rosa: Me hubiera gustado ver ese Feywild, seguro que las hadas tenían un sentido de la moda muy divino.",
+    "Barbara: Si vosotros vencisteis a las hadas, yo venceré a la distancia. Encontraré a mi familia cueste lo que cueste.",
+    "Solana: El alma de Dago clama por su redención. ¡Muevan las piernas! No quiero terminar como el pobre Basal."
+  ]},
+  { "id": "WP30_17", "party": ["Barbara", "Azafran", "Lulu", "Daragat"], "leader": "Azafran", "mood": "analytical", "dialogue": [
+    "Azafran: Misión finalizada. Iniciando fase de viaje. Debo encontrar a esos hombres lobo y descubrir sus secretos en Barovia.",
+    "Lulu: ¡Miau! ¡Azafrán, siempre con los planes! ¿Daragat y Huguito hacían planes así de aburridos con Zybilna?",
+    "Barbara: Violeta no estaba aquí, Lulu... este calabozo estaba vacío de mi sangre. Mi nobleza exige un nuevo rumbo.",
+    "Daragat: ¡Lathander nos guiará! ¡Y conoceré al Señor del Alba después de recuperar el alma de Dago!",
+    "Azafran: El rendimiento del grupo ha sido de un 94%. Necesitamos optimizar el descanso antes de la siguiente frontera.",
+    "Lulu: ¡Barbara, yo usaré mi curiosidad de gato para encontrar a la abuela Violeta! ¡Lo prometo por mi cola!",
+    "Barbara: Si vosotros lograsteis salir victoriosos del Feywild, yo encontraré a mi familia. Mi furia noble es mi motor.",
+    "Daragat: Llave dice que está lista para Barovia. ¡Siento que estamos a punto de entrar en una leyenda mayor!"
+  ]},
+  { "id": "WP30_18", "party": ["Barbara", "Azafran", "Lulu", "Solana"], "leader": "Solana", "mood": "focused", "dialogue": [
+    "Solana: El alma de Dago está llamando. No pierdan tiempo; Barovia es nuestro presente inevitable y peligroso.",
+    "Barbara: Busqué en cada sala de este calabozo y Violeta no estaba... mi nobleza se siente vacía sin mi abuela.",
+    "Lulu: ¡Miau! ¡Barbara, no estés triste! ¡En Barovia habrá cosas increíbles que explorar con mi nariz!",
+    "Azafran: Mi objetivo son los licántropos. Sus secretos biológicos en las nieblas son mi prioridad absoluta.",
+    "Solana: No miren atrás. No quiero que Dago termine como Basal, atrapado en un plano extraño de la existencia.",
+    "Barbara: Si vencisteis en el Feywild, encontraré a Violeta donde sea. Mi furia noble no conoce la fatiga.",
+    "Lulu: ¿Crees que la abuela Violeta tenga un gato heróico como yo? ¡Seguro que somos familia!",
+    "Azafran: Aseguren a Blackrazor. Sus emanaciones podrían afectar nuestra estabilidad mental durante el viaje a las nieblas."
+  ]},
+  { "id": "WP30_19", "party": ["Barbara", "Azafran", "Daragat", "Solana"], "leader": "Daragat", "mood": "sarcastic", "dialogue": [
+    "Daragat: ¡Genial! Salimos del horno para ir al refrigerador. Lathander, ¿no había una playa en el camino?",
+    "Solana: El alma de Dago no tiene tiempo para tus quejas, niño. Las nieblas nos esperan con hambre.",
+    "Barbara: Violeta no estaba en este volcán... mi búsqueda continúa. Mi nobleza exige que no me rinda.",
+    "Azafran: El sarcasmo no acelera el viaje. Mi investigación sobre los hombres lobo requiere toda nuestra atención.",
+    "Daragat: Huguito me dijo que las hadas eran divertidas antes de intentar mataros. ¡Barovia suena a sitio aburrido!",
+    "Solana: Es un sitio de redención, no de diversión. ¡Muevan las piernas o terminaremos como Basal!",
+    "Barbara: Si lograsteis salir de las tierras feéricas, encontraré a Violeta aunque deba romper el mundo.",
+    "Azafran: Necesito café y suministros. La logística en las tierras de Strahd será nuestra próxima métrica de éxito."
+  ]},
+  { "id": "WP30_20", "party": ["Barbara", "Lulu", "Daragat", "Solana"], "leader": "Lulu", "mood": "shy", "dialogue": [
+    "Lulu: Barbara, ¿me das un abrazo heróico, miau? Sé que estás triste por no encontrar a la abuela Violeta aquí.",
+    "Daragat: ¡Lathander nos guiará! ¡Yo también te ayudaré, Barbara, con toda mi luz divina!",
+    "Solana: El afecto es bueno, pero el tiempo corre. Barovia espera el alma de Dago y no podemos tardar.",
+    "Barbara: Gracias, pequeños. Vuestra nobleza me reconforta. Si Daragat y Huguito vencieron en el Feywild, yo la encontraré.",
+    "Lulu: ¡La encontraremos, te lo juro! ¡Mi curiosidad de gato no dejará ni una piedra sin oler en Barovia!",
+    "Daragat: ¡Conoceremos al Señor del Alba después de esto! ¡Siento que nada puede detenernos!",
+    "Solana: Caminen con determinación. El destino de Dago está en juego y no quiero que se pierda como Basal.",
+    "Barbara: Mi furia noble arde más que este volcán. Violeta aparecerá, el honor de mi linaje lo exige."
+  ]},
+  { "id": "WP30_21", "party": ["Huguito", "Rosa", "Azafran", "Lulu"], "leader": "Huguito", "mood": "happy", "dialogue": [
+    "Huguito: ¡Huguito, el chiquito, dice que el aire libre es el objeto material más hermoso de la creación!",
+    "Rosa: ¡Claro que sí, corazón! Eres un héroe divino. Adirem, aunque Mystra me encomendó cuidarte, te quiero heróicamente.",
+    "Azafran: Estado del grupo: Estable. Ahora a Barovia; los secretos de los licántropos son mi próxima meta científica.",
+    "Lulu: ¡Miau! ¡Estamos fuera! ¿Huguito, fue así de emocionante cuando salvaron a Zybilna de las tres brujas?",
+    "Huguito: Espero que el maestro Rilae me vea y sepa que su alumno ha madurado materialmente tras salir de Prismalia.",
+    "Rosa: ¡Y con mucho estilo! Mi mandato es proteger a Adirem, pero también conquistar Barovia con glamour.",
+    "Azafran: Necesito café. Huguito, deja de revisar tus botones y ayuda con el inventario de raciones.",
+    "Lulu: ¡Yo quiero ver si en Barovia hay pájaros que brillen! ¡Vamos a explorar todo con mi curiosidad!"
+  ]},
+  { "id": "WP30_22", "party": ["Huguito", "Rosa", "Azafran", "Daragat"], "leader": "Azafran", "mood": "serious", "dialogue": [
+    "Azafran: Misión completada. Próximo objetivo: Barovia. Debo descifrar los secretos de los hombres lobo allí.",
+    "Daragat: ¡Sí! ¡Y conoceré a Lathander! Huguito, ¿el Feywild era un paseo heróico como este volcán?",
+    "Rosa: ¡Exacto! Rosa cuidará de Adirem bajo el resplandor de Mystra. ¡Seremos las heroínas de las nieblas!",
+    "Huguito: ¡Huguito, el chiquito, dice que su única prioridad material es una cama sin brujas ni ghouls!",
+    "Azafran: Mantengan la disciplina táctica. Barovia es una anomalía de la que debemos escapar con el alma de Dago.",
+    "Daragat: ¡Iluminaré cada rastro para que todos estemos a salvo! ¡La luz de Lathander nunca se apaga!",
+    "Rosa: Mira qué bien nos sienta el sol. Adirem, mi deber de protegerte es la joya más divina de mi corona.",
+    "Huguito: Basal siempre decía que el peligro acecha, espero que esté bien en su plano extraño de la existencia."
+  ]},
+  { "id": "WP30_23", "party": ["Huguito", "Rosa", "Azafran", "Solana"], "leader": "Solana", "mood": "determined", "dialogue": [
+    "Solana: No celebren. El alma de Dago aún no está a salvo y Barovia es un laberinto de sombras.",
+    "Rosa: ¡Qué intensa! Pero Rosa tiene suficiente luz de Mystra para cuidar de Adirem y deslumbrar en las nieblas.",
+    "Azafran: Mi prioridad son los licántropos. Sus secretos biológicos en Barovia son clave para mi investigación.",
+    "Huguito: ¡Huguito, el chiquito, dice que prefiere no tentar a la suerte material con viajes tan oscuros!",
+    "Solana: El tiempo corre. No quiero que Dago termine como el pobre Basal, perdido para siempre.",
+    "Rosa: Adirem, mamá te protegerá. Mystra me dio este encargo, pero mi corazón heróico es el que manda ahora.",
+    "Azafran: Aseguren el equipo. El café de Barovia es una incógnita logística que me preocupa seriamente.",
+    "Huguito: ¡El maestro Rilae estaría asustado de verme ir hacia las nieblas! Pero soy un aventurero de Prismalia."
+  ]},
+  { "id": "WP30_24", "party": ["Huguito", "Rosa", "Lulu", "Daragat"], "leader": "Rosa", "mood": "happy", "dialogue": [
+    "Rosa: ¡Victoria heróica! ¡Salimos del volcán con tesoros y gloria! Adirem, mi misión divina ha sido un éxito.",
+    "Lulu: ¡Miau! ¡Héroes con pelaje y garras frescas tras el colapso! ¿Huguito, Zybilna nos daría un premio?",
+    "Daragat: ¡Lathander nos bendice! ¡Siento que después de lo del Feywild nada puede detener a este equipo!",
+    "Huguito: ¡Huguito, el chiquito, dice que la ceniza material no es su accesorio favorito! ¡A la ducha!",
+    "Rosa: Miradnos, parecemos sacados de una leyenda divina. Barovia será testigo de mi heroísmo como cuidadora.",
+    "Lulu: ¡Quiero ver si los ratones de Barovia saben jugar al escondite! ¡Será muy divertido explorar!",
+    "Daragat: ¡Conoceremos al Señor del Alba juntos! ¡Siento que mi fe es más grande que este volcán!",
+    "Huguito: Siento que Basal y los otros estarían riéndose de mi cara de susto material ahora mismo."
+  ]},
+  { "id": "WP30_25", "party": ["Huguito", "Rosa", "Lulu", "Solana"], "leader": "Huguito", "mood": "anxious", "dialogue": [
+    "Huguito: ¡Huguito, el chiquito, teme que las nieblas de Barovia sean muy poco higiénicas para su ropa!",
+    "Rosa: Descuida, corazón. Rosa te protegerá con su aura de Mystra. Adirem, mamá no dejará que te ensucies.",
+    "Lulu: ¡Miau! Solana, ¿en Barovia hay árboles altos para ver el mundo o solo hay niebla fea?",
+    "Solana: En Barovia los árboles tienen secretos, Lulu. Dago nos guiará si somos rápidos y valientes.",
+    "Huguito: Después de lo que Daragat, Dago y yo pasamos con las brujas, mi confianza material es nula.",
+    "Rosa: Adirem, mira qué asustadizo es el tío Huguito. ¡Rosa le enseñará a ser un héroe con estilo!",
+    "Lulu: ¡Espero que la abuela de Barbara esté en un sitio con mucha leche de cabra feérica!",
+    "Solana: No se distraigan. El alma de Dago no puede esperar más tiempo en el vacío de Strahd."
+  ]},
+  { "id": "WP30_26", "party": ["Huguito", "Rosa", "Daragat", "Solana"], "leader": "Daragat", "mood": "sarcastic", "dialogue": [
+    "Daragat: ¡Genial! Salimos de la barbacoa para ir al refrigerador. Lathander tiene un sentido del humor frío.",
+    "Rosa: ¡Rosa y su pistola heróica iluminarán hasta el rincón más oscuro de Barovia! ¡Mira mi pose divina!",
+    "Solana: Tu sarcasmo es un escudo frágil, niño. Las nieblas no perdonan a los que no tienen propósito.",
+    "Huguito: ¡Huguito, el chiquito, dice que su propósito material es llegar vivo a una posada con chimenea!",
+    "Daragat: Huguito me dijo que las hadas eran más divertidas que los vampiros. ¡Espero que se equivoque!",
+    "Rosa: ¡Ay, Solana! Deja que el niño bromee. Es muy heróico reírse ante el destino oscuro de Adirem y todos.",
+    "Solana: El alma de Dago reclama justicia. ¡Muevan las piernas o terminaremos como el pobre Basal!",
+    "Huguito: Basal siempre decía que éramos imanes de desgracias materiales... y tenía toda la razón."
+  ]},
+  { "id": "WP30_27", "party": ["Huguito", "Azafran", "Lulu", "Daragat"], "leader": "Azafran", "mood": "focused", "dialogue": [
+    "Azafran: Misión finalizada. Iniciando logística para el cruce hacia Barovia. Busco secretos de hombres lobo.",
+    "Lulu: ¡Miau! ¡Azafrán es muy seria! ¿Huguito, Daragat y Dago hacíais tantos planes con Zybilna?",
+    "Daragat: ¡Lathander ilumine nuestro camino! ¡Siento que estamos a punto de entrar en una leyenda mayor!",
+    "Huguito: ¡Huguito, el chiquito, dice que sus piernas materiales no están listas para leyendas mayores!",
+    "Azafran: Huguito, deja de revisar tus botones y ayuda a cargar el equipo no metálico de forma eficiente.",
+    "Lulu: ¡Vamos a explorar todo Barovia hasta encontrar a la abuela de Barbara y muchos ratones heróicos!",
+    "Daragat: Llave dice que está lista para Barovia. ¡Conoceremos al Señor del Alba muy pronto!",
+    "Huguito: El maestro Rilae me dijo que creciera, pero esto de ser aventurero es muy estresante para mi lino."
+  ]},
+  { "id": "WP30_28", "party": ["Huguito", "Azafran", "Lulu", "Solana"], "leader": "Solana", "mood": "grim", "dialogue": [
+    "Solana: El volcán quedó atrás, pero la verdadera sombra nos espera. Barovia reclama el alma de Dago.",
+    "Azafran: Protocolo de marcha iniciado. Mis objetivos son los hombres lobo; sus secretos son mi prioridad.",
+    "Lulu: ¡Miau! ¡Solana siempre me da escalofríos! ¡Azafrán, dale un poco de café a ver si se alegra!",
+    "Huguito: ¡Huguito, el chiquito, dice que prefiere los escalofríos materiales a los de la magia de Strahd!",
+    "Solana: No quiero que Dago termine como Basal, perdido en un plano extraño. ¡Debemos darnos prisa!",
+    "Azafran: Aseguren a Blackrazor. Sus emanaciones mágicas son peligrosas para nuestra estabilidad mental.",
+    "Lulu: ¿Crees que en Barovia haya ratones que hablen como en las historias de Daragat sobre el Feywild?",
+    "Huguito: Basal estaría muy preocupado por esta expedición a las nieblas, y yo también lo estoy materialmente."
+  ]},
+  { "id": "WP30_29", "party": ["Huguito", "Azafran", "Daragat", "Solana"], "leader": "Daragat", "mood": "hopeful", "dialogue": [
+    "Daragat: ¡Miren ese cielo! ¡Lathander nos ha sacado del abismo! ¡Estamos listos para Barovia!",
+    "Azafran: El optimismo no es una variable táctica. Busco respuestas sobre los licántropos en esas tierras.",
+    "Solana: No se confíen. La oscuridad de Barovia es infinita y no quiero que Dago desaparezca como Basal.",
+    "Huguito: ¡Huguito, el chiquito, dice que prefiere las rutas materiales que tienen paradas para merendar!",
+    "Daragat: ¡Siento que después de lo del Feywild este equipo es imparable bajo cualquier sol divino!",
+    "Azafran: (Bebiendo café) Aseguren el tridente y el martillo. Sus emanaciones son detectables a distancia.",
+    "Solana: El alma de Dago reclama su hogar. ¡No se detengan ahora por una simple luz de sol!",
+    "Huguito: Siento que esta aventura va a acabar conmigo antes de que lleguemos a ver una sola niebla."
+  ]},
+  { "id": "WP30_30", "party": ["Huguito", "Lulu", "Daragat", "Solana"], "leader": "Lulu", "mood": "curious", "dialogue": [
+    "Lulu: ¿Si en Barovia siempre hay niebla, miau, cómo saben cuándo es hora de desayunar pescado?",
+    "Daragat: ¡Lathander! ¡Yo llevaré la luz para que sepamos la hora heróica de comer! ¡No temas!",
+    "Solana: En Barovia el tiempo se mide por el miedo y la sangre, Lulu. No habrá desayunos tranquilos.",
+    "Huguito: ¡Huguito, el chiquito, dice que el hambre material no conoce de nieblas ni de destinos!",
+    "Lulu: ¡Daragat, cuéntame otra vez lo de las tres brujas! ¿Zybilna nos daría leche si estuviera aquí?",
+    "Daragat: Llave está de acuerdo, él también quiere saber cuándo toca descansar bajo el Señor del Alba.",
+    "Solana: El alma de Dago tiene hambre de justicia. ¡Muevan las piernas, el destino nos llama!",
+    "Huguito: Basal y yo estamos de acuerdo en que esto de ser héroes materiales es muy cansado."
+  ]},
+  { "id": "WP30_31", "party": ["Rosa", "Azafran", "Lulu", "Daragat"], "leader": "Rosa", "mood": "flirty", "dialogue": [
+    "Rosa: Azafrán, ¿no te parece que este sol resalta mi carisma heróico? Mystra me dio la misión de cuidar a Adirem.",
+    "Azafran: Me parece que tu pistola necesita limpieza y Barovia no es una pasarela. Busco hombres lobo.",
+    "Lulu: ¡Miau! ¡Azafrán es tan romántica como un trozo de hierro frío! ¡Exploremos todo, sí!",
+    "Daragat: ¡Lathander dice que la luz siempre vence! Huguito y yo sabemos que el Feywild era peor.",
+    "Rosa: Adirem, mamá será la gloria heróica de las nieblas. ¡Mira qué brillo tengo, Azafrán!",
+    "Azafran: La eficiencia táctica es lo único que nos mantendrá vivos. No malgastes energía posando.",
+    "Lulu: ¡Yo quiero ver si hay ratones que brillen en la oscuridad como en las historias de Daragat!",
+    "Daragat: Siento que este equipo es lo mejor que me ha pasado después de Llave. ¡A la carga!"
+  ]},
+  { "id": "WP30_32", "party": ["Rosa", "Azafran", "Lulu", "Solana"], "leader": "Solana", "mood": "determined", "dialogue": [
+    "Solana: Barovia nos aguarda. El alma de Dago reclama su lugar y no descansaré hasta llegar.",
+    "Azafran: Entendido. Busco secretos de licántropos allí; sus patrones biológicos son mi prioridad absoluta.",
+    "Lulu: ¡Miau! ¡Azafrán, siempre tan seria! ¿Habrá árboles altos para ver el mundo en las nieblas?",
+    "Rosa: ¡Rosa tiene suficiente luz para cuidar de Adirem e iluminar Barovia entera! ¡Mira mi glamour!",
+    "Solana: Las nieblas son una prueba de espíritu. No quiero que terminemos perdidos como el pobre Basal.",
+    "Azafran: (Bebiendo café) Aseguren las raciones. La logística en las tierras de Strahd será compleja.",
+    "Lulu: ¡Espero que la abuela de Barbara esté en un sitio con mucha leche! ¡Vamos a buscarla!",
+    "Rosa: Adirem, mamá te protegerá. Si ellos salvaron a Zybilna, nosotras conquistaremos Barovia."
+  ]},
+  { "id": "WP30_33", "party": ["Rosa", "Azafran", "Daragat", "Solana"], "leader": "Azafran", "mood": "serious", "dialogue": [
+    "Azafran: Informe: Reliquias aseguradas. Destino: Barovia. Debo descifrar los secretos de los hombres lobo.",
+    "Rosa: Adirem está intentando aplaudir tu seriedad, Azafrán, aunque seas aburrida. ¡Qué cuidadora heróica soy!",
+    "Daragat: ¡Lathander bendiga nuestras armas! ¡Estamos listos para la gloria tras vencer a las brujas!",
+    "Solana: El alma de Dago no puede esperar. El Zigurat es historia; Barovia es nuestro presente inevitable.",
+    "Azafran: Mantengan la disciplina táctica en la marcha. El éxito depende de la coordinación constante.",
+    "Rosa: ¡Nadie detiene a la enviada de Mystra! ¡Adirem, mira qué equipo de leyendas heróicas somos!",
+    "Daragat: ¡Conoceremos al Señor del Alba pronto! ¡Siento que estamos a punto de entrar en una leyenda!",
+    "Solana: El destino está de nuestro lado. No quiero que nadie termine como Basal en un plano extraño."
+  ]},
+  { "id": "WP30_34", "party": ["Rosa", "Lulu", "Daragat", "Solana"], "leader": "Rosa", "mood": "heroic", "dialogue": [
+    "Rosa: ¡Nadie puede con nosotros! ¡Somos los héroes de la montaña y pronto de Barovia! ¡Qué divino!",
+    "Lulu: ¡Miau! ¡Héroes con pelaje y garras frescas tras el colapso volcánico! ¡A por la aventura!",
+    "Daragat: ¡Y héroes con dragones que ahora parecen cometas! ¡Lathander nos guía hacia la victoria!",
+    "Solana: El alma de Dago nos guía. Sigamos adelante con fuerza y fe absoluta hacia las nieblas.",
+    "Rosa: Adirem, mamá te ha traído tesoros y una leyenda heróica que contarás por siempre.",
+    "Lulu: ¿Crees que en Barovia nos den pescado por salvar a Zybilna y recuperar el alma de Dago?",
+    "Daragat: Siento que después de vencer aquí y en el Feywild, cualquier cosa es posible para nosotros.",
+    "Solana: No miren atrás. El pasado es ceniza noble, el futuro es redención en las tierras de Strahd."
+  ]},
+  { "id": "WP30_35", "party": ["Azafran", "Lulu", "Daragat", "Solana"], "leader": "Azafran", "mood": "analytical", "dialogue": [
+    "Azafran: Probabilidad de éxito en Barovia: 78%. Debo encontrar a los licántropos y sus secretos biológicos.",
+    "Lulu: ¡Miau! ¡Azafrán es la mejor capitana! ¿Habrá ratones heróicos en las nieblas, miau?",
+    "Daragat: ¡Lathander bendiga tu cerebro! ¡Hoy brillamos gracias a tu estrategia divina tras el Feywild!",
+    "Solana: Que esa luz nos lleve más allá de las nieblas. Dago nos necesita para recuperar su alma.",
+    "Azafran: Tomen un descanso de 15 minutos. Después, iniciaremos la marcha forzada hacia el este.",
+    "Lulu: ¡Yo usaré mi curiosidad de gato para encontrar la salida más rápida de Barovia!",
+    "Daragat: ¡Siento que con estas armas, el mal de Strahd no tiene ninguna oportunidad material!",
+    "Solana: El alma reclama su hogar. No hay vuelta atrás ahora. Barovia nos espera."
+  ]}
+]
