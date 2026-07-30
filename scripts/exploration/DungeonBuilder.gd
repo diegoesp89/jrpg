@@ -5,7 +5,7 @@ class_name DungeonBuilder
 const TILE_SIZE: float = 2.0
 
 # Tile types
-enum Tile { EMPTY = 0, FLOOR = 1, WALL = 2, DOOR = 3, NPC = 4, CHEST = 5, COMBAT_TRIGGER = 6, TRAP = 7, BOSS_TRIGGER = 8, EXIT = 9 }
+enum Tile { EMPTY = 0, FLOOR = 1, WALL = 2, DOOR = 3, NPC = 4, CHEST = 5, COMBAT_TRIGGER = 6, TRAP = 7, BOSS_TRIGGER = 8, EXIT = 9, RIDDLE_GATE = 10 }
 
 # Colors for placeholder sprites
 const WALL_COLOR = Color(0.4, 0.4, 0.45)
@@ -19,37 +19,34 @@ const DOOR_BORDER = Color(0.35, 0.2, 0.05)
 const FLOOR_COLOR = Color(0.25, 0.22, 0.2)
 const FLOOR_ALT_COLOR = Color(0.28, 0.25, 0.22)
 
-# Dungeon map: 25 columns x 20 rows
-# Layout:
-#   Sala 1 (Entrada + NPC) top-left
-#   Pasillo Norte (vertical going down)
-#   CombatTrigger #1 in hallway
-#   Sala 2 (Bifurcación) center
-#   Sala 3 (left branch: Door + Chest)
-#   Sala 4 (right branch: Trap + CombatTrigger #2)
-#   Sala 5 (Boss room) bottom center
+# Dungeon map: 25 columns x 20 rows.
+# Orientado como el mapa de referencia de White Plume Mountain: la entrada (Zona 1) está
+# abajo del array (fila 19, "sur"); se avanza hacia filas menores ("norte") a través de un
+# pasillo con el primer encuentro, hasta la puerta de la Esfinge. Ahí el mapa se abre a un
+# hub que se bifurca en 3 caminos explorables en cualquier orden; las 3 ramas convergen y
+# llevan al corredor final con el boss y la salida, arriba del todo (fila 0).
 var dungeon_map: Array = [
 	#  0  1  2  3  4  5  6  7  8  9  10 11 12 13 14 15 16 17 18 19 20 21 22 23 24
-	[2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], # row 0
-	[2, 1, 1, 1, 1, 1, 1, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], # row 1 - Sala 1
-	[2, 1, 4, 1, 1, 1, 1, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], # row 2 - NPC
-	[2, 1, 1, 1, 1, 1, 1, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], # row 3
-	[2, 2, 2, 1, 1, 2, 2, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], # row 4
-	[0, 0, 2, 1, 1, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], # row 5 - Pasillo
-	[0, 0, 2, 6, 1, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], # row 6 - Combat #1
-	[0, 0, 2, 1, 1, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], # row 7
-	[2, 2, 2, 1, 1, 2, 2, 2, 2, 2, 2, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], # row 8 - Sala 2 top
-	[2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], # row 9
-	[2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], # row 10 - Sala 2
-	[2, 1, 1, 2, 2, 1, 1, 2, 2, 1, 1, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], # row 11
-	[2, 1, 1, 2, 0, 0, 0, 0, 2, 1, 1, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], # row 12 - Branches
-	[2, 1, 5, 2, 0, 0, 0, 0, 2, 7, 1, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], # row 13 - Sala3: Chest | Sala4: Trap
-	[2, 3, 1, 2, 0, 0, 0, 0, 2, 6, 1, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], # row 14 - Door | Combat #2
-	[2, 1, 1, 2, 0, 0, 0, 0, 2, 1, 1, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], # row 15
-	[2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], # row 16 - Reconnect
-	[0, 2, 2, 2, 1, 1, 1, 1, 2, 2, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], # row 17 - Sala 5 top
-	[0, 0, 2, 1, 1, 8, 1, 1, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], # row 18 - Boss
-	[0, 0, 2, 2, 2, 9, 2, 2, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], # row 19 - Exit
+	[0, 0, 2, 2, 2, 9, 2, 2, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], # row 0 - Exit
+	[0, 0, 2, 1, 1, 8, 1, 1, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], # row 1 - Boss
+	[0, 2, 2, 2, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0], # row 2 - Sala 5 top
+	[2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0], # row 3 - Reconnect (las 3 ramas convergen)
+	[2, 1, 1, 2, 0, 0, 0, 0, 2, 1, 1, 2, 2, 1, 1, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0], # row 4
+	[2, 3, 1, 2, 0, 0, 0, 0, 2, 6, 1, 2, 2, 1, 1, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0], # row 5 - Door | Combat #2 | (placeholder)
+	[2, 1, 5, 2, 0, 0, 0, 0, 2, 7, 1, 2, 2, 1, 1, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0], # row 6 - Chest | Trap | (placeholder)
+	[2, 1, 1, 2, 0, 0, 0, 0, 2, 1, 1, 2, 2, 1, 1, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0], # row 7 - Rama Whelm | Rama Wave | Rama Blackrazor (placeholder)
+	[2, 1, 1, 2, 2, 2, 2, 2, 2, 1, 1, 2, 2, 1, 1, 2, 2, 0, 0, 0, 0, 0, 0, 0, 0], # row 8 - gaps: rama izq/centro/der
+	[2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 0, 0, 0, 0, 0, 0, 0, 0], # row 9 - Hub
+	[2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 0, 0, 0, 0, 0, 0, 0, 0], # row 10 - Hub (3 ramas)
+	[2, 2, 2, 10, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 0, 0, 0, 0, 0, 0, 0, 0], # row 11 - RiddleGate (Esfinge) + Hub top
+	[0, 0, 2, 1, 1, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], # row 12
+	[0, 0, 2, 6, 1, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], # row 13 - Combat #1
+	[0, 0, 2, 1, 1, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], # row 14 - Pasillo
+	[2, 2, 2, 1, 1, 2, 2, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], # row 15
+	[2, 1, 1, 1, 1, 1, 1, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], # row 16
+	[2, 1, 4, 1, 1, 1, 1, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], # row 17 - NPC (Zona 1: Entrada)
+	[2, 1, 1, 1, 1, 1, 1, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], # row 18
+	[2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], # row 19 - Zona 1 (Entrada), pared sur
 ]
 
 var _wall_nodes: Array[Node3D] = []
@@ -80,6 +77,7 @@ func _build_dungeon() -> void:
 	_wall_texture = _create_rect_texture(WALL_COLOR, WALL_BORDER, 32, 48)
 	_build_floor()
 	_build_walls_and_entities()
+	_create_random_encounter_zones()
 
 func _build_floor() -> void:
 	# Count floor tiles to determine floor extent
@@ -143,6 +141,8 @@ func _build_walls_and_entities() -> void:
 					_create_boss_trigger(pos)
 				Tile.EXIT:
 					_create_exit(pos)
+				Tile.RIDDLE_GATE:
+					_create_riddle_gate(pos)
 
 func _create_wall(pos: Vector3, col: int, row: int) -> void:
 	var wall = StaticBody3D.new()
@@ -190,16 +190,12 @@ func _create_wall(pos: Vector3, col: int, row: int) -> void:
 			wall.add_child(mesh_instance)
 			face_idx += 1
 
-	# If no exposed faces (surrounded by walls), add a top cap so it's visible from above
+	# A wall tile with no exposed faces is fully surrounded by other walls — no floor tile
+	# is ever adjacent to it, so the player can never be next to it. Skip it entirely:
+	# the old "top cap so it's visible from above" fallback rendered a lone floating plane
+	# with no wall geometry beneath it, showing up as a stray panel from oblique angles.
 	if face_idx == 0:
-		var cap = MeshInstance3D.new()
-		cap.name = "WallCap"
-		var plane = PlaneMesh.new()
-		plane.size = Vector2(TILE_SIZE - 0.05, TILE_SIZE - 0.05)
-		cap.mesh = plane
-		cap.material_override = _make_fog_color_material(WALL_COLOR * 0.8)
-		cap.position = Vector3(0, 3.0, 0)
-		wall.add_child(cap)
+		return
 
 	# Add Occludable as child node
 	var occludable_script = load("res://scripts/exploration/Occludable.gd")
@@ -303,9 +299,9 @@ func _create_combat_trigger(pos: Vector3, col: int, row: int) -> void:
 	var trigger_script = load("res://scripts/exploration/CombatTrigger.gd")
 	var trigger = Area3D.new()
 	# Determine encounter based on position
-	if row == 6:
+	if row == 13:
 		trigger.name = "CombatTrigger_hallway"
-	elif row == 14:
+	elif row == 5:
 		trigger.name = "CombatTrigger_golem"
 	else:
 		trigger.name = "CombatTrigger_%d_%d" % [col, row]
@@ -356,6 +352,58 @@ func _create_trap(pos: Vector3) -> void:
 
 	add_child(trap)
 
+func _create_riddle_gate(pos: Vector3) -> void:
+	var gate_script = load("res://scripts/exploration/RiddleGate.gd")
+	var gate = StaticBody3D.new()
+	gate.name = "RiddleGate"
+	gate.position = pos
+	gate.collision_layer = 1 | 4  # world (blocks player) + interactable
+	gate.collision_mask = 0
+
+	var col_shape = CollisionShape3D.new()
+	var box = BoxShape3D.new()
+	box.size = Vector3(TILE_SIZE, 3.0, TILE_SIZE)
+	col_shape.shape = box
+	col_shape.position = Vector3(0, 1.5, 0)
+	gate.add_child(col_shape)
+
+	var sprite = Sprite3D.new()
+	sprite.name = "Sprite3D"
+	sprite.pixel_size = 0.03
+	sprite.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	sprite.alpha_cut = SpriteBase3D.ALPHA_CUT_OPAQUE_PREPASS
+	sprite.texture = _create_rect_texture(Color(0.55, 0.15, 0.55), Color(0.3, 0.05, 0.3), 32, 48)
+	sprite.position = Vector3(0, 1.2, 0)
+	gate.add_child(sprite)
+
+	if gate_script:
+		gate.set_script(gate_script)
+
+	add_child(gate)
+
+func _create_random_encounter_zones() -> void:
+	# Pasillo corridor (cols 3-4, rows 12-14): ambient random encounters, no visible sprite,
+	# distinct from the fixed CombatTrigger already in the same corridor.
+	var zone_script = load("res://scripts/exploration/RandomEncounterZone.gd")
+	var zone = Area3D.new()
+	zone.name = "RandomEncounterZone_pasillo"
+	zone.position = Vector3(3.5 * TILE_SIZE, 0, 13 * TILE_SIZE)
+	zone.collision_layer = 8
+	zone.collision_mask = 2
+
+	var col_shape = CollisionShape3D.new()
+	var box = BoxShape3D.new()
+	box.size = Vector3(TILE_SIZE * 2, 2.0, TILE_SIZE * 3)
+	col_shape.shape = box
+	col_shape.position = Vector3(0, 1.0, 0)
+	zone.add_child(col_shape)
+
+	if zone_script:
+		zone.set_script(zone_script)
+		zone.encounter_ids = ["encounter_hallway"]
+
+	add_child(zone)
+
 func _create_boss_trigger(pos: Vector3) -> void:
 	var trigger_script = load("res://scripts/exploration/CombatTrigger.gd")
 	var trigger = Area3D.new()
@@ -403,17 +451,31 @@ func _create_exit(pos: Vector3) -> void:
 	exit_area.body_entered.connect(_on_exit_entered)
 	add_child(exit_area)
 
+	# Co-located story trigger: plays the WP30 exit banter (matched to the current party)
+	# before the victory screen. auto_trigger=false avoids a body_entered race with exit_area;
+	# _on_exit_entered invokes it directly and awaits completion.
+	var trigger_script = load("res://scripts/exploration/StoryTrigger.gd")
+	_wp30_trigger = Area3D.new()
+	_wp30_trigger.set_script(trigger_script)
+	_wp30_trigger.event_id = "WP30"
+	_wp30_trigger.requires_flag = "combat_encounter_boss_done"
+	_wp30_trigger.auto_trigger = false
+	add_child(_wp30_trigger)
+
 var _exit_triggered: bool = false
+var _wp30_trigger: Area3D = null
 
 func _on_exit_entered(body: Node3D) -> void:
 	if _exit_triggered:
 		return
 	if body is CharacterBody3D:
 		_exit_triggered = true
-		print("Victory! You have escaped White Plume Mountain!")
 		# Disable player movement
 		if body.has_method("set_movement_disabled"):
 			body.set_movement_disabled(true)
+		if _wp30_trigger:
+			await _wp30_trigger.play_for_current_party()
+		print("Victory! You have escaped White Plume Mountain!")
 		# Show victory screen
 		_show_victory_screen()
 
@@ -609,8 +671,8 @@ func _is_open_tile(row: int, col: int) -> bool:
 	return tile != Tile.EMPTY and tile != Tile.WALL
 
 func get_player_start_position() -> Vector3:
-	# Center of Sala 1 (row 2, col 4)
-	return Vector3(4 * TILE_SIZE, 0, 2 * TILE_SIZE)
+	# Center of Sala 1 / Zona 1 - Entrada (row 17, col 4)
+	return Vector3(4 * TILE_SIZE, 0, 17 * TILE_SIZE)
 
 func get_wall_nodes() -> Array[Node3D]:
 	return _wall_nodes

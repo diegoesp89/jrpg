@@ -15,9 +15,19 @@ var _message_label: Label
 var _card_panels: Array[PanelContainer] = []
 var _cursor_highlight: ColorRect
 
+# Feat selection step (runs after "Iniciar aventura", before the party is created)
+var _choosing_feats: bool = false
+var _feat_step: int = 0
+var _feat_selected_index: int = 0
+var _chosen_feats: Dictionary = {}  # character index -> feat id
+var _feat_panel: Control = null
+var _feat_title: Label = null
+var _feat_options_container: VBoxContainer = null
+
 func _ready() -> void:
 	_load_characters()
-	_build_ui()
+	await _build_ui()
+	_build_feat_panel()
 	_update_cursor()
 
 func _load_characters() -> void:
@@ -225,7 +235,146 @@ func _create_character_card(index: int) -> PanelContainer:
 	
 	return panel
 
+func _build_feat_panel() -> void:
+	_feat_panel = Control.new()
+	_feat_panel.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_feat_panel.visible = false
+	_root.add_child(_feat_panel)
+
+	var bg = ColorRect.new()
+	bg.color = Color(0.05, 0.05, 0.12, 0.97)
+	bg.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_feat_panel.add_child(bg)
+
+	_feat_title = Label.new()
+	_feat_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_feat_title.add_theme_font_size_override("font_size", 32)
+	_feat_title.add_theme_color_override("font_color", Color(0.9, 0.8, 0.4))
+	_feat_title.set_anchors_preset(Control.PRESET_TOP_WIDE)
+	_feat_title.offset_top = 80
+	_feat_title.offset_bottom = 140
+	_feat_panel.add_child(_feat_title)
+
+	_feat_options_container = VBoxContainer.new()
+	_feat_options_container.set_anchors_preset(Control.PRESET_CENTER)
+	_feat_options_container.offset_left = -450
+	_feat_options_container.offset_right = 450
+	_feat_options_container.offset_top = -160
+	_feat_options_container.offset_bottom = 200
+	_feat_options_container.add_theme_constant_override("separation", 18)
+	_feat_panel.add_child(_feat_options_container)
+
+	var hint = Label.new()
+	hint.text = "WASD/Flechas: Navegar  |  Z: Elegir"
+	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	hint.add_theme_font_size_override("font_size", 18)
+	hint.add_theme_color_override("font_color", Color(0.5, 0.5, 0.5))
+	hint.set_anchors_preset(Control.PRESET_BOTTOM_WIDE)
+	hint.offset_top = -60
+	hint.offset_bottom = -20
+	_feat_panel.add_child(hint)
+
+func _begin_feat_selection() -> void:
+	_choosing_feats = true
+	_feat_step = 0
+	_chosen_feats.clear()
+	_show_feat_step()
+
+func _show_feat_step() -> void:
+	var char_index = _selected_indices[_feat_step]
+	var char_data = _available_characters[char_index]
+	var pool: Array = char_data.get("feat_pool", [])
+
+	_feat_title.text = "%s — elige un feat" % char_data["name"]
+
+	for child in _feat_options_container.get_children():
+		child.queue_free()
+
+	for feat_id in pool:
+		var feat = DataLoader.get_feat(feat_id)
+		var label = Label.new()
+		label.text = "%s — %s" % [feat.get("name", feat_id), feat.get("description", "")]
+		label.add_theme_font_size_override("font_size", 20)
+		label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		label.custom_minimum_size = Vector2(900, 0)
+		_feat_options_container.add_child(label)
+
+	_feat_selected_index = 0
+	_update_feat_highlight()
+	_feat_panel.visible = true
+
+func _update_feat_highlight() -> void:
+	var children = _feat_options_container.get_children()
+	for i in range(children.size()):
+		if i == _feat_selected_index:
+			children[i].add_theme_color_override("font_color", Color(1, 0.9, 0.3))
+		else:
+			children[i].add_theme_color_override("font_color", Color(0.7, 0.7, 0.7))
+
+func _handle_feat_input(event: InputEvent) -> void:
+	if _feat_step >= _selected_indices.size():
+		return
+	var char_index = _selected_indices[_feat_step]
+	var pool: Array = _available_characters[char_index].get("feat_pool", [])
+	if pool.is_empty():
+		return
+	if event.is_action_pressed("move_up"):
+		_feat_selected_index = maxi(0, _feat_selected_index - 1)
+		_update_feat_highlight()
+		get_viewport().set_input_as_handled()
+	elif event.is_action_pressed("move_down"):
+		_feat_selected_index = mini(pool.size() - 1, _feat_selected_index + 1)
+		_update_feat_highlight()
+		get_viewport().set_input_as_handled()
+	elif event.is_action_pressed("action1"):
+		_chosen_feats[char_index] = pool[_feat_selected_index]
+		_feat_step += 1
+		if _feat_step >= _selected_indices.size():
+			_finish_feat_selection()
+		else:
+			_show_feat_step()
+		get_viewport().set_input_as_handled()
+
+func _finish_feat_selection() -> void:
+	_choosing_feats = false
+	GameState.party.clear()
+	for i in _selected_indices:
+		var c = _available_characters[i]
+		var member = GameState.create_party_member(c)
+		var feat_id = _chosen_feats.get(i, "")
+		member["feat"] = feat_id
+		_apply_feat_effects(member, feat_id)
+		GameState.party.append(member)
+
+	SceneFlow.change_scene("res://scenes/exploration/Dungeon.tscn")
+
+## Applies the feats whose effect can be resolved once, at party creation (a flat stat
+## change or a bonus skill). The rest (per-battle charges, combat-time hooks) are read
+## directly from member["feat"] by BattleController where relevant.
+func _apply_feat_effects(member: Dictionary, feat_id: String) -> void:
+	if feat_id == "":
+		return
+	var feat = DataLoader.get_feat(feat_id)
+	match feat.get("effect", ""):
+		"hp_bonus_pct":
+			var bonus: float = feat.get("value", 0)
+			member["max_hp"] = int(member["max_hp"] * (1.0 + bonus / 100.0))
+			member["hp"] = member["max_hp"]
+		"ca_bonus_flat":
+			member["ca"] += int(feat.get("value", 0))
+		"damage_bonus_flat":
+			member["damage_bonus_flat"] = int(feat.get("value", 0))
+		"heal_double":
+			member["heal_multiplier"] = 2.0
+		"bonus_skill":
+			var skill_id = str(feat.get("value", ""))
+			if skill_id != "" and not member["skills"].has(skill_id):
+				member["skills"].append(skill_id)
+
 func _unhandled_input(event: InputEvent) -> void:
+	if _choosing_feats:
+		_handle_feat_input(event)
+		return
 	if event.is_action_pressed("move_left"):
 		if _cursor_row == 0:
 			_cursor_index = maxi(0, _cursor_index - 1)
@@ -317,11 +466,4 @@ func _update_display() -> void:
 func _on_start_pressed() -> void:
 	if _selected_indices.size() != MAX_PARTY_SIZE:
 		return
-	
-	GameState.party.clear()
-	for i in _selected_indices:
-		var c = _available_characters[i]
-		var member = GameState.create_party_member(c)
-		GameState.party.append(member)
-	
-	SceneFlow.change_scene("res://scenes/exploration/Dungeon.tscn")
+	_begin_feat_selection()

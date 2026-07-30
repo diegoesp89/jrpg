@@ -15,10 +15,16 @@ var _player: Node3D = null
 var _dungeon_map: Array = []
 
 func _ready() -> void:
-	custom_minimum_size = Vector2(MAP_SIZE + MAP_MARGIN * 2, MAP_SIZE + MAP_MARGIN * 2)
+	mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var box_size = MAP_SIZE + MAP_MARGIN * 2
+	custom_minimum_size = Vector2(box_size, box_size)
+	# Explicit offsets (not position/size) — a bare Control has no content to
+	# auto-size from, so anchors alone can leave it with a zero-size rect.
 	set_anchors_preset(Control.PRESET_TOP_RIGHT)
-	position = Vector2(-MAP_SIZE - MAP_MARGIN * 2 - 10, 10)
-	size = custom_minimum_size
+	offset_left = -box_size - 10
+	offset_top = 10
+	offset_right = -10
+	offset_bottom = 10 + box_size
 
 	# Try to get dungeon map data
 	await get_tree().process_frame

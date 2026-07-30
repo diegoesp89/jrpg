@@ -23,6 +23,7 @@ func _ready() -> void:
 	_setup_hud()
 	_setup_lantern()
 	_setup_dialogue_controller()
+	_setup_status_menu()
 	_setup_minimap()
 	_setup_occlusion_controller()
 	_setup_player_fog_global()
@@ -137,6 +138,13 @@ func _setup_dialogue_controller() -> void:
 	dc.name = "DialogueController"
 	dc.set_script(dc_script)
 	add_child(dc)
+
+func _setup_status_menu() -> void:
+	var status_script = load("res://scripts/ui/StatusMenu.gd")
+	var status_menu = CanvasLayer.new()
+	status_menu.name = "StatusMenu"
+	status_menu.set_script(status_script)
+	add_child(status_menu)
 
 func _setup_minimap() -> void:
 	# MiniMapReveal (logic)

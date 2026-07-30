@@ -50,7 +50,11 @@ func _calculate_stats(char_data: Dictionary) -> Dictionary:
 	var max_hp = hit_die + con_bonus
 	if max_hp < 1:
 		max_hp = 1
-	
+
+	var max_mp = 10 + maxi(maxi(int_mod, wis_mod), cha_mod) * 2
+	if max_mp < 10:
+		max_mp = 10
+
 	var ca = 10 + dex_mod
 	
 	if clase == "Barbaro":
@@ -73,6 +77,8 @@ func _calculate_stats(char_data: Dictionary) -> Dictionary:
 		"cha_mod": cha_mod,
 		"hp": max_hp,
 		"max_hp": max_hp,
+		"mp": max_mp,
+		"max_mp": max_mp,
 		"ca": ca,
 		"atk": 0,
 		"def": 0,
@@ -99,6 +105,8 @@ func create_party_member(char_data: Dictionary) -> Dictionary:
 		"cha_mod": stats["cha_mod"],
 		"hp": stats["hp"],
 		"max_hp": stats["max_hp"],
+		"mp": stats["mp"],
+		"max_mp": stats["max_mp"],
 		"ca": stats["ca"],
 		"atk": stats["atk"],
 		"def": stats["def"],
@@ -106,6 +114,7 @@ func create_party_member(char_data: Dictionary) -> Dictionary:
 		"mdef": stats["mdef"],
 		"spd": stats["spd"],
 		"skills": char_data.get("skills", []).duplicate(),
+		"sprite_path": char_data.get("sprite_path", CharacterSprites.DEFAULT_SHEET_PATH),
 	}
 
 # --- Flag helpers ---

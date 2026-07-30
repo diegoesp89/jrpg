@@ -212,6 +212,9 @@ func set_movement_disabled(disabled: bool) -> void:
 	if disabled:
 		velocity = Vector3.ZERO
 
+func is_movement_disabled() -> bool:
+	return _movement_disabled
+
 func _on_interaction_area_body_entered(body: Node3D) -> void:
 	if body.has_method("interact") and body.has_method("get_prompt_text"):
 		if not body.has_method("is_available") or body.is_available():

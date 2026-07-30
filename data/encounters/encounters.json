@@ -15,6 +15,14 @@
 			"gold": 20
 		}
 	},
+	"encounter_sphinx": {
+		"id": "encounter_sphinx",
+		"enemies": ["guardiana_enigma"],
+		"rewards": {
+			"xp": 40,
+			"gold": 25
+		}
+	},
 	"encounter_boss": {
 		"id": "encounter_boss",
 		"enemies": ["flame_guardian"],

@@ -46,5 +46,45 @@
 		"target_type": "all_enemies",
 		"power": 14,
 		"effect_type": "magical"
+	},
+	"reckless": {
+		"id": "reckless",
+		"name": "Ataque Temerario",
+		"mp_cost": 0,
+		"target_type": "single_enemy",
+		"power": 0,
+		"effect_type": "reckless"
+	},
+	"flurry": {
+		"id": "flurry",
+		"name": "Ráfaga de Golpes",
+		"mp_cost": 0,
+		"target_type": "single_enemy",
+		"power": 0,
+		"effect_type": "flurry"
+	},
+	"recoil": {
+		"id": "recoil",
+		"name": "Retroceso",
+		"mp_cost": 0,
+		"target_type": "single_enemy",
+		"power": 0,
+		"effect_type": "recoil"
+	},
+	"shadow": {
+		"id": "shadow",
+		"name": "Sombra",
+		"mp_cost": 0,
+		"target_type": "single_enemy",
+		"power": 0,
+		"effect_type": "shadow"
+	},
+	"call_lathander": {
+		"id": "call_lathander",
+		"name": "Llamar a Lathander",
+		"mp_cost": 0,
+		"target_type": "all_enemies",
+		"power": 0,
+		"effect_type": "call_lathander"
 	}
 }

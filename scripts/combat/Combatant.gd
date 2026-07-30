@@ -85,9 +85,23 @@ static func get_damage_dice(attacker: Dictionary) -> String:
 		_:
 			return "1d8"
 
-static func attack_roll(attacker: Dictionary, defender: Dictionary) -> Dictionary:
+## Rolls 1d20 applying advantage/disadvantage from status effects (blind, Reckless' granted
+## advantage) plus an optional explicit force_advantage (e.g. Barbara's own Reckless attack,
+## Azafran's Shadow). forced_roll (if > 0) bypasses rolling entirely (Solana's Premonition).
+static func _roll_attack_d20(attacker: Dictionary, defender: Dictionary, force_advantage: bool, forced_roll: int) -> int:
+	if forced_roll > 0:
+		return forced_roll
+	var advantage = force_advantage or defender.get("blind_turns", 0) > 0 or defender.get("grants_advantage", false)
+	var disadvantage = attacker.get("blind_turns", 0) > 0
+	if advantage and not disadvantage:
+		return maxi(randi_range(1, 20), randi_range(1, 20))
+	elif disadvantage and not advantage:
+		return mini(randi_range(1, 20), randi_range(1, 20))
+	return randi_range(1, 20)
+
+static func attack_roll(attacker: Dictionary, defender: Dictionary, force_advantage: bool = false, forced_roll: int = 0) -> Dictionary:
 	var attack_bonus = get_attack_modifier(attacker)
-	var roll = randi_range(1, 20)
+	var roll = _roll_attack_d20(attacker, defender, force_advantage, forced_roll)
 	var total_attack = roll + attack_bonus
 	
 	var defender_ca = defender.get("ca", 10)
@@ -112,25 +126,23 @@ static func attack_roll(attacker: Dictionary, defender: Dictionary) -> Dictionar
 	elif is_crit:
 		result.hit = true
 		result.crit = true
-		
-		var damage_dice = get_damage_dice(attacker)
+
 		var attrs = attacker.get("attributes", {})
 		var str_val = attrs.get("fuerza", 10)
 		var dex_val = attrs.get("agilidad", 10)
 		var clase = attacker.get("class", "")
-		
+
 		var stat_mod = _get_modifier(str_val)
 		if clase == "Monje" or clase == "Gunslinger":
 			stat_mod = _get_modifier(dex_val)
-		
+
 		var max_damage = _max_roll_dice(damage_dice) + stat_mod
 		var extra_damage = _roll_dice(damage_dice) + stat_mod
 		result.damage = max_damage + extra_damage
 		result.message = "GOLPE CRITICO!"
 	elif total_attack >= defender_ca:
 		result.hit = true
-		
-		var damage_dice = get_damage_dice(attacker)
+
 		var attrs = attacker.get("attributes", {})
 		var str_val = attrs.get("fuerza", 10)
 		var dex_val = attrs.get("agilidad", 10)
@@ -174,20 +186,18 @@ static func enemy_attack(enemy: Dictionary, defender: Dictionary) -> Dictionary:
 	elif is_crit:
 		result.hit = true
 		result.crit = true
-		
-		var damage_dice = enemy.get("damage", "1d6")
+
 		var attrs = enemy.get("attributes", {})
 		var str_val = attrs.get("fuerza", 10)
 		var stat_mod = _get_modifier(str_val)
-		
+
 		var max_damage = _max_roll_dice(damage_dice) + stat_mod
 		var extra_damage = _roll_dice(damage_dice) + stat_mod
 		result.damage = max_damage + extra_damage
 		result.message = "Golpe critico del enemigo!"
 	elif total_attack >= defender_ca:
 		result.hit = true
-		
-		var damage_dice = enemy.get("damage", "1d6")
+
 		var attrs = enemy.get("attributes", {})
 		var str_val = attrs.get("fuerza", 10)
 		var stat_mod = _get_modifier(str_val)
@@ -214,26 +224,55 @@ static func use_mp(caster: Dictionary, amount: int) -> bool:
 static func is_dead(combatant: Dictionary) -> bool:
 	return combatant.get("hp", 0) <= 0
 
+# --- Position system (0 = adelante, 1 = medio, 2 = retaguardia) ---
+
+const MELEE_CLASSES: Array[String] = ["Barbaro", "Monje"]
+
+static func is_melee_class(class_name_str: String) -> bool:
+	return class_name_str in MELEE_CLASSES
+
+## Adelante: sin cambios. Medio: da y recibe la mitad de daño. Retaguardia: sin cambio de daño
+## (solo restringe qué acciones puede hacer el propio combatiente, ver is_melee_class).
+## También aplica pasivas siempre-activas que afectan daño: Rage de Barbara (doble daño dado
+## Y doble daño recibido) y la marca de "Mystra Wanted" de Rosa (+25% daño recibido).
+static func apply_position_modifiers(damage: int, attacker: Dictionary, defender: Dictionary) -> int:
+	var result: float = float(damage)
+	if attacker.get("position", 0) == 1:
+		result *= 0.5
+	if defender.get("position", 0) == 1:
+		result *= 0.5
+	if attacker.get("class", "") == "Barbaro":
+		result *= 2.0
+	if defender.get("class", "") == "Barbaro":
+		result *= 2.0
+	if defender.get("marked", false):
+		result *= 1.25
+	result += attacker.get("damage_bonus_flat", 0)  # Great Weapon Master / Dual Wielder feats
+	return maxi(1, int(round(result)))
+
 static func calculate_physical_damage(attacker: Dictionary, defender: Dictionary, power: int = 0) -> int:
 	var result = attack_roll(attacker, defender)
 	if power > 0:
 		return result.damage + power
 	return result.damage
 
-static func calculate_magical_damage(attacker: Dictionary, defender: Dictionary, power: int) -> int:
-	var attrs = attacker.get("attributes", {})
+## Devuelve el mayor entre el modificador de inteligencia y sabiduría — el "casting stat"
+## compartido por hechizos y curaciones en este sistema simplificado.
+static func get_caster_stat_mod(caster: Dictionary) -> int:
+	var attrs = caster.get("attributes", {})
 	var int_mod = _get_modifier(attrs.get("inteligencia", 10))
 	var wis_mod = _get_modifier(attrs.get("sabiduria", 10))
-	var stat_mod = max(int_mod, wis_mod)
+	return max(int_mod, wis_mod)
+
+static func calculate_magical_damage(attacker: Dictionary, defender: Dictionary, power: int) -> int:
+	var stat_mod = get_caster_stat_mod(attacker)
 	var damage = power + stat_mod
 	return max(1, damage)
 
 static func calculate_heal(caster: Dictionary, power: int) -> int:
-	var attrs = caster.get("attributes", {})
-	var wis_mod = _get_modifier(attrs.get("sabiduria", 10))
-	var int_mod = _get_modifier(attrs.get("inteligencia", 10))
-	var stat_mod = max(wis_mod, int_mod)
-	return power + stat_mod
+	var stat_mod = get_caster_stat_mod(caster)
+	var heal = power + stat_mod
+	return int(heal * caster.get("heal_multiplier", 1.0))  # Healer feat
 
 static func calculate_flee_chance(party: Array, enemies: Array) -> int:
 	var base = 50

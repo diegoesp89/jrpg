@@ -1,0 +1,122 @@
+[
+	{
+		"id": "riddle_01",
+		"question": "Redonda unas noches, delgada otras; nunca cambia, pero parece hacerlo. Reina de la noche, con luz prestada. ¿Quién soy?",
+		"answer_display": "La Luna",
+		"accepted": ["la luna", "luna"]
+	},
+	{
+		"id": "riddle_02",
+		"question": "Devoro todo lo que nace, envejezco montañas y silencio reyes, pero nadie me ha visto pasar. ¿Quién soy?",
+		"answer_display": "El Tiempo",
+		"accepted": ["el tiempo", "tiempo"]
+	},
+	{
+		"id": "riddle_03",
+		"question": "Hablo sin lengua, respondo sin pensar, repito tus palabras hasta que te cansas de escucharlas. ¿Quién soy?",
+		"answer_display": "El Eco",
+		"accepted": ["el eco", "eco"]
+	},
+	{
+		"id": "riddle_04",
+		"question": "Te muestro tal cual eres, pero jamás te toco. Si me rompes, te devuelvo mil pedazos de la misma verdad. ¿Quién soy?",
+		"answer_display": "Un Espejo",
+		"accepted": ["un espejo", "el espejo", "espejo"]
+	},
+	{
+		"id": "riddle_05",
+		"question": "Te sigo de día, te abandono de noche, crezco y encojo sin que tú lo ordenes. ¿Quién soy?",
+		"answer_display": "La Sombra",
+		"accepted": ["la sombra", "sombra"]
+	},
+	{
+		"id": "riddle_06",
+		"question": "Nazco pequeño, puedo devorar bosques enteros, y muero si me falta lo que como. ¿Quién soy?",
+		"answer_display": "El Fuego",
+		"accepted": ["el fuego", "fuego"]
+	},
+	{
+		"id": "riddle_07",
+		"question": "Me rompo con una sola palabra, pero jamás hago ruido al llegar. ¿Quién soy?",
+		"answer_display": "El Silencio",
+		"accepted": ["el silencio", "silencio"]
+	},
+	{
+		"id": "riddle_08",
+		"question": "Cuanto más vivo, más me consumo; cuanto más ilumino, menos me queda. ¿Quién soy?",
+		"answer_display": "Una Vela",
+		"accepted": ["una vela", "la vela", "vela"]
+	},
+	{
+		"id": "riddle_09",
+		"question": "No tengo cuerpo, pero derribo árboles; no tengo voz, pero silbo entre las rocas. ¿Quién soy?",
+		"answer_display": "El Viento",
+		"accepted": ["el viento", "viento"]
+	},
+	{
+		"id": "riddle_10",
+		"question": "Abro puertas sin ser fuerte, guardo secretos sin saber leer. ¿Quién soy?",
+		"answer_display": "La Llave",
+		"accepted": ["la llave", "una llave", "llave"]
+	},
+	{
+		"id": "riddle_11",
+		"question": "Siempre corro, nunca llego; siempre me voy, nunca me acabo. ¿Quién soy?",
+		"answer_display": "El Río",
+		"accepted": ["el rio", "el río", "un rio", "un río", "rio", "río"]
+	},
+	{
+		"id": "riddle_12",
+		"question": "Visito cada noche sin ser invitado, y me olvidan antes del desayuno. ¿Quién soy?",
+		"answer_display": "El Sueño",
+		"accepted": ["el sueño", "un sueño", "sueño", "los sueños", "sueños"]
+	},
+	{
+		"id": "riddle_13",
+		"question": "Llego para todos, sin prisa y sin excepción, pero nadie me reconoce hasta que me ve de cerca. ¿Quién soy?",
+		"answer_display": "La Muerte",
+		"accepted": ["la muerte", "muerte"]
+	},
+	{
+		"id": "riddle_14",
+		"question": "Late sin que se lo pidan, se rompe sin sangrar, y guarda lo que la boca calla. ¿Quién soy?",
+		"answer_display": "El Corazón",
+		"accepted": ["el corazon", "el corazón", "un corazon", "un corazón", "corazon", "corazón"]
+	},
+	{
+		"id": "riddle_15",
+		"question": "Tejo sin hilo comprado, atrapo sin manos, y espero sin impaciencia. ¿Quién soy?",
+		"answer_display": "La Araña",
+		"accepted": ["la araña", "una araña", "araña"]
+	},
+	{
+		"id": "riddle_16",
+		"question": "Guardo mil voces calladas, hablo solo si me abren, y nunca me canso de repetir mi historia. ¿Quién soy?",
+		"answer_display": "Un Libro",
+		"accepted": ["un libro", "el libro", "libro"]
+	},
+	{
+		"id": "riddle_17",
+		"question": "Nazco fácil, crezco rápido, pero me caigo con una sola pregunta bien hecha. ¿Quién soy?",
+		"answer_display": "La Mentira",
+		"accepted": ["la mentira", "mentira"]
+	},
+	{
+		"id": "riddle_18",
+		"question": "Muestro caminos que nunca recorrí, y guío a quienes nunca conocí. ¿Quién soy?",
+		"answer_display": "Un Mapa",
+		"accepted": ["un mapa", "el mapa", "mapa"]
+	},
+	{
+		"id": "riddle_19",
+		"question": "Curo heridas y arruino postres; vengo del mar, pero vivo en tu mesa. ¿Quién soy?",
+		"answer_display": "La Sal",
+		"accepted": ["la sal", "sal"]
+	},
+	{
+		"id": "riddle_20",
+		"question": "Es tuyo desde que naces, pero lo usan más los demás que tú mismo. ¿Qué es?",
+		"answer_display": "El Nombre",
+		"accepted": ["el nombre", "un nombre", "nombre"]
+	}
+]

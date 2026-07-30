@@ -1,0 +1,140 @@
+{
+	"tough": {
+		"id": "tough",
+		"name": "Resistente",
+		"description": "Tu Máximo de HP aumenta un 50% de forma permanente (por ejemplo, de 20 a 30). El aumento se calcula una sola vez, al crear el personaje, y se mantiene durante toda la aventura.",
+		"effect": "hp_bonus_pct",
+		"value": 50
+	},
+	"great_weapon_master": {
+		"id": "great_weapon_master",
+		"name": "Maestro de Armas Grandes",
+		"description": "Todos tus golpes básicos y habilidades de ataque cuerpo a cuerpo suman +3 de daño plano, además del daño normal del arma y el modificador de característica. Este bono se aplica siempre, en cada golpe que conecta.",
+		"effect": "damage_bonus_flat",
+		"value": 3
+	},
+	"savage_attacker": {
+		"id": "savage_attacker",
+		"name": "Atacante Salvaje",
+		"description": "Descripción de diseño: tus golpes nunca deberían quedarse en el daño mínimo posible del dado. Nota: en esta build todavía no está conectado a ninguna mecánica de combate real — no tiene efecto todavía.",
+		"effect": "min_damage_floor"
+	},
+	"heavily_armored": {
+		"id": "heavily_armored",
+		"name": "Fuertemente Armada",
+		"description": "Tu Clase de Armadura (CA) aumenta permanentemente en +2. Esto hace que los enemigos fallen sus ataques contra vos con más frecuencia. Se calcula una sola vez al crear el personaje.",
+		"effect": "ca_bonus_flat",
+		"value": 2
+	},
+	"mobile": {
+		"id": "mobile",
+		"name": "Móvil",
+		"description": "Descripción de diseño: cambiar de posición (adelante/medio/retaguardia) no debería gastar tu acción del turno. Nota: en esta build todavía no está conectado — usar 'Mover' sigue consumiendo el turno igual que para cualquier otro personaje.",
+		"effect": "free_move"
+	},
+	"atleta": {
+		"id": "atleta",
+		"name": "Atleta",
+		"description": "Descripción de diseño: +50% a tu iniciativa (orden de turnos). Nota: en esta build todavía no está conectado a la tirada de iniciativa real — no tiene efecto todavía.",
+		"effect": "initiative_bonus_pct",
+		"value": 50
+	},
+	"dungeon_delver": {
+		"id": "dungeon_delver",
+		"name": "Exploradora de Mazmorras",
+		"description": "Descripción de diseño: deberías poder detectar trampas ocultas y pasadizos secretos mientras explorás la mazmorra. Nota: en esta build todavía no hay sistema de trampas ocultas/secretos que lo use — no tiene efecto todavía.",
+		"effect": "trap_detection"
+	},
+	"martial_adept": {
+		"id": "martial_adept",
+		"name": "Adepta Marcial",
+		"description": "Descripción de diseño: una vez por combate, tu golpe básico debería aturdir al objetivo (le hace perder su próximo turno). Nota: en esta build todavía no está conectado — no tiene efecto todavía.",
+		"effect": "stun_on_attack_charges",
+		"value": 1
+	},
+	"lucky": {
+		"id": "lucky",
+		"name": "Afortunada",
+		"description": "Tenés 3 cargas por combate (se recargan al empezar cada batalla nueva). Cada vez que tu ataque básico falla, si te queda al menos 1 carga, se gasta automáticamente 1 carga y se vuelve a tirar el ataque una vez, reemplazando el resultado fallido.",
+		"effect": "reroll_miss_charges",
+		"value": 3
+	},
+	"actor": {
+		"id": "actor",
+		"name": "Actriz",
+		"description": "Descripción de diseño: bono a tiradas sociales (huida del combate, respuestas de diálogo tipo el acertijo de entrada). Nota: en esta build todavía no está conectado a la fórmula de huida ni a los diálogos — no tiene efecto todavía.",
+		"effect": "social_bonus_pct",
+		"value": 20
+	},
+	"inspiring_leader": {
+		"id": "inspiring_leader",
+		"name": "Líder Inspiradora",
+		"description": "Descripción de diseño: como acción de bono, cura a toda la party, hasta 2 veces por combate. Nota: en esta build todavía no hay una acción de bono en el menú de batalla para activarlo — no tiene efecto todavía.",
+		"effect": "party_heal_charges",
+		"value": 2
+	},
+	"alert": {
+		"id": "alert",
+		"name": "Alerta",
+		"description": "Justo al empezar el combate, antes de que se calcule el orden de turnos, hacés un ataque básico gratis contra un enemigo elegido al azar (con tirada de ataque normal, puede fallar o acertar).",
+		"effect": "free_attack_on_start"
+	},
+	"keen_mind": {
+		"id": "keen_mind",
+		"name": "Mente Aguda",
+		"description": "Descripción de diseño: deberías poder ver la respuesta correcta en ciertos acertijos de la mazmorra (como el de la Esfinge). Nota: en esta build todavía no está conectado a los puzzles — no tiene efecto todavía.",
+		"effect": "puzzle_hint"
+	},
+	"elemental_adept": {
+		"id": "elemental_adept",
+		"name": "Adepta Elemental",
+		"description": "Descripción de diseño: tus hechizos deberían hacer el doble de daño cuando su elemento coincide con el elegido (por ejemplo, fuego). Nota: en esta build los hechizos todavía no tienen una etiqueta de elemento — no tiene efecto todavía.",
+		"effect": "elemental_damage_double"
+	},
+	"magic_initiate": {
+		"id": "magic_initiate",
+		"name": "Iniciada en la Magia",
+		"description": "Aprendés de forma permanente la habilidad 'Golpe de Poder' (power_strike) además de las que ya tenías, disponible desde el primer combate en el menú de Habilidad.",
+		"effect": "bonus_skill",
+		"value": "power_strike"
+	},
+	"mage_slayer": {
+		"id": "mage_slayer",
+		"name": "Cazadora de Magos",
+		"description": "Descripción de diseño: tus ataques cuerpo a cuerpo hacen daño extra contra enemigos que lanzan hechizos. Nota: en esta build los enemigos todavía no están etiquetados como 'lanzadores de hechizos' — no tiene efecto todavía.",
+		"effect": "bonus_vs_casters"
+	},
+	"skulker": {
+		"id": "skulker",
+		"name": "Merodeadora",
+		"description": "Descripción de diseño: los enemigos deberían atacarte con desventaja (tiran dos dados y se quedan con el peor) por tu evasión natural. Nota: en esta build todavía no está conectado a las tiradas de los enemigos — no tiene efecto todavía.",
+		"effect": "attacker_disadvantage"
+	},
+	"dual_wielder": {
+		"id": "dual_wielder",
+		"name": "Doble Garra",
+		"description": "Todos tus golpes básicos y habilidades de ataque cuerpo a cuerpo suman +2 de daño plano por pelear con ambas garras a la vez, además del daño normal y el modificador de característica.",
+		"effect": "damage_bonus_flat",
+		"value": 2
+	},
+	"grappler": {
+		"id": "grappler",
+		"name": "Forcejeadora",
+		"description": "Descripción de diseño: una vez por combate, inmovilizás al objetivo por un turno (no puede actuar). Nota: en esta build todavía no está conectado — no tiene efecto todavía.",
+		"effect": "immobilize_charges",
+		"value": 1
+	},
+	"durable": {
+		"id": "durable",
+		"name": "Resiliente",
+		"description": "Descripción de diseño: los efectos negativos que sufrís (como quedar ciega) deberían durar 1 turno menos. Nota: en esta build todavía no está conectado al sistema de estados — no tiene efecto todavía.",
+		"effect": "status_duration_reduction",
+		"value": 1
+	},
+	"healer": {
+		"id": "healer",
+		"name": "Sanadora",
+		"description": "Todas las curaciones que hacés (con hechizos, objetos, o cualquier otra fuente que pase por el cálculo de curación) sanan el doble de HP de lo normal. Se aplica siempre, sin límite de usos.",
+		"effect": "heal_double"
+	}
+}

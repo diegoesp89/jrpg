@@ -13,7 +13,16 @@
 			"inteligencia": 12,
 			"carisma": 8
 		},
-		"skills": []
+		"skills": [
+			"reckless"
+		],
+		"feat_pool": [
+			"tough",
+			"great_weapon_master",
+			"savage_attacker",
+			"heavily_armored"
+		],
+		"sprite_path": "res://assets/sprites/spritesheet.png"
 	},
 	"huguito": {
 		"id": "huguito",
@@ -29,7 +38,16 @@
 			"inteligencia": 8,
 			"carisma": 12
 		},
-		"skills": []
+		"skills": [
+			"flurry"
+		],
+		"feat_pool": [
+			"mobile",
+			"atleta",
+			"dungeon_delver",
+			"martial_adept"
+		],
+		"sprite_path": "res://assets/sprites/spritesheet.png"
 	},
 	"rosa": {
 		"id": "rosa",
@@ -45,7 +63,16 @@
 			"inteligencia": 14,
 			"carisma": 12
 		},
-		"skills": []
+		"skills": [
+			"recoil"
+		],
+		"feat_pool": [
+			"lucky",
+			"actor",
+			"inspiring_leader",
+			"alert"
+		],
+		"sprite_path": "res://assets/sprites/spritesheet.png"
 	},
 	"azafran": {
 		"id": "azafran",
@@ -61,7 +88,16 @@
 			"inteligencia": 14,
 			"carisma": 12
 		},
-		"skills": []
+		"skills": [
+			"shadow"
+		],
+		"feat_pool": [
+			"keen_mind",
+			"elemental_adept",
+			"magic_initiate",
+			"mage_slayer"
+		],
+		"sprite_path": "res://assets/sprites/spritesheet.png"
 	},
 	"lulu": {
 		"id": "lulu",
@@ -77,7 +113,16 @@
 			"inteligencia": 12,
 			"carisma": 14
 		},
-		"skills": []
+		"skills": [
+			"flurry"
+		],
+		"feat_pool": [
+			"skulker",
+			"mobile",
+			"dual_wielder",
+			"grappler"
+		],
+		"sprite_path": "res://assets/sprites/spritesheet.png"
 	},
 	"daragat": {
 		"id": "daragat",
@@ -93,7 +138,17 @@
 			"inteligencia": 10,
 			"carisma": 12
 		},
-		"skills": []
+		"skills": [
+			"heal",
+			"call_lathander"
+		],
+		"feat_pool": [
+			"healer",
+			"inspiring_leader",
+			"durable",
+			"magic_initiate"
+		],
+		"sprite_path": "res://assets/sprites/spritesheet.png"
 	},
 	"solana": {
 		"id": "solana",
@@ -109,6 +164,15 @@
 			"inteligencia": 10,
 			"carisma": 14
 		},
-		"skills": []
+		"skills": [
+			"fireball"
+		],
+		"feat_pool": [
+			"alert",
+			"lucky",
+			"durable",
+			"inspiring_leader"
+		],
+		"sprite_path": "res://assets/sprites/spritesheet.png"
 	}
 }

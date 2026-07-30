@@ -59,6 +59,26 @@
 		"xp_reward": 30,
 		"gold_reward": 20
 	},
+	"guardiana_enigma": {
+		"id": "guardiana_enigma",
+		"name": "Guardiana Enigma",
+		"attributes": {
+			"fuerza": 14,
+			"agilidad": 12,
+			"constitucion": 14,
+			"sabiduria": 16,
+			"inteligencia": 16,
+			"carisma": 14
+		},
+		"hit_die": 10,
+		"hp": 40,
+		"ca": 16,
+		"attack_bonus": 5,
+		"damage": "2d6+2",
+		"skills": ["fireball"],
+		"xp_reward": 40,
+		"gold_reward": 25
+	},
 	"flame_guardian": {
 		"id": "flame_guardian",
 		"name": "Guardian de Llamas",

@@ -4,6 +4,8 @@ class_name DialogueBox
 
 var _speaker_label: Label = null
 var _text_label: RichTextLabel = null
+var _portrait_rect: TextureRect = null
+var _emoji_label: Label = null
 var _choices_container: VBoxContainer = null
 var _choice_labels: Array[Label] = []
 var _selected_choice: int = 0
@@ -32,10 +34,32 @@ func setup() -> void:
 	style.set_content_margin_all(12)
 	add_theme_stylebox_override("panel", style)
 
-	# VBox layout
+	# HBox layout: emoji portrait (left) + speaker/text/choices (right)
+	var hbox = HBoxContainer.new()
+	hbox.set_anchors_preset(Control.PRESET_FULL_RECT)
+	hbox.add_theme_constant_override("separation", 16)
+	add_child(hbox)
+
+	var portrait_col = VBoxContainer.new()
+	portrait_col.custom_minimum_size = Vector2(110, 0)
+	portrait_col.alignment = BoxContainer.ALIGNMENT_CENTER
+	hbox.add_child(portrait_col)
+
+	_portrait_rect = TextureRect.new()
+	_portrait_rect.custom_minimum_size = Vector2(100, 105)
+	_portrait_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	_portrait_rect.visible = false
+	portrait_col.add_child(_portrait_rect)
+
+	_emoji_label = Label.new()
+	_emoji_label.add_theme_font_size_override("font_size", 48)
+	_emoji_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_emoji_label.visible = false
+	portrait_col.add_child(_emoji_label)
+
 	var vbox = VBoxContainer.new()
-	vbox.set_anchors_preset(Control.PRESET_FULL_RECT)
-	add_child(vbox)
+	vbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	hbox.add_child(vbox)
 
 	# Speaker
 	_speaker_label = Label.new()
@@ -58,17 +82,23 @@ func setup() -> void:
 
 	hide()
 
-func show_text(speaker: String, text: String) -> void:
+func show_text(speaker: String, text: String, emoji: String = "", portrait: Texture2D = null) -> void:
 	_showing_choices = false
 	_speaker_label.text = speaker
 	_text_label.text = text
 	_choices_container.visible = false
+	_emoji_label.text = emoji
+	_emoji_label.visible = emoji != ""
+	_portrait_rect.texture = portrait
+	_portrait_rect.visible = portrait != null
 	visible = true
 
 func show_choices(speaker: String, text: String, choices: Array) -> void:
 	_showing_choices = true
 	_speaker_label.text = speaker
 	_text_label.text = text
+	_emoji_label.visible = false
+	_portrait_rect.visible = false
 
 	# Clear old choices
 	for child in _choices_container.get_children():

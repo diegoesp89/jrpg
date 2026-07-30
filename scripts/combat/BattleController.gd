@@ -34,6 +34,7 @@ func start_battle(encounter_id: String) -> void:
 	_battle_active = true
 
 	action_performed.emit("--- Comienza el combate! ---")
+	_apply_alert_feat()
 
 	# Combine all combatants for turn system
 	var all_combatants: Array[Dictionary] = []
@@ -50,6 +51,16 @@ func _setup_party() -> void:
 		var battle_member = member.duplicate(true)
 		battle_member["is_player"] = true
 		battle_member["defending"] = false
+		battle_member["position"] = 0  # adelante, por defecto al empezar cada combate
+		battle_member["focus"] = 0
+		battle_member["blind_turns"] = 0
+		battle_member["grants_advantage"] = false
+		battle_member["marked"] = false
+		if battle_member.get("class", "") == "Hechicera":
+			battle_member["premonition_roll"] = randi_range(1, 20)
+		if battle_member.get("feat", "") == "lucky":
+			var lucky_feat = DataLoader.get_feat("lucky")
+			battle_member["lucky_charges"] = lucky_feat.get("value", 3)
 		_party.append(battle_member)
 
 func _setup_enemies() -> void:
@@ -73,13 +84,17 @@ func _setup_enemies() -> void:
 			"skills": enemy_data.get("skills", []).duplicate(),
 			"is_player": false,
 			"defending": false,
+			"position": 0,
 		}
 		_enemies.append(battle_enemy)
 
 func _start_round() -> void:
-	# Reset defend flags
+	# Reset defend flags and per-round status effects
 	for c in _party + _enemies:
 		c["defending"] = false
+		c["grants_advantage"] = false
+		if c.get("blind_turns", 0) > 0:
+			c["blind_turns"] -= 1
 
 	_turn_system.start_new_round()
 	_process_current_turn()
@@ -125,10 +140,11 @@ func _execute_enemy_turn(enemy: Dictionary) -> void:
 			var result = Combatant.enemy_attack(enemy, target)
 			
 			if result.hit:
-				Combatant.apply_damage(target, result.damage)
-				damage_dealt.emit(target, result.damage, false)
+				var final_dmg = Combatant.apply_position_modifiers(result.damage, enemy, target)
+				Combatant.apply_damage(target, final_dmg)
+				damage_dealt.emit(target, final_dmg, false)
 				var dmg_str = "daño!" if not result.crit else "daño CRÍTICO!"
-				action_performed.emit("%s: %d(1d20)+%d = %d vs %d CA -> Golpe! Dañó %d a %s" % [enemy["name"], result.roll, result.bonus, result.total, target.get("ca", 10), result.damage, target["name"]])
+				action_performed.emit("%s: %d(1d20)+%d = %d vs %d CA -> Golpe! Dañó %d a %s" % [enemy["name"], result.roll, result.bonus, result.total, target.get("ca", 10), final_dmg, target["name"]])
 			else:
 				action_performed.emit("%s: %d(1d20)+%d = %d vs %d CA -> %s" % [enemy["name"], result.roll, result.bonus, result.total, target.get("ca", 10), result.message])
 		"skill":
@@ -143,6 +159,7 @@ func _execute_enemy_turn(enemy: Dictionary) -> void:
 					_next_turn()
 					return
 				var dmg = Combatant.calculate_physical_damage(enemy, fallback_target)
+				dmg = Combatant.apply_position_modifiers(dmg, enemy, fallback_target)
 				Combatant.apply_damage(fallback_target, dmg)
 				damage_dealt.emit(fallback_target, dmg, false)
 				action_performed.emit("%s no tiene MP! Ataca a %s por %d de daño!" % [enemy["name"], fallback_target["name"], dmg])
@@ -151,33 +168,46 @@ func _execute_enemy_turn(enemy: Dictionary) -> void:
 				_next_turn()
 				return
 
+			var skill_power = skill.get("power", 0)
 			if skill.get("target_type", "") == "all_enemies":
 				# AoE against party
+				var stat_mod = Combatant.get_caster_stat_mod(enemy)
 				var targets = action.get("targets", [])
+				var hit_log: Array = []
 				for t in targets:
-					var dmg = Combatant.calculate_magical_damage(enemy, t, skill.get("power", 0))
+					var dmg = Combatant.calculate_magical_damage(enemy, t, skill_power)
+					dmg = Combatant.apply_position_modifiers(dmg, enemy, t)
 					Combatant.apply_damage(t, dmg)
 					damage_dealt.emit(t, dmg, false)
-				action_performed.emit("%s usa %s contra todo el grupo!" % [enemy["name"], skill_name])
+					hit_log.append("%s -%d" % [t["name"], dmg])
+				action_performed.emit("%s usa %s (%d poder+%d mod cada uno): %s" % [enemy["name"], skill_name, skill_power, stat_mod, ", ".join(hit_log)])
 			else:
 				var target = action.get("target", {})
 				if target.is_empty():
 					_next_turn()
 					return
 				if skill.get("effect_type", "") == "heal":
-					var heal = Combatant.calculate_heal(enemy, skill.get("power", 0))
+					var stat_mod = Combatant.get_caster_stat_mod(enemy)
+					var heal = Combatant.calculate_heal(enemy, skill_power)
 					Combatant.apply_heal(target, heal)
 					damage_dealt.emit(target, heal, true)
-					action_performed.emit("%s usa %s en %s, cura %d HP!" % [enemy["name"], skill_name, target["name"], heal])
-				else:
-					var dmg: int
-					if skill.get("effect_type", "") == "physical":
-						dmg = Combatant.calculate_physical_damage(enemy, target, skill.get("power", 0))
+					action_performed.emit("%s usa %s en %s: %d(poder)+%d(mod) = %d HP curados!" % [enemy["name"], skill_name, target["name"], skill_power, stat_mod, heal])
+				elif skill.get("effect_type", "") == "physical":
+					var result = Combatant.attack_roll(enemy, target)
+					if result.hit:
+						var dmg = Combatant.apply_position_modifiers(result.damage + skill_power, enemy, target)
+						Combatant.apply_damage(target, dmg)
+						damage_dealt.emit(target, dmg, false)
+						action_performed.emit("%s usa %s en %s: %d(1d20)+%d = %d vs %d CA -> Golpe! %d de daño!" % [enemy["name"], skill_name, target["name"], result.roll, result.bonus, result.total, target.get("ca", 10), dmg])
 					else:
-						dmg = Combatant.calculate_magical_damage(enemy, target, skill.get("power", 0))
+						action_performed.emit("%s usa %s en %s: %d(1d20)+%d = %d vs %d CA -> %s" % [enemy["name"], skill_name, target["name"], result.roll, result.bonus, result.total, target.get("ca", 10), result.message])
+				else:
+					var stat_mod = Combatant.get_caster_stat_mod(enemy)
+					var dmg = Combatant.calculate_magical_damage(enemy, target, skill_power)
+					dmg = Combatant.apply_position_modifiers(dmg, enemy, target)
 					Combatant.apply_damage(target, dmg)
 					damage_dealt.emit(target, dmg, false)
-					action_performed.emit("%s usa %s en %s por %d de daño!" % [enemy["name"], skill_name, target["name"], dmg])
+					action_performed.emit("%s usa %s en %s: %d(poder)+%d(mod) = %d de daño!" % [enemy["name"], skill_name, target["name"], skill_power, stat_mod, dmg])
 
 	hp_updated.emit()
 	await get_tree().create_timer(0.8).timeout
@@ -198,13 +228,35 @@ func player_action(action: Dictionary) -> void:
 				_waiting_for_player = true
 				return
 			
-			var result = Combatant.attack_roll(current, target)
-			
+			if Combatant.is_melee_class(current.get("class", "")) and current.get("position", 0) == 2:
+				action_performed.emit("%s no puede atacar cuerpo a cuerpo desde la retaguardia!" % current["name"])
+				_waiting_for_player = true
+				return
+
+			var use_premonition = action.get("use_premonition", false)
+			var forced_roll = current.get("premonition_roll", 0) if use_premonition else 0
+			var result = Combatant.attack_roll(current, target, false, forced_roll)
+			if use_premonition and current.get("class", "") == "Hechicera":
+				current["premonition_roll"] = randi_range(1, 20)
+
+			if not result.hit and current.get("lucky_charges", 0) > 0:
+				current["lucky_charges"] -= 1
+				action_performed.emit("%s usa Afortunada para re-tirar el fallo!" % current["name"])
+				result = Combatant.attack_roll(current, target)
+
 			if result.hit:
-				Combatant.apply_damage(target, result.damage)
-				damage_dealt.emit(target, result.damage, false)
+				var final_dmg = Combatant.apply_position_modifiers(result.damage, current, target)
+				if current.get("class", "") == "Warlock":
+					final_dmg *= 2  # Spiritual Weapon
+				if current.get("class", "") == "Monje":
+					current["focus"] = mini(5, current.get("focus", 0) + 1)
+				if current.get("class", "") == "Gunslinger":
+					for e in _enemies:
+						e["marked"] = (e.get("id", "") == target.get("id", ""))
+				Combatant.apply_damage(target, final_dmg)
+				damage_dealt.emit(target, final_dmg, false)
 				var dmg_str = "daño!" if not result.crit else "daño CRÍTICO!"
-				action_performed.emit("%s: %d(1d20)+%d(Fue) = %d vs %d CA -> Golpe! Dañó %d a %s" % [current["name"], result.roll, result.bonus, result.total, target.get("ca", 10), result.damage, target["name"]])
+				action_performed.emit("%s: %d(1d20)+%d(Fue) = %d vs %d CA -> Golpe! Dañó %d a %s" % [current["name"], result.roll, result.bonus, result.total, target.get("ca", 10), final_dmg, target["name"]])
 			else:
 				action_performed.emit("%s: %d(1d20)+%d(Fue) = %d vs %d CA -> %s" % [current["name"], result.roll, result.bonus, result.total, target.get("ca", 10), result.message])
 
@@ -216,39 +268,70 @@ func player_action(action: Dictionary) -> void:
 				return
 
 			var skill_name = skill.get("name", "???")
-			if skill.get("effect_type", "") == "heal":
+			var effect_type = skill.get("effect_type", "")
+			var power = skill.get("power", 0)
+			if effect_type == "heal":
 				var target = action.get("target", {})
-				var heal = Combatant.calculate_heal(current, skill.get("power", 0))
+				var stat_mod = Combatant.get_caster_stat_mod(current)
+				var heal = Combatant.calculate_heal(current, power)
 				Combatant.apply_heal(target, heal)
 				damage_dealt.emit(target, heal, true)
-				action_performed.emit("%s usa %s en %s, cura %d HP!" % [current["name"], skill_name, target["name"], heal])
+				action_performed.emit("%s usa %s en %s: %d(poder)+%d(mod) = %d HP curados!" % [current["name"], skill_name, target["name"], power, stat_mod, heal])
+			elif effect_type == "reckless":
+				_do_reckless(current, action.get("target", {}))
+			elif effect_type == "flurry":
+				_do_flurry(current, action.get("target", {}))
+			elif effect_type == "recoil":
+				_do_recoil(current, action.get("target", {}))
+			elif effect_type == "shadow":
+				_do_shadow(current, action.get("target", {}))
+			elif effect_type == "call_lathander":
+				_do_call_lathander(current)
 			elif skill.get("target_type", "") == "all_enemies":
+				var stat_mod = Combatant.get_caster_stat_mod(current)
+				var hit_log: Array = []
 				for e in _enemies:
 					if e.get("hp", 0) > 0:
-						var dmg = Combatant.calculate_magical_damage(current, e, skill.get("power", 0))
+						var dmg = Combatant.calculate_magical_damage(current, e, power)
+						dmg = Combatant.apply_position_modifiers(dmg, current, e)
 						Combatant.apply_damage(e, dmg)
 						damage_dealt.emit(e, dmg, false)
-				action_performed.emit("%s usa %s contra todos los enemigos!" % [current["name"], skill_name])
+						hit_log.append("%s -%d" % [e["name"], dmg])
+				action_performed.emit("%s usa %s (%d poder+%d mod cada uno): %s" % [current["name"], skill_name, power, stat_mod, ", ".join(hit_log)])
 			else:
 				var target = action.get("target", {})
-				var dmg: int
-				if skill.get("effect_type", "") == "physical":
-					dmg = Combatant.calculate_physical_damage(current, target, skill.get("power", 0))
+				if effect_type == "physical":
+					var result = Combatant.attack_roll(current, target)
+					if result.hit:
+						var dmg = Combatant.apply_position_modifiers(result.damage + power, current, target)
+						Combatant.apply_damage(target, dmg)
+						damage_dealt.emit(target, dmg, false)
+						action_performed.emit("%s usa %s en %s: %d(1d20)+%d = %d vs %d CA -> Golpe! %d de daño!" % [current["name"], skill_name, target["name"], result.roll, result.bonus, result.total, target.get("ca", 10), dmg])
+					else:
+						action_performed.emit("%s usa %s en %s: %d(1d20)+%d = %d vs %d CA -> %s" % [current["name"], skill_name, target["name"], result.roll, result.bonus, result.total, target.get("ca", 10), result.message])
 				else:
-					dmg = Combatant.calculate_magical_damage(current, target, skill.get("power", 0))
-				Combatant.apply_damage(target, dmg)
-				damage_dealt.emit(target, dmg, false)
-				action_performed.emit("%s usa %s en %s por %d de daño!" % [current["name"], skill_name, target["name"], dmg])
+					var stat_mod = Combatant.get_caster_stat_mod(current)
+					var dmg = Combatant.calculate_magical_damage(current, target, power)
+					dmg = Combatant.apply_position_modifiers(dmg, current, target)
+					Combatant.apply_damage(target, dmg)
+					damage_dealt.emit(target, dmg, false)
+					action_performed.emit("%s usa %s en %s: %d(poder)+%d(mod) = %d de daño!" % [current["name"], skill_name, target["name"], power, stat_mod, dmg])
 
 		"defend":
 			current["defending"] = true
 			action_performed.emit("%s se defiende!" % current["name"])
 
+		"move":
+			var target_position: int = action.get("target_position", 0)
+			var position_names = ["adelante", "medio", "retaguardia"]
+			current["position"] = target_position
+			action_performed.emit("%s se mueve a la posición %s!" % [current["name"], position_names[target_position]])
+
 		"item":
 			var item = action.get("item", {})
 			var target = action.get("target", {})
 			if item.get("effect", "") == "heal":
-				var heal_amount = item.get("power", 30)
+				var heal_amount = int(item.get("power", 30) * current.get("heal_multiplier", 1.0))
 				Combatant.apply_heal(target, heal_amount)
 				damage_dealt.emit(target, heal_amount, true)
 				GameState.remove_item(item["id"])
@@ -271,6 +354,130 @@ func player_action(action: Dictionary) -> void:
 	hp_updated.emit()
 	await get_tree().create_timer(0.5).timeout
 	_next_turn()
+
+## "Alerta" feat: at the very start of the battle, before initiative even matters, each
+## party member with this feat gets one free basic attack against a random alive enemy.
+func _apply_alert_feat() -> void:
+	for p in _party:
+		if p.get("feat", "") != "alert":
+			continue
+		var alive_enemies: Array = []
+		for e in _enemies:
+			if e.get("hp", 0) > 0:
+				alive_enemies.append(e)
+		if alive_enemies.is_empty():
+			return
+		var target = alive_enemies[randi_range(0, alive_enemies.size() - 1)]
+		var result = Combatant.attack_roll(p, target)
+		if result.hit:
+			var final_dmg = Combatant.apply_position_modifiers(result.damage, p, target)
+			Combatant.apply_damage(target, final_dmg)
+			damage_dealt.emit(target, final_dmg, false)
+			action_performed.emit("%s (Alerta): %d(1d20)+%d = %d vs %d CA -> Golpe! %d de daño de sorpresa a %s" % [p["name"], result.roll, result.bonus, result.total, target.get("ca", 10), final_dmg, target["name"]])
+		else:
+			action_performed.emit("%s (Alerta): %d(1d20)+%d = %d vs %d CA -> %s" % [p["name"], result.roll, result.bonus, result.total, target.get("ca", 10), result.message])
+
+# --- Signature class abilities ---
+
+func _do_reckless(attacker: Dictionary, target: Dictionary) -> void:
+	if target.is_empty():
+		return
+	var result = Combatant.attack_roll(attacker, target, true)
+	if result.hit:
+		var final_dmg = Combatant.apply_position_modifiers(result.damage, attacker, target)
+		Combatant.apply_damage(target, final_dmg)
+		damage_dealt.emit(target, final_dmg, false)
+		action_performed.emit("%s (Temerario, ventaja): %d(1d20)+%d = %d vs %d CA -> Golpe! %d de daño a %s" % [attacker["name"], result.roll, result.bonus, result.total, target.get("ca", 10), final_dmg, target["name"]])
+	else:
+		action_performed.emit("%s (Temerario, ventaja): %d(1d20)+%d = %d vs %d CA -> %s" % [attacker["name"], result.roll, result.bonus, result.total, target.get("ca", 10), result.message])
+	attacker["grants_advantage"] = true
+
+func _do_flurry(attacker: Dictionary, target: Dictionary) -> void:
+	if target.is_empty():
+		return
+	var hits = maxi(1, attacker.get("focus", 0))
+	attacker["focus"] = 0
+	var total_dmg = 0
+	var rolls_log: Array = []
+	for i in range(hits):
+		if target.get("hp", 0) <= 0:
+			break
+		var result = Combatant.attack_roll(attacker, target)
+		if result.hit:
+			var final_dmg = Combatant.apply_position_modifiers(result.damage, attacker, target)
+			Combatant.apply_damage(target, final_dmg)
+			damage_dealt.emit(target, final_dmg, false)
+			total_dmg += final_dmg
+			rolls_log.append("%d(1d20)+%d=%d✓-%d" % [result.roll, result.bonus, result.total, final_dmg])
+		else:
+			rolls_log.append("%d(1d20)+%d=%d✗" % [result.roll, result.bonus, result.total])
+	action_performed.emit("%s desata Ráfaga (%d golpes) en %s: [%s] -> %d de daño total" % [attacker["name"], hits, target["name"], ", ".join(rolls_log), total_dmg])
+
+func _do_recoil(attacker: Dictionary, target: Dictionary) -> void:
+	if target.is_empty():
+		return
+	var result = Combatant.attack_roll(attacker, target)
+	if not result.hit:
+		action_performed.emit("%s (Retroceso): %d(1d20)+%d = %d vs %d CA -> %s" % [attacker["name"], result.roll, result.bonus, result.total, target.get("ca", 10), result.message])
+		return
+
+	var main_dmg = Combatant.apply_position_modifiers(result.damage, attacker, target)
+	for e in _enemies:
+		e["marked"] = (e.get("id", "") == target.get("id", ""))
+	Combatant.apply_damage(target, main_dmg)
+	damage_dealt.emit(target, main_dmg, false)
+
+	var recoil_dmg = maxi(1, main_dmg / 2)
+	var other_targets: Array = []
+	for e in _enemies:
+		if e.get("hp", 0) > 0 and e.get("id", "") != target.get("id", ""):
+			other_targets.append(e)
+
+	var roll_str = "%d(1d20)+%d = %d vs %d CA -> Golpe!" % [result.roll, result.bonus, result.total, target.get("ca", 10)]
+	if other_targets.size() > 0:
+		var other = other_targets[randi_range(0, other_targets.size() - 1)]
+		Combatant.apply_damage(other, recoil_dmg)
+		damage_dealt.emit(other, recoil_dmg, false)
+		action_performed.emit("%s (Retroceso): %s %d daño a %s. El retroceso (mitad) golpea a %s: %d daño extra!" % [attacker["name"], roll_str, main_dmg, target["name"], other["name"], recoil_dmg])
+	elif target.get("hp", 0) > 0:
+		Combatant.apply_damage(target, recoil_dmg)
+		damage_dealt.emit(target, recoil_dmg, false)
+		action_performed.emit("%s (Retroceso): %s %d daño a %s. Al ser el único enemigo, el retroceso (mitad) también lo golpea: %d daño extra!" % [attacker["name"], roll_str, main_dmg, target["name"], recoil_dmg])
+	else:
+		action_performed.emit("%s (Retroceso): %s %d daño a %s!" % [attacker["name"], roll_str, main_dmg, target["name"]])
+
+func _do_shadow(attacker: Dictionary, target: Dictionary) -> void:
+	if target.is_empty():
+		return
+	var result = Combatant.attack_roll(attacker, target, true)
+	if result.hit:
+		var final_dmg = Combatant.apply_position_modifiers(result.damage, attacker, target)
+		Combatant.apply_damage(target, final_dmg)
+		damage_dealt.emit(target, final_dmg, false)
+		var crit_str = " ¡CRÍTICO!" if result.crit else ""
+		var blind_msg = ""
+		if result.crit:
+			target["blind_turns"] = randi_range(1, 3)
+			blind_msg = " ¡%s queda ciego %d turnos!" % [target["name"], target["blind_turns"]]
+		action_performed.emit("%s (Sombra, ventaja): %d(1d20)+%d = %d vs %d CA -> Golpe!%s %d de daño a %s.%s" % [attacker["name"], result.roll, result.bonus, result.total, target.get("ca", 10), crit_str, final_dmg, target["name"], blind_msg])
+	else:
+		action_performed.emit("%s (Sombra, ventaja): %d(1d20)+%d = %d vs %d CA -> %s" % [attacker["name"], result.roll, result.bonus, result.total, target.get("ca", 10), result.message])
+
+func _do_call_lathander(caster: Dictionary) -> void:
+	var roll = randi_range(1, 20)
+	if roll == 20 and not is_boss_encounter():
+		var alive_enemies: Array = []
+		for e in _enemies:
+			if e.get("hp", 0) > 0:
+				alive_enemies.append(e)
+		if alive_enemies.size() > 0:
+			var victim = alive_enemies[randi_range(0, alive_enemies.size() - 1)]
+			var victim_hp = victim.get("hp", 0)
+			Combatant.apply_damage(victim, victim_hp)
+			damage_dealt.emit(victim, victim_hp, false)
+			action_performed.emit("%s invoca a Lathander (¡20 natural!) y elimina a %s al instante!" % [caster["name"], victim["name"]])
+			return
+	action_performed.emit("%s invoca a Lathander... (tirada: %d, sin efecto)" % [caster["name"], roll])
 
 func _next_turn() -> void:
 	if not _battle_active:

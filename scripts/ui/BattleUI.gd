@@ -10,6 +10,8 @@ var _action_menu: VBoxContainer = null
 var _skill_menu: VBoxContainer = null
 var _item_menu: VBoxContainer = null
 var _target_menu: VBoxContainer = null
+var _position_menu: VBoxContainer = null
+var _premonition_menu: VBoxContainer = null
 var _log_label: RichTextLabel = null
 var _turn_indicator: Label = null
 var _battle_sprites_container: HBoxContainer = null
@@ -27,7 +29,8 @@ var _hp_bars: Array[Dictionary] = []
 var _combatant_sprite_map: Dictionary = {}
 
 # State
-enum MenuState { MAIN, SKILL, ITEM, TARGET_ENEMY, TARGET_ALLY }
+enum MenuState { MAIN, SKILL, ITEM, TARGET_ENEMY, TARGET_ALLY, POSITION, PREMONITION }
+const POSITION_NAMES := ["Adelante", "Medio", "Retaguardia"]
 var _menu_state: MenuState = MenuState.MAIN
 var _selected_index: int = 0
 var _pending_action: Dictionary = {}
@@ -39,7 +42,7 @@ var _current_turn_combatant: Dictionary = {}
 var _current_turn_is_player: bool = false
 
 const MAX_LOG_LINES = 6
-const MENU_OPTIONS = ["Atacar", "Habilidad", "Objeto", "Defender", "Huir"]
+const MENU_OPTIONS = ["Atacar", "Habilidad", "Objeto", "Defender", "Mover", "Huir"]
 
 func _ready() -> void:
 	layer = 20
@@ -137,6 +140,14 @@ func _build_ui() -> void:
 	_target_menu.visible = false
 	menu_panel.add_child(_target_menu)
 
+	_position_menu = VBoxContainer.new()
+	_position_menu.visible = false
+	menu_panel.add_child(_position_menu)
+
+	_premonition_menu = VBoxContainer.new()
+	_premonition_menu.visible = false
+	menu_panel.add_child(_premonition_menu)
+
 	# Right: Log
 	var log_panel = PanelContainer.new()
 	log_panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -202,12 +213,16 @@ func _unhandled_input(event: InputEvent) -> void:
 			_handle_target_input(event)
 		MenuState.TARGET_ALLY:
 			_handle_target_input(event)
+		MenuState.POSITION:
+			_handle_position_input(event)
+		MenuState.PREMONITION:
+			_handle_premonition_input(event)
 
 func _handle_main_menu_input(event: InputEvent) -> void:
 	var max_index = MENU_OPTIONS.size() - 1
-	# In boss fights, cap navigation before "Huir" (index 4)
+	# In boss fights, cap navigation before "Huir" (the last option)
 	if _is_boss:
-		max_index = 3
+		max_index = MENU_OPTIONS.size() - 2
 	if event.is_action_pressed("move_up"):
 		_selected_index = maxi(0, _selected_index - 1)
 		_update_menu_highlight(_action_menu)
@@ -256,7 +271,11 @@ func _select_main_option(idx: int) -> void:
 	match idx:
 		0:  # Attack
 			_pending_action = { "type": "attack" }
-			_show_target_menu(false)
+			var current = _battle_controller.get_turn_system().get_current_combatant()
+			if current.get("premonition_roll", 0) > 0:
+				_show_premonition_menu(current["premonition_roll"])
+			else:
+				_show_target_menu(false)
 		1:  # Skill
 			_show_skill_menu()
 		2:  # Item
@@ -264,9 +283,68 @@ func _select_main_option(idx: int) -> void:
 		3:  # Defend
 			_battle_controller.player_action({ "type": "defend" })
 			_hide_all_menus()
-		4:  # Flee
+		4:  # Move
+			_show_position_menu()
+		5:  # Flee
 			_battle_controller.player_action({ "type": "flee" })
 			_hide_all_menus()
+
+func _show_position_menu() -> void:
+	_clear_container(_position_menu)
+	for i in range(POSITION_NAMES.size()):
+		var label = Label.new()
+		label.text = POSITION_NAMES[i]
+		label.add_theme_font_size_override("font_size", 42)
+		_position_menu.add_child(label)
+
+	_menu_state = MenuState.POSITION
+	_selected_index = 0
+	_action_menu.visible = false
+	_position_menu.visible = true
+	_update_menu_highlight(_position_menu)
+
+func _show_premonition_menu(roll: int) -> void:
+	_clear_container(_premonition_menu)
+	var opt1 = Label.new()
+	opt1.text = "Tirar dados"
+	opt1.add_theme_font_size_override("font_size", 42)
+	_premonition_menu.add_child(opt1)
+	var opt2 = Label.new()
+	opt2.text = "Usar premonición (%d)" % roll
+	opt2.add_theme_font_size_override("font_size", 42)
+	_premonition_menu.add_child(opt2)
+
+	_menu_state = MenuState.PREMONITION
+	_selected_index = 0
+	_action_menu.visible = false
+	_premonition_menu.visible = true
+	_update_menu_highlight(_premonition_menu)
+
+func _handle_premonition_input(event: InputEvent) -> void:
+	if event.is_action_pressed("move_up"):
+		_selected_index = maxi(0, _selected_index - 1)
+		_update_menu_highlight(_premonition_menu)
+	elif event.is_action_pressed("move_down"):
+		_selected_index = mini(1, _selected_index + 1)
+		_update_menu_highlight(_premonition_menu)
+	elif event.is_action_pressed("action1"):
+		_pending_action["use_premonition"] = (_selected_index == 1)
+		_show_target_menu(false)
+	elif event.is_action_pressed("action2"):
+		_back_to_main()
+
+func _handle_position_input(event: InputEvent) -> void:
+	if event.is_action_pressed("move_up"):
+		_selected_index = maxi(0, _selected_index - 1)
+		_update_menu_highlight(_position_menu)
+	elif event.is_action_pressed("move_down"):
+		_selected_index = mini(POSITION_NAMES.size() - 1, _selected_index + 1)
+		_update_menu_highlight(_position_menu)
+	elif event.is_action_pressed("action1"):
+		_battle_controller.player_action({ "type": "move", "target_position": _selected_index })
+		_hide_all_menus()
+	elif event.is_action_pressed("action2"):
+		_back_to_main()
 
 func _show_skill_menu() -> void:
 	var current = _battle_controller._turn_system.get_current_combatant()
@@ -393,6 +471,8 @@ func _back_to_main() -> void:
 	_skill_menu.visible = false
 	_item_menu.visible = false
 	_target_menu.visible = false
+	_position_menu.visible = false
+	_premonition_menu.visible = false
 	_action_menu.visible = true
 	_update_menu_highlight(_action_menu)
 
@@ -401,6 +481,8 @@ func _hide_all_menus() -> void:
 	_skill_menu.visible = false
 	_item_menu.visible = false
 	_target_menu.visible = false
+	_position_menu.visible = false
+	_premonition_menu.visible = false
 
 func _on_turn_changed(combatant: Dictionary, is_player: bool) -> void:
 	_turn_indicator.text = "Turno: %s" % combatant.get("name", "???")
@@ -423,8 +505,8 @@ func _show_main_menu() -> void:
 		var label = Label.new()
 		label.text = option
 		label.add_theme_font_size_override("font_size", 45)
-		# Grey out "Huir" (index 4) in boss fights
-		if i == 4 and _is_boss:
+		# Grey out "Huir" (last option) in boss fights
+		if i == MENU_OPTIONS.size() - 1 and _is_boss:
 			label.add_theme_color_override("font_color", Color(0.35, 0.35, 0.35))
 		_action_menu.add_child(label)
 
@@ -434,6 +516,8 @@ func _show_main_menu() -> void:
 	_skill_menu.visible = false
 	_item_menu.visible = false
 	_target_menu.visible = false
+	_position_menu.visible = false
+	_premonition_menu.visible = false
 	_update_menu_highlight(_action_menu)
 
 func _update_menu_highlight(container: VBoxContainer) -> void:
@@ -441,7 +525,7 @@ func _update_menu_highlight(container: VBoxContainer) -> void:
 	for i in range(children.size()):
 		if children[i] is Label:
 			# Keep greyed-out "Huir" in boss fights regardless of selection
-			var is_disabled = (container == _action_menu and i == 4 and _is_boss)
+			var is_disabled = (container == _action_menu and i == MENU_OPTIONS.size() - 1 and _is_boss)
 			if is_disabled:
 				children[i].add_theme_color_override("font_color", Color(0.35, 0.35, 0.35))
 				children[i].text = "  " + children[i].text.strip_edges().trim_prefix("> ")
@@ -541,16 +625,16 @@ func _update_initiative_list() -> void:
 		_initiative_list.add_child(label)
 
 func _update_battle_sprites() -> void:
-	# Update party sprite colors based on alive/dead state
+	# Update party sprite tint based on alive/dead state
 	if _battle_controller:
 		var party = _battle_controller.get_party()
 		var party_children = _battle_sprites_container.get_children()
 		for i in range(mini(party.size(), party_children.size())):
 			var vbox = party_children[i]
-			# First child is the ColorRect sprite
-			if vbox.get_child_count() > 0 and vbox.get_child(0) is ColorRect:
-				var rect = vbox.get_child(0) as ColorRect
-				rect.color = Color(0.2, 0.4, 0.9) if party[i]["hp"] > 0 else Color(0.3, 0.3, 0.3)
+			# First child is the sprite TextureRect
+			if vbox.get_child_count() > 0 and vbox.get_child(0) is TextureRect:
+				var rect = vbox.get_child(0) as TextureRect
+				rect.modulate = Color(1, 1, 1) if party[i]["hp"] > 0 else Color(0.3, 0.3, 0.3)
 	_update_hp_bars()
 
 func _update_hp_bars() -> void:
@@ -610,15 +694,20 @@ func setup_sprites(party: Array, enemies: Array) -> void:
 	_hp_bars.clear()
 	_combatant_sprite_map.clear()
 
-	# Party sprites (blue squares) — no HP bar (stats shown in HUD panel)
+	# Party sprites (side-view battle pose) — no HP bar (stats shown in HUD panel)
 	for p in party:
 		var vbox = VBoxContainer.new()
 		vbox.alignment = BoxContainer.ALIGNMENT_END
 		var sprite_w := 64.0
+		# Row offset: middle/retaguardia sprites sit lower/further back visually
+		vbox.add_theme_constant_override("separation", 0)
+		vbox.custom_minimum_size.y = p.get("position", 0) * 20.0
 		# Sprite
-		var rect = ColorRect.new()
+		var rect = TextureRect.new()
 		rect.custom_minimum_size = Vector2(sprite_w, 80)
-		rect.color = Color(0.2, 0.4, 0.9) if p["hp"] > 0 else Color(0.3, 0.3, 0.3)
+		rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		rect.texture = CharacterSprites.get_battle_texture(p)
+		rect.modulate = Color(1, 1, 1) if p["hp"] > 0 else Color(0.3, 0.3, 0.3)
 		vbox.add_child(rect)
 		# Name
 		var name_label = Label.new()
@@ -636,6 +725,8 @@ func setup_sprites(party: Array, enemies: Array) -> void:
 		var is_boss_sprite = "guardian" in e.get("base_id", e.get("id", ""))
 		var sprite_w := 100.0 if is_boss_sprite else 64.0
 		var sprite_h := 120.0 if is_boss_sprite else 80.0
+		# Row offset: middle/retaguardia sprites sit lower/further back visually
+		vbox.custom_minimum_size.y = e.get("position", 0) * 20.0
 		# HP bar
 		var hp_bar = _create_hp_bar(e, sprite_w, false)
 		vbox.add_child(hp_bar)
