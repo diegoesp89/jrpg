@@ -11,6 +11,7 @@ var _hud: CanvasLayer = null
 var _minimap_ui = null
 var _prompt_label: Label = null
 var _debug_label: Label = null
+var _map_editor = null
 
 func _ready() -> void:
 	_setup_environment()
@@ -27,6 +28,7 @@ func _ready() -> void:
 	_setup_minimap()
 	_setup_occlusion_controller()
 	_setup_player_fog_global()
+	_setup_map_editor()
 
 func _setup_environment() -> void:
 	var env = Environment.new()
@@ -160,6 +162,25 @@ func _setup_minimap() -> void:
 	_minimap_ui.name = "MiniMapUI"
 	_minimap_ui.set_script(minimap_script)
 	_hud.add_child(_minimap_ui)
+
+func _setup_map_editor() -> void:
+	var editor_script = load("res://scripts/ui/MapEditor.gd")
+	var editor = CanvasLayer.new()
+	editor.name = "MapEditor"
+	editor.set_script(editor_script)
+	add_child(editor)
+	_map_editor = editor
+
+	var btn = Button.new()
+	btn.name = "MapEditorButton"
+	btn.text = "Editor de Mapa"
+	btn.set_anchors_preset(Control.PRESET_BOTTOM_RIGHT)
+	btn.offset_left = -180
+	btn.offset_right = -10
+	btn.offset_top = -50
+	btn.offset_bottom = -10
+	btn.pressed.connect(func(): _map_editor.open_editor())
+	_hud.add_child(btn)
 
 func _setup_occlusion_controller() -> void:
 	var oc_script = load("res://scripts/exploration/OcclusionController.gd")

@@ -1,0 +1,6 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/core/MapSelection.gd" id="1"]
+
+[node name="MapSelection" type="Node"]
+script = ExtResource("1")

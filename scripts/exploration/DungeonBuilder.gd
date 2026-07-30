@@ -19,35 +19,13 @@ const DOOR_BORDER = Color(0.35, 0.2, 0.05)
 const FLOOR_COLOR = Color(0.25, 0.22, 0.2)
 const FLOOR_ALT_COLOR = Color(0.28, 0.25, 0.22)
 
-# Dungeon map: 25 columns x 20 rows.
-# Orientado como el mapa de referencia de White Plume Mountain: la entrada (Zona 1) está
-# abajo del array (fila 19, "sur"); se avanza hacia filas menores ("norte") a través de un
-# pasillo con el primer encuentro, hasta la puerta de la Esfinge. Ahí el mapa se abre a un
-# hub que se bifurca en 3 caminos explorables en cualquier orden; las 3 ramas convergen y
-# llevan al corredor final con el boss y la salida, arriba del todo (fila 0).
-var dungeon_map: Array = [
-	#  0  1  2  3  4  5  6  7  8  9  10 11 12 13 14 15 16 17 18 19 20 21 22 23 24
-	[0, 0, 2, 2, 2, 9, 2, 2, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], # row 0 - Exit
-	[0, 0, 2, 1, 1, 8, 1, 1, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], # row 1 - Boss
-	[0, 2, 2, 2, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0], # row 2 - Sala 5 top
-	[2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0], # row 3 - Reconnect (las 3 ramas convergen)
-	[2, 1, 1, 2, 0, 0, 0, 0, 2, 1, 1, 2, 2, 1, 1, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0], # row 4
-	[2, 3, 1, 2, 0, 0, 0, 0, 2, 6, 1, 2, 2, 1, 1, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0], # row 5 - Door | Combat #2 | (placeholder)
-	[2, 1, 5, 2, 0, 0, 0, 0, 2, 7, 1, 2, 2, 1, 1, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0], # row 6 - Chest | Trap | (placeholder)
-	[2, 1, 1, 2, 0, 0, 0, 0, 2, 1, 1, 2, 2, 1, 1, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0], # row 7 - Rama Whelm | Rama Wave | Rama Blackrazor (placeholder)
-	[2, 1, 1, 2, 2, 2, 2, 2, 2, 1, 1, 2, 2, 1, 1, 2, 2, 0, 0, 0, 0, 0, 0, 0, 0], # row 8 - gaps: rama izq/centro/der
-	[2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 0, 0, 0, 0, 0, 0, 0, 0], # row 9 - Hub
-	[2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 0, 0, 0, 0, 0, 0, 0, 0], # row 10 - Hub (3 ramas)
-	[2, 2, 2, 10, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 0, 0, 0, 0, 0, 0, 0, 0], # row 11 - RiddleGate (Esfinge) + Hub top
-	[0, 0, 2, 1, 1, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], # row 12
-	[0, 0, 2, 6, 1, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], # row 13 - Combat #1
-	[0, 0, 2, 1, 1, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], # row 14 - Pasillo
-	[2, 2, 2, 1, 1, 2, 2, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], # row 15
-	[2, 1, 1, 1, 1, 1, 1, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], # row 16
-	[2, 1, 4, 1, 1, 1, 1, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], # row 17 - NPC (Zona 1: Entrada)
-	[2, 1, 1, 1, 1, 1, 1, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], # row 18
-	[2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], # row 19 - Zona 1 (Entrada), pared sur
-]
+# Dungeon layout is data-driven: loaded from the current map (res://maps/*.map, selected at
+# MapSelection) via DataLoader.get_current_map(). See _load_map_data(). Falls back to the
+# default shipped map if none was selected (e.g. testing this scene directly).
+const DEFAULT_MAP_PATH := "res://maps/white_plume_mountain.map"
+
+var dungeon_map: Array = []
+var _entities: Dictionary = {}
 
 var _wall_nodes: Array[Node3D] = []
 var _floor_mesh: MeshInstance3D = null
@@ -61,9 +39,26 @@ var _fog_shader_textured_alpha: Shader = null  # transparent variant for occlusi
 static var _fog_globals_registered: bool = false
 
 func _ready() -> void:
+	_load_map_data()
 	_init_fog_shaders()
 	_register_fog_globals()
 	_build_dungeon()
+
+func _load_map_data() -> void:
+	var map_data = DataLoader.get_current_map()
+	if map_data.is_empty():
+		DataLoader.load_map(DEFAULT_MAP_PATH)
+		map_data = DataLoader.get_current_map()
+	dungeon_map = map_data.get("tiles", [])
+	_entities = map_data.get("entities", {})
+
+## Finds the entity config placed at (row, col) within one of the lists in `_entities`
+## (e.g. "npcs", "chests"). Returns {} if none is configured there.
+func _get_entity_at(list_key: String, row: int, col: int) -> Dictionary:
+	for entry in _entities.get(list_key, []):
+		if int(entry.get("row", -1)) == row and int(entry.get("col", -1)) == col:
+			return entry
+	return {}
 
 func _register_fog_globals() -> void:
 	# Register global shader params only once (persists across scene reloads).
@@ -78,6 +73,40 @@ func _build_dungeon() -> void:
 	_build_floor()
 	_build_walls_and_entities()
 	_create_random_encounter_zones()
+	_create_standalone_story_triggers()
+
+## Story triggers co-located with an Exit tile are handled specially inside _create_exit
+## (auto_trigger=false, invoked directly to avoid a body_entered race). Any other entry in
+## "story_triggers" is a standalone narrative beat placed anywhere on the map — it gets its
+## own self-triggering Area3D, so future scenes can be added purely through map data.
+func _create_standalone_story_triggers() -> void:
+	var trigger_script = load("res://scripts/exploration/StoryTrigger.gd")
+	for cfg in _entities.get("story_triggers", []):
+		var row = int(cfg.get("row", -1))
+		var col = int(cfg.get("col", -1))
+		if row >= 0 and row < dungeon_map.size() and col >= 0 and col < dungeon_map[row].size():
+			if dungeon_map[row][col] == Tile.EXIT:
+				continue  # handled inside _create_exit
+		var trigger = Area3D.new()
+		trigger.name = "StoryTrigger_%s" % cfg.get("event_id", "")
+		trigger.position = Vector3(col * TILE_SIZE, 0, row * TILE_SIZE)
+		trigger.collision_layer = 8
+		trigger.collision_mask = 2
+
+		var col_shape = CollisionShape3D.new()
+		var box = BoxShape3D.new()
+		box.size = Vector3(TILE_SIZE, 2.0, TILE_SIZE)
+		col_shape.shape = box
+		col_shape.position = Vector3(0, 1.0, 0)
+		trigger.add_child(col_shape)
+
+		if trigger_script:
+			trigger.set_script(trigger_script)
+			trigger.event_id = cfg.get("event_id", "")
+			trigger.requires_flag = cfg.get("requires_flag", "")
+			trigger.auto_trigger = true
+
+		add_child(trigger)
 
 func _build_floor() -> void:
 	# Count floor tiles to determine floor extent
@@ -130,19 +159,19 @@ func _build_walls_and_entities() -> void:
 				Tile.DOOR:
 					_create_door(pos)
 				Tile.NPC:
-					_create_npc(pos)
+					_create_npc(pos, _get_entity_at("npcs", row, col))
 				Tile.CHEST:
-					_create_chest(pos)
+					_create_chest(pos, _get_entity_at("chests", row, col))
 				Tile.COMBAT_TRIGGER:
-					_create_combat_trigger(pos, col, row)
+					_create_combat_trigger(pos, _get_entity_at("combat_triggers", row, col))
 				Tile.TRAP:
-					_create_trap(pos)
+					_create_trap(pos, _get_entity_at("traps", row, col))
 				Tile.BOSS_TRIGGER:
-					_create_boss_trigger(pos)
+					_create_boss_trigger(pos, _get_entity_at("boss_triggers", row, col))
 				Tile.EXIT:
-					_create_exit(pos)
+					_create_exit(pos, row, col)
 				Tile.RIDDLE_GATE:
-					_create_riddle_gate(pos)
+					_create_riddle_gate(pos, _get_entity_at("riddle_gates", row, col))
 
 func _create_wall(pos: Vector3, col: int, row: int) -> void:
 	var wall = StaticBody3D.new()
@@ -237,7 +266,7 @@ func _create_door(pos: Vector3) -> void:
 
 	add_child(door)
 
-func _create_npc(pos: Vector3) -> void:
+func _create_npc(pos: Vector3, config: Dictionary = {}) -> void:
 	var npc_script = load("res://scripts/exploration/NPCIntro.gd")
 	var npc = StaticBody3D.new()
 	npc.name = "NPCIntro"
@@ -263,10 +292,12 @@ func _create_npc(pos: Vector3) -> void:
 
 	if npc_script:
 		npc.set_script(npc_script)
+		if config.has("dialogue_id"):
+			npc.dialogue_id = config["dialogue_id"]
 
 	add_child(npc)
 
-func _create_chest(pos: Vector3) -> void:
+func _create_chest(pos: Vector3, config: Dictionary = {}) -> void:
 	var pickup_script = load("res://scripts/exploration/Pickup.gd")
 	var chest = StaticBody3D.new()
 	chest.name = "Chest"
@@ -292,19 +323,20 @@ func _create_chest(pos: Vector3) -> void:
 
 	if pickup_script:
 		chest.set_script(pickup_script)
+		if config.has("item_id"):
+			chest.item_id = config["item_id"]
+		if config.has("quantity"):
+			chest.item_quantity = int(config["quantity"])
+		if config.has("chest_id"):
+			chest.chest_id = config["chest_id"]
 
 	add_child(chest)
 
-func _create_combat_trigger(pos: Vector3, col: int, row: int) -> void:
+func _create_combat_trigger(pos: Vector3, config: Dictionary = {}) -> void:
 	var trigger_script = load("res://scripts/exploration/CombatTrigger.gd")
 	var trigger = Area3D.new()
-	# Determine encounter based on position
-	if row == 13:
-		trigger.name = "CombatTrigger_hallway"
-	elif row == 5:
-		trigger.name = "CombatTrigger_golem"
-	else:
-		trigger.name = "CombatTrigger_%d_%d" % [col, row]
+	var encounter_id = config.get("encounter_id", "encounter_hallway")
+	trigger.name = "CombatTrigger_%s" % encounter_id
 	trigger.position = pos
 	trigger.collision_layer = 8  # trigger layer
 	trigger.collision_mask = 2  # detect player
@@ -318,10 +350,11 @@ func _create_combat_trigger(pos: Vector3, col: int, row: int) -> void:
 
 	if trigger_script:
 		trigger.set_script(trigger_script)
+		trigger.encounter_id = encounter_id
 
 	add_child(trigger)
 
-func _create_trap(pos: Vector3) -> void:
+func _create_trap(pos: Vector3, config: Dictionary = {}) -> void:
 	# Trap: an area that damages player on enter
 	var trap = Area3D.new()
 	trap.name = "Trap"
@@ -349,10 +382,12 @@ func _create_trap(pos: Vector3) -> void:
 	var trap_script = load("res://scripts/exploration/Trap.gd")
 	if trap_script:
 		trap.set_script(trap_script)
+		if config.has("damage"):
+			trap.damage = int(config["damage"])
 
 	add_child(trap)
 
-func _create_riddle_gate(pos: Vector3) -> void:
+func _create_riddle_gate(pos: Vector3, config: Dictionary = {}) -> void:
 	var gate_script = load("res://scripts/exploration/RiddleGate.gd")
 	var gate = StaticBody3D.new()
 	gate.name = "RiddleGate"
@@ -378,36 +413,49 @@ func _create_riddle_gate(pos: Vector3) -> void:
 
 	if gate_script:
 		gate.set_script(gate_script)
+		if config.has("encounter_id"):
+			gate.encounter_id = config["encounter_id"]
+		if config.has("success_event_id"):
+			gate.success_event_id = config["success_event_id"]
+		if config.has("combat_event_id"):
+			gate.combat_event_id = config["combat_event_id"]
 
 	add_child(gate)
 
 func _create_random_encounter_zones() -> void:
-	# Pasillo corridor (cols 3-4, rows 12-14): ambient random encounters, no visible sprite,
-	# distinct from the fixed CombatTrigger already in the same corridor.
 	var zone_script = load("res://scripts/exploration/RandomEncounterZone.gd")
-	var zone = Area3D.new()
-	zone.name = "RandomEncounterZone_pasillo"
-	zone.position = Vector3(3.5 * TILE_SIZE, 0, 13 * TILE_SIZE)
-	zone.collision_layer = 8
-	zone.collision_mask = 2
+	var zones_config: Array = _entities.get("random_encounter_zones", [])
+	for cfg in zones_config:
+		var zone = Area3D.new()
+		var row = float(cfg.get("row", 0))
+		var col = float(cfg.get("col", 0))
+		var width = float(cfg.get("width", 1))
+		var height = float(cfg.get("height", 1))
+		zone.name = "RandomEncounterZone_%d_%d" % [int(row), int(col)]
+		zone.position = Vector3(col * TILE_SIZE, 0, row * TILE_SIZE)
+		zone.collision_layer = 8
+		zone.collision_mask = 2
 
-	var col_shape = CollisionShape3D.new()
-	var box = BoxShape3D.new()
-	box.size = Vector3(TILE_SIZE * 2, 2.0, TILE_SIZE * 3)
-	col_shape.shape = box
-	col_shape.position = Vector3(0, 1.0, 0)
-	zone.add_child(col_shape)
+		var col_shape = CollisionShape3D.new()
+		var box = BoxShape3D.new()
+		box.size = Vector3(width * TILE_SIZE, 2.0, height * TILE_SIZE)
+		col_shape.shape = box
+		col_shape.position = Vector3(0, 1.0, 0)
+		zone.add_child(col_shape)
 
-	if zone_script:
-		zone.set_script(zone_script)
-		zone.encounter_ids = ["encounter_hallway"]
+		if zone_script:
+			zone.set_script(zone_script)
+			zone.encounter_ids = cfg.get("encounter_ids", [])
+			zone.chance = float(cfg.get("chance", 0.25))
+			zone.check_interval = float(cfg.get("interval", 8.0))
 
-	add_child(zone)
+		add_child(zone)
 
-func _create_boss_trigger(pos: Vector3) -> void:
+func _create_boss_trigger(pos: Vector3, config: Dictionary = {}) -> void:
 	var trigger_script = load("res://scripts/exploration/CombatTrigger.gd")
 	var trigger = Area3D.new()
-	trigger.name = "CombatTrigger_boss"
+	var encounter_id = config.get("encounter_id", "encounter_boss")
+	trigger.name = "CombatTrigger_%s" % encounter_id
 	trigger.position = pos
 	trigger.collision_layer = 8
 	trigger.collision_mask = 2
@@ -421,10 +469,11 @@ func _create_boss_trigger(pos: Vector3) -> void:
 
 	if trigger_script:
 		trigger.set_script(trigger_script)
+		trigger.encounter_id = encounter_id
 
 	add_child(trigger)
 
-func _create_exit(pos: Vector3) -> void:
+func _create_exit(pos: Vector3, row: int, col: int) -> void:
 	# Exit: touching this ends the slice with victory
 	var exit_area = Area3D.new()
 	exit_area.name = "Exit"
@@ -451,14 +500,16 @@ func _create_exit(pos: Vector3) -> void:
 	exit_area.body_entered.connect(_on_exit_entered)
 	add_child(exit_area)
 
-	# Co-located story trigger: plays the WP30 exit banter (matched to the current party)
-	# before the victory screen. auto_trigger=false avoids a body_entered race with exit_area;
-	# _on_exit_entered invokes it directly and awaits completion.
+	# Co-located story trigger: plays the exit banter (matched to the current party) before the
+	# victory screen. auto_trigger=false avoids a body_entered race with exit_area; _on_exit_entered
+	# invokes it directly and awaits completion. Config comes from the map's "story_triggers" list
+	# (falls back to the classic WP30/boss-defeated defaults if the map doesn't define one here).
+	var story_cfg = _get_entity_at("story_triggers", row, col)
 	var trigger_script = load("res://scripts/exploration/StoryTrigger.gd")
 	_wp30_trigger = Area3D.new()
 	_wp30_trigger.set_script(trigger_script)
-	_wp30_trigger.event_id = "WP30"
-	_wp30_trigger.requires_flag = "combat_encounter_boss_done"
+	_wp30_trigger.event_id = story_cfg.get("event_id", "WP30")
+	_wp30_trigger.requires_flag = story_cfg.get("requires_flag", "combat_encounter_boss_done")
 	_wp30_trigger.auto_trigger = false
 	add_child(_wp30_trigger)
 
@@ -671,8 +722,10 @@ func _is_open_tile(row: int, col: int) -> bool:
 	return tile != Tile.EMPTY and tile != Tile.WALL
 
 func get_player_start_position() -> Vector3:
-	# Center of Sala 1 / Zona 1 - Entrada (row 17, col 4)
-	return Vector3(4 * TILE_SIZE, 0, 17 * TILE_SIZE)
+	var start = _entities.get("player_start", {})
+	var row = float(start.get("row", 17))
+	var col = float(start.get("col", 4))
+	return Vector3(col * TILE_SIZE, 0, row * TILE_SIZE)
 
 func get_wall_nodes() -> Array[Node3D]:
 	return _wall_nodes

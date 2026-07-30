@@ -2,6 +2,8 @@ extends Area3D
 class_name Trap
 ## Trap — Damages the party leader
 
+@export var damage: int = 10
+
 var _triggered: bool = false
 
 func _ready() -> void:
@@ -15,6 +17,5 @@ func _on_body_entered(body: Node3D) -> void:
 		# Damage leader
 		if GameState.party.size() > 0:
 			var leader = GameState.party[0]
-			var dmg = 10
-			leader["hp"] = maxi(leader["hp"] - dmg, 0)
-			print("Trampa! %s recibe %d de dano!" % [leader["name"], dmg])
+			leader["hp"] = maxi(leader["hp"] - damage, 0)
+			print("Trampa! %s recibe %d de dano!" % [leader["name"], damage])

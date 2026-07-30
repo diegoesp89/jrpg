@@ -11,6 +11,8 @@ var _dialogues: Dictionary = {}
 var _feats: Dictionary = {}
 var _riddles: Array = []
 var _adventure: Array = []
+var _current_map: Dictionary = {}
+var _current_map_path: String = ""
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
@@ -139,3 +141,77 @@ func get_waypoint_scene(event_id: String, party_names: Array) -> Dictionary:
 		if entry_party == target:
 			return entry
 	return {}
+
+# --- Maps (res://maps/*.map) ---
+
+const MAPS_DIR := "res://maps/"
+
+## Scans res://maps/ and returns [{"name": <map's "name" field>, "path": <res:// path>}, ...].
+func list_maps() -> Array:
+	var result: Array = []
+	var dir = DirAccess.open(MAPS_DIR)
+	if dir == null:
+		push_warning("DataLoader: maps folder not found: %s" % MAPS_DIR)
+		return result
+	dir.list_dir_begin()
+	var file_name = dir.get_next()
+	while file_name != "":
+		if not dir.current_is_dir() and file_name.ends_with(".map"):
+			var path = MAPS_DIR + file_name
+			var data = _load_json_dict(path)
+			result.append({"name": data.get("name", file_name), "path": path})
+		file_name = dir.get_next()
+	dir.list_dir_end()
+	return result
+
+## Loads and parses a .map file, storing it as the current map. Returns true on success.
+func load_map(path: String) -> bool:
+	var data = _load_json_dict(path)
+	if data.is_empty():
+		push_error("DataLoader: could not load map: %s" % path)
+		return false
+	_sanitize_map_tiles(data)
+	_current_map = data
+	_current_map_path = path
+	return true
+
+## Godot's JSON parser always returns floats for numbers (even whole ones), but
+## DungeonBuilder's `match tile:` against the Tile enum needs real ints — `match` doesn't
+## coerce float 2.0 to int 2 the way `==`/`!=` do, so every tile silently failed to match
+## and only floor tiles (checked with `!=`) were ever built. Normalize right after parsing.
+func _sanitize_map_tiles(data: Dictionary) -> void:
+	var tiles: Array = data.get("tiles", [])
+	for row in tiles:
+		for i in range(row.size()):
+			row[i] = int(row[i])
+
+func get_current_map() -> Dictionary:
+	return _current_map
+
+func get_current_map_path() -> String:
+	return _current_map_path
+
+## Sets the current map from in-memory data without touching disk (used by MapEditor's
+## Playtest button, which reloads the dungeon scene against unsaved edits).
+func set_current_map(data: Dictionary) -> void:
+	_current_map = data
+
+func get_all_dialogue_ids() -> Array:
+	return _dialogues.keys()
+
+func get_all_item_ids() -> Array:
+	return _items.keys()
+
+func get_all_encounter_ids() -> Array:
+	return _encounters.keys()
+
+## Writes map_data as the .map at path (used by the in-game map editor). Only works when
+## running from the Godot editor / a local dev environment — res:// is read-only once exported.
+func save_map(path: String, map_data: Dictionary) -> bool:
+	var file = FileAccess.open(path, FileAccess.WRITE)
+	if file == null:
+		push_error("DataLoader: could not open map for writing: %s" % path)
+		return false
+	file.store_string(JSON.stringify(map_data, "\t"))
+	file.close()
+	return true
