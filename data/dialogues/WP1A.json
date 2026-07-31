@@ -2,11 +2,16 @@
   {
     "id": "WP1A_01",
     "scene": "1.A",
-    "party": ["Barbara", "Huguito", "Rosa", "Azafran"],
+    "party": [
+      "Barbara",
+      "Huguito",
+      "Rosa",
+      "Azafran"
+    ],
     "leader": "Rosa",
     "mood": "happy",
     "dialogue": [
-      "Rosa: ¡La Luna! Qué romántico que la entrada a la Montaña del Penacho Blanco se abra con algo tan bello.",
+      "Rosa: ¡{respuesta}! Qué romántico que la entrada a la Montaña del Penacho Blanco se abra con algo tan bello.",
       "Azafran: Menos mal que recordaste el patrón astral, Rosa. No quería gastar munición tan pronto.",
       "Barbara: Noble respuesta para una criatura antigua. Aunque me hubiera gustado romper ese pedestal.",
       "Huguito: ¡Huguito, el chiquito, prefiere las palabras a los golpes! ¡Entremos antes de que cambie de opinión!"
@@ -15,7 +20,12 @@
   {
     "id": "WP1A_02",
     "scene": "1.A",
-    "party": ["Barbara", "Huguito", "Rosa", "Lulu"],
+    "party": [
+      "Barbara",
+      "Huguito",
+      "Rosa",
+      "Lulu"
+    ],
     "leader": "Lulu",
     "mood": "curious",
     "dialogue": [
@@ -28,11 +38,16 @@
   {
     "id": "WP1A_03",
     "scene": "1.A",
-    "party": ["Barbara", "Huguito", "Rosa", "Daragat"],
+    "party": [
+      "Barbara",
+      "Huguito",
+      "Rosa",
+      "Daragat"
+    ],
     "leader": "Daragat",
     "mood": "sarcastic",
     "dialogue": [
-      "Daragat: 'La Luna'. Vaya, la Montaña del Penacho Blanco tiene contraseñas de nivel principiante.",
+      "Daragat: '{respuesta}'. Vaya, la Montaña del Penacho Blanco tiene contraseñas de nivel principiante.",
       "Rosa: No seas cínico, niño. Fue un momento heroico. ¿Verdad, Adirem?",
       "Huguito: ¡Cínico o no, funcionó! ¡Huguito, el chiquito, no tendrá que pelear contra una estatua!",
       "Barbara: Hubiera sido una pelea corta. Pero avancemos, mi abuela no está en esta puerta."
@@ -41,11 +56,16 @@
   {
     "id": "WP1A_04",
     "scene": "1.A",
-    "party": ["Barbara", "Huguito", "Rosa", "Solana"],
+    "party": [
+      "Barbara",
+      "Huguito",
+      "Rosa",
+      "Solana"
+    ],
     "leader": "Solana",
     "mood": "mysterious",
     "dialogue": [
-      "Solana: La Luna rige los caminos ocultos de los Vistani. No es coincidencia que sea la clave aquí.",
+      "Solana: {respuesta} rige los caminos ocultos de los Vistani. No es coincidencia que sea la clave aquí.",
       "Rosa: Sabía que tu misterio nos serviría de algo, Solana. Casi tanto como mi puntería.",
       "Barbara: Mientras el camino nos lleve al fondo de la montaña, aceptaré sus juegos de palabras.",
       "Huguito: ¡Huguito, el chiquito, solo espera que dentro no necesitemos saber el nombre del sol!"
@@ -54,7 +74,12 @@
   {
     "id": "WP1A_05",
     "scene": "1.A",
-    "party": ["Barbara", "Huguito", "Azafran", "Lulu"],
+    "party": [
+      "Barbara",
+      "Huguito",
+      "Azafran",
+      "Lulu"
+    ],
     "leader": "Azafran",
     "mood": "focused",
     "dialogue": [
@@ -67,11 +92,16 @@
   {
     "id": "WP1A_06",
     "scene": "1.A",
-    "party": ["Barbara", "Huguito", "Azafran", "Daragat"],
+    "party": [
+      "Barbara",
+      "Huguito",
+      "Azafran",
+      "Daragat"
+    ],
     "leader": "Huguito",
     "mood": "happy",
     "dialogue": [
-      "Huguito: ¡Huguito, el chiquito, es un genio de los puzzles! ¡La Luna nos dio el paso!",
+      "Huguito: ¡Huguito, el chiquito, es un genio de los puzzles! ¡{respuesta} nos dio el paso!",
       "Daragat: Bueno, en realidad Azafrán lo dijo primero, pero te dejaremos el crédito para que no llores.",
       "Azafran: (Sorbiendo café) Mientras la puerta esté abierta, no me importa quién se lleve el mérito.",
       "Barbara: Mi abuela decía que la Luna guía a los perdidos. Espero que tenga razón hoy."
@@ -80,7 +110,12 @@
   {
     "id": "WP1A_07",
     "scene": "1.A",
-    "party": ["Barbara", "Huguito", "Azafran", "Solana"],
+    "party": [
+      "Barbara",
+      "Huguito",
+      "Azafran",
+      "Solana"
+    ],
     "leader": "Barbara",
     "mood": "noble",
     "dialogue": [
@@ -93,11 +128,16 @@
   {
     "id": "WP1A_08",
     "scene": "1.A",
-    "party": ["Barbara", "Huguito", "Lulu", "Daragat"],
+    "party": [
+      "Barbara",
+      "Huguito",
+      "Lulu",
+      "Daragat"
+    ],
     "leader": "Lulu",
     "mood": "playful",
     "dialogue": [
-      "Lulu: ¡La Luna! ¡Como el juguete de plata que tenía de pequeña, miau!",
+      "Lulu: ¡{respuesta}! ¡Como el juguete de plata que tenía de pequeña, miau!",
       "Daragat: Si Llave la rana pudiera hablar, diría que ese acertijo fue demasiado fácil para nosotros.",
       "Huguito: ¡Fácil es bueno! ¡Huguito, el chiquito, ama las cosas que no intentan morderlo!",
       "Barbara: No se confíen. La montaña nos deja pasar solo para devorarnos más adentro."
@@ -106,7 +146,12 @@
   {
     "id": "WP1A_09",
     "scene": "1.A",
-    "party": ["Barbara", "Huguito", "Lulu", "Solana"],
+    "party": [
+      "Barbara",
+      "Huguito",
+      "Lulu",
+      "Solana"
+    ],
     "leader": "Solana",
     "mood": "mysterious",
     "dialogue": [
@@ -119,11 +164,16 @@
   {
     "id": "WP1A_10",
     "scene": "1.A",
-    "party": ["Barbara", "Huguito", "Daragat", "Solana"],
+    "party": [
+      "Barbara",
+      "Huguito",
+      "Daragat",
+      "Solana"
+    ],
     "leader": "Daragat",
     "mood": "sarcastic",
     "dialogue": [
-      "Daragat: Genial, entramos. Lathander debe estar riéndose de que 'La Luna' sea la llave de un volcán.",
+      "Daragat: Genial, entramos. Lathander debe estar riéndose de que '{respuesta}' sea la llave de un volcán.",
       "Solana: El equilibrio cósmico no entiende de bromas, niño. Dago necesita que nos concentremos.",
       "Barbara: Basta de cháchara. Mis pies arden por avanzar y mis manos por golpear algo.",
       "Huguito: ¡Huguito, el chiquito, sugiere que usemos esa energía para caminar rápido y no para romper cosas!"
@@ -132,7 +182,12 @@
   {
     "id": "WP1A_11",
     "scene": "1.A",
-    "party": ["Barbara", "Rosa", "Azafran", "Lulu"],
+    "party": [
+      "Barbara",
+      "Rosa",
+      "Azafran",
+      "Lulu"
+    ],
     "leader": "Rosa",
     "mood": "heroic",
     "dialogue": [
@@ -145,7 +200,12 @@
   {
     "id": "WP1A_12",
     "scene": "1.A",
-    "party": ["Barbara", "Rosa", "Azafran", "Daragat"],
+    "party": [
+      "Barbara",
+      "Rosa",
+      "Azafran",
+      "Daragat"
+    ],
     "leader": "Azafran",
     "mood": "focused",
     "dialogue": [
@@ -158,11 +218,16 @@
   {
     "id": "WP1A_13",
     "scene": "1.A",
-    "party": ["Barbara", "Rosa", "Azafran", "Solana"],
+    "party": [
+      "Barbara",
+      "Rosa",
+      "Azafran",
+      "Solana"
+    ],
     "leader": "Solana",
     "mood": "determined",
     "dialogue": [
-      "Solana: La Luna ha hablado. No volveremos a ver el cielo hasta que Dago recupere su alma.",
+      "Solana: {respuesta} ha hablado. No volveremos a ver el cielo hasta que Dago recupere su alma.",
       "Rosa: Qué dramática, Solana. Con mis disparos y tu magia, esto será un paseo.",
       "Azafran: Un paseo por un volcán lleno de trampas. Tomen su café y vigilen el suelo.",
       "Barbara: Si el suelo intenta tragarnos, le daré un motivo para escupirnos."
@@ -171,7 +236,12 @@
   {
     "id": "WP1A_14",
     "scene": "1.A",
-    "party": ["Barbara", "Rosa", "Lulu", "Daragat"],
+    "party": [
+      "Barbara",
+      "Rosa",
+      "Lulu",
+      "Daragat"
+    ],
     "leader": "Rosa",
     "mood": "protective",
     "dialogue": [
@@ -184,7 +254,12 @@
   {
     "id": "WP1A_15",
     "scene": "1.A",
-    "party": ["Barbara", "Rosa", "Lulu", "Solana"],
+    "party": [
+      "Barbara",
+      "Rosa",
+      "Lulu",
+      "Solana"
+    ],
     "leader": "Lulu",
     "mood": "tense",
     "dialogue": [
@@ -197,11 +272,16 @@
   {
     "id": "WP1A_16",
     "scene": "1.A",
-    "party": ["Barbara", "Rosa", "Daragat", "Solana"],
+    "party": [
+      "Barbara",
+      "Rosa",
+      "Daragat",
+      "Solana"
+    ],
     "leader": "Daragat",
     "mood": "curious",
     "dialogue": [
-      "Daragat: ¿Ustedes creen que la Esfinge se aburre de decir siempre lo de 'La Luna'?",
+      "Daragat: ¿Ustedes creen que la Esfinge se aburre de decir siempre lo de '{respuesta}'?",
       "Solana: Las criaturas eternas no conocen el aburrimiento, solo el deber.",
       "Rosa: Como mi deber de proteger a esta party y verme bien mientras lo hago.",
       "Barbara: Mi único deber es encontrar a mi abuela. ¡Muévanse antes de que pierda la paciencia!"
@@ -210,11 +290,16 @@
   {
     "id": "WP1A_17",
     "scene": "1.A",
-    "party": ["Barbara", "Azafran", "Lulu", "Daragat"],
+    "party": [
+      "Barbara",
+      "Azafran",
+      "Lulu",
+      "Daragat"
+    ],
     "leader": "Azafran",
     "mood": "analytical",
     "dialogue": [
-      "Azafran: Patrón confirmado. La palabra era 'La Luna'. El mecanismo de la entrada es hidráulico.",
+      "Azafran: Patrón confirmado. La palabra era '{respuesta}'. El mecanismo de la entrada es hidráulico.",
       "Lulu: ¿Hidra-qué? Yo solo sé que el camino está libre, miau.",
       "Daragat: Significa que hay agua cerca. Lathander nos libre de morir ahogados en un volcán.",
       "Barbara: Si hay agua, la beberé. Si hay muros, los romperé. ¡Adelante!"
@@ -223,7 +308,12 @@
   {
     "id": "WP1A_18",
     "scene": "1.A",
-    "party": ["Barbara", "Azafran", "Lulu", "Solana"],
+    "party": [
+      "Barbara",
+      "Azafran",
+      "Lulu",
+      "Solana"
+    ],
     "leader": "Solana",
     "mood": "focused",
     "dialogue": [
@@ -236,7 +326,12 @@
   {
     "id": "WP1A_19",
     "scene": "1.A",
-    "party": ["Barbara", "Azafran", "Daragat", "Solana"],
+    "party": [
+      "Barbara",
+      "Azafran",
+      "Daragat",
+      "Solana"
+    ],
     "leader": "Daragat",
     "mood": "sarcastic",
     "dialogue": [
@@ -249,11 +344,16 @@
   {
     "id": "WP1A_20",
     "scene": "1.A",
-    "party": ["Barbara", "Lulu", "Daragat", "Solana"],
+    "party": [
+      "Barbara",
+      "Lulu",
+      "Daragat",
+      "Solana"
+    ],
     "leader": "Lulu",
     "mood": "shy",
     "dialogue": [
-      "Lulu: La Luna nos dejó pasar... ¿creen que la montaña sea buena con nosotros, miau?",
+      "Lulu: {respuesta} nos dejó pasar... ¿creen que la montaña sea buena con nosotros, miau?",
       "Barbara: La bondad no existe aquí, Lulu. Pero mi protección sí. Camina tras de mí.",
       "Daragat: Lathander dice que la luz siempre vence, pero por si acaso, Chispita está listo.",
       "Solana: No busquen bondad en la piedra. Busquen la salida y el alma que vinimos a salvar."
@@ -262,11 +362,16 @@
   {
     "id": "WP1A_21",
     "scene": "1.A",
-    "party": ["Huguito", "Rosa", "Azafran", "Lulu"],
+    "party": [
+      "Huguito",
+      "Rosa",
+      "Azafran",
+      "Lulu"
+    ],
     "leader": "Huguito",
     "mood": "happy",
     "dialogue": [
-      "Huguito: ¡Huguito, el chiquito, sabía que 'La Luna' era la clave! ¡Soy un experto!",
+      "Huguito: ¡Huguito, el chiquito, sabía que '{respuesta}' era la clave! ¡Soy un experto!",
       "Rosa: Lo hiciste bien, cosita. Pero ahora deja que las armas grandes tomen el relevo.",
       "Azafran: No te confíes, Huguito. La Esfinge fue solo el saludo de bienvenida.",
       "Lulu: ¡Entremos saltando antes de que la puerta se canse de nosotros, miau!"
@@ -275,7 +380,12 @@
   {
     "id": "WP1A_22",
     "scene": "1.A",
-    "party": ["Huguito", "Rosa", "Azafran", "Daragat"],
+    "party": [
+      "Huguito",
+      "Rosa",
+      "Azafran",
+      "Daragat"
+    ],
     "leader": "Azafran",
     "mood": "serious",
     "dialogue": [
@@ -288,11 +398,16 @@
   {
     "id": "WP1A_23",
     "scene": "1.A",
-    "party": ["Huguito", "Rosa", "Azafran", "Solana"],
+    "party": [
+      "Huguito",
+      "Rosa",
+      "Azafran",
+      "Solana"
+    ],
     "leader": "Solana",
     "mood": "determined",
     "dialogue": [
-      "Solana: La Luna nos abre el paso al inframundo. No hay marcha atrás para nosotros.",
+      "Solana: {respuesta} nos abre el paso al inframundo. No hay marcha atrás para nosotros.",
       "Rosa: Mientras haya una salida y un espejo para retocarme, me basta.",
       "Azafran: (Suspirando) Menos vanidad y más atención. El aire aquí dentro es viciado.",
       "Huguito: ¡Huguito, el chiquito, sugiere que Solana guíe con su magia brillante!"
@@ -301,11 +416,16 @@
   {
     "id": "WP1A_24",
     "scene": "1.A",
-    "party": ["Huguito", "Rosa", "Lulu", "Daragat"],
+    "party": [
+      "Huguito",
+      "Rosa",
+      "Lulu",
+      "Daragat"
+    ],
     "leader": "Rosa",
     "mood": "happy",
     "dialogue": [
-      "Rosa: ¡Miren! La Montaña del Penacho Blanco nos recibe con los brazos abiertos gracias a 'La Luna'.",
+      "Rosa: ¡Miren! La Montaña del Penacho Blanco nos recibe con los brazos abiertos gracias a '{respuesta}'.",
       "Huguito: ¡Y sin romper nada! ¡Huguito, el chiquito, ama cuando las cosas no explotan!",
       "Lulu: Hay olores nuevos ahí dentro, miau. ¿Será comida o monstruos?",
       "Daragat: Con nuestra suerte, monstruos que huelen a comida. Lathander nos proteja."
@@ -314,7 +434,12 @@
   {
     "id": "WP1A_25",
     "scene": "1.A",
-    "party": ["Huguito", "Rosa", "Lulu", "Solana"],
+    "party": [
+      "Huguito",
+      "Rosa",
+      "Lulu",
+      "Solana"
+    ],
     "leader": "Huguito",
     "mood": "anxious",
     "dialogue": [
@@ -327,7 +452,12 @@
   {
     "id": "WP1A_26",
     "scene": "1.A",
-    "party": ["Huguito", "Rosa", "Daragat", "Solana"],
+    "party": [
+      "Huguito",
+      "Rosa",
+      "Daragat",
+      "Solana"
+    ],
     "leader": "Daragat",
     "mood": "sarcastic",
     "dialogue": [
@@ -340,7 +470,12 @@
   {
     "id": "WP1A_27",
     "scene": "1.A",
-    "party": ["Huguito", "Azafran", "Lulu", "Daragat"],
+    "party": [
+      "Huguito",
+      "Azafran",
+      "Lulu",
+      "Daragat"
+    ],
     "leader": "Azafran",
     "mood": "focused",
     "dialogue": [
@@ -353,11 +488,16 @@
   {
     "id": "WP1A_28",
     "scene": "1.A",
-    "party": ["Huguito", "Azafran", "Lulu", "Solana"],
+    "party": [
+      "Huguito",
+      "Azafran",
+      "Lulu",
+      "Solana"
+    ],
     "leader": "Solana",
     "mood": "grim",
     "dialogue": [
-      "Solana: El umbral ha sido cruzado. La Luna nos ha entregado a las entrañas del volcán.",
+      "Solana: El umbral ha sido cruzado. {respuesta} nos ha entregado a las entrañas del volcán.",
       "Azafran: Menos misticismo y más pies en la tierra. Estén atentos a los cambios de presión.",
       "Lulu: El aire está caliente, miau. No me gusta para mi pelaje.",
       "Huguito: ¡Huguito, el chiquito, se ofrece a llevar el ventilador si alguien tiene uno!"
@@ -366,7 +506,12 @@
   {
     "id": "WP1A_29",
     "scene": "1.A",
-    "party": ["Huguito", "Azafran", "Daragat", "Solana"],
+    "party": [
+      "Huguito",
+      "Azafran",
+      "Daragat",
+      "Solana"
+    ],
     "leader": "Daragat",
     "mood": "hopeful",
     "dialogue": [
@@ -379,11 +524,16 @@
   {
     "id": "WP1A_30",
     "scene": "1.A",
-    "party": ["Huguito", "Lulu", "Daragat", "Solana"],
+    "party": [
+      "Huguito",
+      "Lulu",
+      "Daragat",
+      "Solana"
+    ],
     "leader": "Lulu",
     "mood": "curious",
     "dialogue": [
-      "Lulu: ¡Entramos, miau! ¿Creen que la Esfinge sea amiga de la Luna?",
+      "Lulu: ¡Entramos, miau! ¿Creen que la Esfinge sea amiga de {respuesta}?",
       "Solana: Son sirvientes de las mismas leyes antiguas. Nada es azaroso aquí.",
       "Daragat: Llave dice que la Esfinge solo quería una excusa para volver a dormir.",
       "Huguito: ¡Huguito, el chiquito, también quiere dormir! Pero en una cama, no en un volcán."
@@ -392,11 +542,16 @@
   {
     "id": "WP1A_31",
     "scene": "1.A",
-    "party": ["Rosa", "Azafran", "Lulu", "Daragat"],
+    "party": [
+      "Rosa",
+      "Azafran",
+      "Lulu",
+      "Daragat"
+    ],
     "leader": "Rosa",
     "mood": "flirty",
     "dialogue": [
-      "Rosa: Entramos bajo el signo de la Luna. ¿No te parece una señal de que deberías hacerme caso, Azafrán?",
+      "Rosa: Entramos bajo el signo de {respuesta}. ¿No te parece una señal de que deberías hacerme caso, Azafrán?",
       "Azafran: La única señal que veo es que la puerta está abierta y perdemos tiempo. Camina.",
       "Lulu: El amor es más difícil que el acertijo, miau.",
       "Daragat: Lathander dice que la perseverancia es clave, Rosa. Pero tal vez no con Azafrán."
@@ -405,7 +560,12 @@
   {
     "id": "WP1A_32",
     "scene": "1.A",
-    "party": ["Rosa", "Azafran", "Lulu", "Solana"],
+    "party": [
+      "Rosa",
+      "Azafran",
+      "Lulu",
+      "Solana"
+    ],
     "leader": "Solana",
     "mood": "determined",
     "dialogue": [
@@ -418,11 +578,16 @@
   {
     "id": "WP1A_33",
     "scene": "1.A",
-    "party": ["Rosa", "Azafran", "Daragat", "Solana"],
+    "party": [
+      "Rosa",
+      "Azafran",
+      "Daragat",
+      "Solana"
+    ],
     "leader": "Azafran",
     "mood": "serious",
     "dialogue": [
-      "Azafran: 'La Luna'. Código aceptado. Procedan con cautela hacia el sector primario de la montaña.",
+      "Azafran: '{respuesta}'. Código aceptado. Procedan con cautela hacia el sector primario de la montaña.",
       "Rosa: Eres tan técnica que me asustas. Pero me encanta.",
       "Daragat: Yo solo espero que haya tesoros. Lathander dice que la fe es suficiente, pero el oro ayuda.",
       "Solana: El único tesoro que importa está atrapado en una bolsa en tu hombro, niño."
@@ -431,7 +596,12 @@
   {
     "id": "WP1A_34",
     "scene": "1.A",
-    "party": ["Rosa", "Lulu", "Daragat", "Solana"],
+    "party": [
+      "Rosa",
+      "Lulu",
+      "Daragat",
+      "Solana"
+    ],
     "leader": "Rosa",
     "mood": "heroic",
     "dialogue": [
@@ -444,7 +614,12 @@
   {
     "id": "WP1A_35",
     "scene": "1.A",
-    "party": ["Azafran", "Lulu", "Daragat", "Solana"],
+    "party": [
+      "Azafran",
+      "Lulu",
+      "Daragat",
+      "Solana"
+    ],
     "leader": "Azafran",
     "mood": "analytical",
     "dialogue": [

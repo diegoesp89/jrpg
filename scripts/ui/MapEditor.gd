@@ -11,14 +11,16 @@ const TOOLS := [
 	{"id": "erase", "label": "Vacío", "tile": 0},
 	{"id": "floor", "label": "Piso", "tile": 1},
 	{"id": "wall", "label": "Pared", "tile": 2},
-	{"id": "door", "label": "Puerta", "tile": 3},
+	{"id": "door", "label": "Puerta", "tile": 3, "list": "doors"},
 	{"id": "npc", "label": "NPC", "tile": 4, "list": "npcs"},
 	{"id": "chest", "label": "Cofre", "tile": 5, "list": "chests"},
 	{"id": "combat_trigger", "label": "Trigger Combate", "tile": 6, "list": "combat_triggers"},
 	{"id": "trap", "label": "Trampa", "tile": 7, "list": "traps"},
 	{"id": "boss_trigger", "label": "Trigger Jefe", "tile": 8, "list": "boss_triggers"},
-	{"id": "exit", "label": "Salida", "tile": 9},
-	{"id": "riddle_gate", "label": "Puerta Enigma", "tile": 10, "list": "riddle_gates"},
+	{"id": "exit", "label": "Salida", "tile": 9, "list": "exits"},
+	{"id": "riddle_gate", "label": "Esfinge (Puerta Enigma)", "tile": 10, "list": "riddle_gates"},
+	{"id": "floor_item", "label": "Item en el Suelo", "tile": 11, "list": "floor_items"},
+	{"id": "rest_zone", "label": "Zona de Descanso", "tile": 12, "list": "rest_zones"},
 	{"id": "player_start", "label": "Inicio Jugador"},
 	{"id": "zone", "label": "Zona Encuentros"},
 	{"id": "story_trigger", "label": "Story Trigger"},
@@ -43,6 +45,12 @@ var _selected_kind: String = ""
 var _selected_list_key: String = ""
 var _selected_entry: Dictionary = {}
 var _prop_fields: Dictionary = {}
+var _enemies_section: VBoxContainer = null
+var _event_preview_section: VBoxContainer = null
+
+## Set by the door key-location flow when "Suelo" is chosen — the next floor_item placed
+## uses this as its item_id (instead of the "potion" default) and then clears itself.
+var _pending_key_item_id: String = ""
 
 var _root: Control
 var _grid: MapEditorGrid
@@ -59,6 +67,20 @@ var _prompt_callback: Callable = Callable()
 
 var _load_panel: Control
 var _load_list_container: VBoxContainer
+
+var _key_location_panel: Control
+var _key_location_title: Label
+var _key_location_list_container: VBoxContainer
+
+var _enemy_editor_panel: Control
+var _enemy_editor_fields_container: VBoxContainer
+var _enemy_editor_fields: Dictionary = {}
+var _enemy_editor_current_id: String = ""
+
+var _new_encounter_panel: Control
+var _new_encounter_id_field: LineEdit
+var _new_encounter_enemies_field: LineEdit
+var _new_encounter_hint_label: Label
 
 func _ready() -> void:
 	layer = 70
@@ -214,6 +236,8 @@ func _build_ui() -> void:
 	_add_action_button(action_bar, "Nuevo mapa", _on_new_map_pressed)
 	_add_action_button(action_bar, "Cargar mapa", _on_load_map_pressed)
 	_add_action_button(action_bar, "Redimensionar", _on_resize_pressed)
+	_add_action_button(action_bar, "Nuevo Enemigo", _on_new_enemy_pressed)
+	_add_action_button(action_bar, "Nuevo Encuentro", _on_new_encounter_pressed)
 	_add_action_button(action_bar, "Playtest", _on_playtest_pressed)
 	_add_action_button(action_bar, "Cerrar", close_editor)
 
@@ -228,6 +252,9 @@ func _build_ui() -> void:
 
 	_build_prompt_panel()
 	_build_load_panel()
+	_build_key_location_panel()
+	_build_enemy_editor_panel()
+	_build_new_encounter_panel()
 
 func _make_panel_style() -> StyleBoxFlat:
 	var style = StyleBoxFlat.new()
@@ -296,7 +323,7 @@ func _select_tool(tool: Dictionary, btn: Button) -> void:
 
 func _tool_category(tool: Dictionary) -> String:
 	match tool.get("id", ""):
-		"erase", "floor", "wall", "door", "exit":
+		"erase", "floor", "wall":
 			return "tile"
 		"player_start":
 			return "player_start"
@@ -378,7 +405,7 @@ func _paint_tile(row: int, col: int) -> void:
 	_set_status("(%d,%d) -> %s" % [row, col, _current_tool["label"]])
 
 func _remove_entities_at(row: int, col: int) -> void:
-	for list_key in ["npcs", "chests", "traps", "combat_triggers", "riddle_gates", "boss_triggers", "story_triggers"]:
+	for list_key in ["npcs", "chests", "doors", "floor_items", "rest_zones", "traps", "combat_triggers", "riddle_gates", "boss_triggers", "story_triggers", "exits"]:
 		var list: Array = _entities.get(list_key, [])
 		for i in range(list.size() - 1, -1, -1):
 			var entry = list[i]
@@ -401,9 +428,20 @@ func _apply_default_props(kind: String, entry: Dictionary) -> void:
 			entry["item_id"] = "potion"
 			entry["quantity"] = 1
 			entry["chest_id"] = "chest_%d_%d" % [entry["row"], entry["col"]]
+		"door":
+			entry["door_id"] = "door_%d_%d" % [entry["row"], entry["col"]]
+			entry["locked"] = false
+			entry["required_item_id"] = ""
+		"floor_item":
+			entry["item_id"] = _pending_key_item_id if _pending_key_item_id != "" else "potion"
+			entry["quantity"] = 1
+			entry["chest_id"] = "floor_item_%d_%d" % [entry["row"], entry["col"]]
+			_pending_key_item_id = ""
 		"combat_trigger", "boss_trigger":
 			var ids = DataLoader.get_all_encounter_ids()
 			entry["encounter_id"] = ids[0] if ids.size() > 0 else ""
+			entry["intro_message"] = ""
+			entry["death_message"] = ""
 		"trap":
 			entry["damage"] = 10
 		"riddle_gate":
@@ -413,6 +451,8 @@ func _apply_default_props(kind: String, entry: Dictionary) -> void:
 		"story_trigger":
 			entry["event_id"] = ""
 			entry["requires_flag"] = ""
+		"exit":
+			entry["requires_items"] = []
 
 func _place_or_select_entity(tool: Dictionary, row: int, col: int) -> void:
 	var kind = tool["id"]
@@ -465,6 +505,8 @@ func _show_no_selection() -> void:
 	_selected_kind = ""
 	_selected_list_key = ""
 	_selected_entry = {}
+	_enemies_section = null
+	_event_preview_section = null
 	for child in _props_container.get_children():
 		child.queue_free()
 	var lbl = Label.new()
@@ -494,21 +536,54 @@ func _open_property_panel(kind: String, list_key: String, entry: Dictionary) -> 
 			_add_option_field("item_id", "Item", DataLoader.get_all_item_ids(), str(entry.get("item_id", "")))
 			_add_text_field("quantity", "Cantidad", str(entry.get("quantity", 1)))
 			_add_text_field("chest_id", "ID del cofre", str(entry.get("chest_id", "")))
+		"floor_item":
+			_add_option_field("item_id", "Item", DataLoader.get_all_item_ids(), str(entry.get("item_id", "")))
+			_add_text_field("quantity", "Cantidad", str(entry.get("quantity", 1)))
+		"door":
+			_add_bool_field("locked", "Bloqueada", bool(entry.get("locked", false)))
+			_add_text_field("required_item_id", "ID de la llave requerida", str(entry.get("required_item_id", "")))
+			var gen_key_btn = Button.new()
+			gen_key_btn.text = "Generar llave nueva"
+			gen_key_btn.pressed.connect(_on_generate_key_pressed)
+			_props_container.add_child(gen_key_btn)
+			var locate_key_btn = Button.new()
+			locate_key_btn.text = "Ubicar la llave..."
+			locate_key_btn.pressed.connect(_on_locate_key_pressed)
+			_props_container.add_child(locate_key_btn)
 		"combat_trigger", "boss_trigger":
-			_add_option_field("encounter_id", "Encuentro", DataLoader.get_all_encounter_ids(), str(entry.get("encounter_id", "")))
+			_add_option_field("encounter_id", "Encuentro", DataLoader.get_all_encounter_ids(), str(entry.get("encounter_id", "")), func(_idx): _refresh_encounter_enemies_section())
+			_add_text_field("intro_message", "Mensaje de bienvenida (antes del combate)", str(entry.get("intro_message", "")))
+			_add_text_field("death_message", "Mensaje de muerte", str(entry.get("death_message", "")))
+			_enemies_section = VBoxContainer.new()
+			_enemies_section.add_theme_constant_override("separation", 4)
+			_props_container.add_child(_enemies_section)
+			_refresh_encounter_enemies_section()
 		"trap":
 			_add_text_field("damage", "Daño", str(entry.get("damage", 10)))
 		"riddle_gate":
 			_add_option_field("encounter_id", "Encuentro (guardiana)", DataLoader.get_all_encounter_ids(), str(entry.get("encounter_id", "")))
-			_add_text_field("success_event_id", "Evento (éxito)", str(entry.get("success_event_id", "")))
-			_add_text_field("combat_event_id", "Evento (post-combate)", str(entry.get("combat_event_id", "")))
+			_add_option_field("success_event_id", "Evento (éxito)", DataLoader.get_all_event_ids(), str(entry.get("success_event_id", "")))
+			_add_option_field("combat_event_id", "Evento (post-combate)", DataLoader.get_all_event_ids(), str(entry.get("combat_event_id", "")))
 		"zone":
 			_add_text_field("encounter_ids", "Encuentros (separados por coma)", ",".join(entry.get("encounter_ids", [])))
 			_add_text_field("chance", "Probabilidad (0-1)", str(entry.get("chance", 0.25)))
 			_add_text_field("interval", "Intervalo (seg)", str(entry.get("interval", 8.0)))
 		"story_trigger":
-			_add_text_field("event_id", "ID de evento", str(entry.get("event_id", "")))
+			_add_option_field("event_id", "ID de evento", DataLoader.get_all_event_ids(), str(entry.get("event_id", "")), func(_idx): _refresh_event_preview_section())
 			_add_text_field("requires_flag", "Flag requerido (opcional)", str(entry.get("requires_flag", "")))
+			_event_preview_section = VBoxContainer.new()
+			_event_preview_section.add_theme_constant_override("separation", 4)
+			_props_container.add_child(_event_preview_section)
+			_refresh_event_preview_section()
+		"exit":
+			_add_text_field("requires_items", "Items requeridos (separados por coma, opcional)", ",".join(entry.get("requires_items", [])))
+		"rest_zone":
+			var info = Label.new()
+			info.text = "Restaura HP y MP completos a la party. Comparte un pool GLOBAL de %d descansos con todas las zonas de descanso del mapa (no es por zona individual)." % GameState.MAX_REST_CHARGES
+			info.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+			info.add_theme_font_size_override("font_size", 13)
+			info.add_theme_color_override("font_color", Color(0.7, 0.7, 0.7))
+			_props_container.add_child(info)
 
 	var apply_btn = Button.new()
 	apply_btn.text = "Aplicar"
@@ -530,7 +605,7 @@ func _add_text_field(key: String, label_text: String, default_value: String) -> 
 	_props_container.add_child(edit)
 	_prop_fields[key] = edit
 
-func _add_option_field(key: String, label_text: String, options: Array, current_value: String) -> void:
+func _add_option_field(key: String, label_text: String, options: Array, current_value: String, on_change: Callable = Callable()) -> void:
 	var lbl = Label.new()
 	lbl.text = label_text
 	lbl.add_theme_font_size_override("font_size", 14)
@@ -546,6 +621,20 @@ func _add_option_field(key: String, label_text: String, options: Array, current_
 				opt.select(i)
 	_props_container.add_child(opt)
 	_prop_fields[key] = opt
+	if on_change.is_valid():
+		opt.item_selected.connect(on_change)
+
+func _add_bool_field(key: String, label_text: String, current_value: bool) -> void:
+	var lbl = Label.new()
+	lbl.text = label_text
+	lbl.add_theme_font_size_override("font_size", 14)
+	_props_container.add_child(lbl)
+	var opt = OptionButton.new()
+	opt.add_item("No")
+	opt.add_item("Sí")
+	opt.select(1 if current_value else 0)
+	_props_container.add_child(opt)
+	_prop_fields[key] = opt
 
 func _apply_property_changes() -> void:
 	if _selected_entry.is_empty():
@@ -558,11 +647,13 @@ func _apply_property_changes() -> void:
 		else:
 			raw = field.text
 		match key:
+			"locked":
+				_selected_entry[key] = (raw == "Sí")
 			"quantity", "damage":
 				_selected_entry[key] = int(raw) if raw.is_valid_int() else 0
 			"chance", "interval":
 				_selected_entry[key] = float(raw) if raw.is_valid_float() else 0.0
-			"encounter_ids":
+			"encounter_ids", "requires_items":
 				var parts = raw.split(",")
 				var clean: Array = []
 				for p in parts:
@@ -581,7 +672,7 @@ func _delete_selected_entity() -> void:
 	var list: Array = _entities.get(_selected_list_key, [])
 	list.erase(_selected_entry)
 	_entities[_selected_list_key] = list
-	if _selected_kind in ["npc", "chest", "trap", "combat_trigger", "boss_trigger", "riddle_gate"]:
+	if _selected_kind in ["npc", "chest", "door", "floor_item", "rest_zone", "trap", "combat_trigger", "boss_trigger", "riddle_gate", "exit"]:
 		var row = int(_selected_entry.get("row", -1))
 		var col = int(_selected_entry.get("col", -1))
 		if row >= 0 and row < _tiles.size() and col >= 0 and col < _tiles[row].size():
@@ -589,6 +680,486 @@ func _delete_selected_entity() -> void:
 	_grid.set_data(_tiles, _entities)
 	_set_status("Eliminado")
 	_show_no_selection()
+
+# --- Enemies-in-encounter list + Enemy Editor modal (combat_trigger / boss_trigger) ---
+
+## Rebuilds the "Enemigos en este encuentro" section live, reading whatever encounter_id is
+## currently selected in the dropdown (even before Aplicar is pressed).
+func _refresh_encounter_enemies_section() -> void:
+	if _enemies_section == null or not is_instance_valid(_enemies_section):
+		return
+	for child in _enemies_section.get_children():
+		child.queue_free()
+
+	var opt = _prop_fields.get("encounter_id")
+	if opt == null or not (opt is OptionButton) or opt.selected < 0:
+		return
+	var encounter_id = opt.get_item_text(opt.selected)
+	var encounter = DataLoader.get_encounter(encounter_id)
+	var enemy_ids: Array = encounter.get("enemies", [])
+
+	var header = Label.new()
+	header.text = "Enemigos en este encuentro:"
+	header.add_theme_font_size_override("font_size", 14)
+	_enemies_section.add_child(header)
+
+	var seen := {}
+	for enemy_id in enemy_ids:
+		if seen.has(enemy_id):
+			continue
+		seen[enemy_id] = true
+		var enemy_def = DataLoader.get_enemy(enemy_id)
+		var btn = Button.new()
+		btn.text = "Editar %s" % str(enemy_def.get("name", enemy_id))
+		btn.pressed.connect(_open_enemy_editor.bind(enemy_id))
+		_enemies_section.add_child(btn)
+
+# --- Event preview (story_trigger) ---
+
+## Rebuilds a short preview of whatever event_id is currently selected in the dropdown — party
+## example, leader, mood, and the first line of dialogue — so you don't have to open the JSON
+## to know what a scene actually contains before wiring it to a trigger.
+func _refresh_event_preview_section() -> void:
+	if _event_preview_section == null or not is_instance_valid(_event_preview_section):
+		return
+	for child in _event_preview_section.get_children():
+		child.queue_free()
+
+	var opt = _prop_fields.get("event_id")
+	if opt == null or not (opt is OptionButton) or opt.selected < 0:
+		return
+	var event_id = opt.get_item_text(opt.selected)
+
+	var header = Label.new()
+	header.text = "Vista previa de %s:" % event_id
+	header.add_theme_font_size_override("font_size", 14)
+	header.add_theme_color_override("font_color", Color(0.8, 0.75, 0.5))
+	_event_preview_section.add_child(header)
+
+	var sample = DataLoader.get_any_waypoint_variant(event_id)
+	if sample.is_empty():
+		var empty_lbl = Label.new()
+		empty_lbl.text = "(sin datos de diálogo para este evento)"
+		empty_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		empty_lbl.add_theme_color_override("font_color", Color(0.6, 0.6, 0.6))
+		_event_preview_section.add_child(empty_lbl)
+		return
+
+	var party: Array = sample.get("party", [])
+	var info_lbl = Label.new()
+	info_lbl.text = "Party ejemplo: %s\nLíder: %s | Mood: %s" % [", ".join(party), str(sample.get("leader", "")), str(sample.get("mood", ""))]
+	info_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	info_lbl.add_theme_font_size_override("font_size", 12)
+	_event_preview_section.add_child(info_lbl)
+
+	var dialogue: Array = sample.get("dialogue", [])
+	if dialogue.size() > 0:
+		var line_lbl = Label.new()
+		line_lbl.text = "\"%s\"" % str(dialogue[0])
+		line_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		line_lbl.add_theme_font_size_override("font_size", 12)
+		line_lbl.add_theme_color_override("font_color", Color(0.7, 0.7, 0.75))
+		_event_preview_section.add_child(line_lbl)
+
+func _build_enemy_editor_panel() -> void:
+	_enemy_editor_panel = Control.new()
+	_enemy_editor_panel.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_enemy_editor_panel.visible = false
+	_root.add_child(_enemy_editor_panel)
+
+	var dim = ColorRect.new()
+	dim.color = Color(0, 0, 0, 0.7)
+	dim.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_enemy_editor_panel.add_child(dim)
+
+	var box = PanelContainer.new()
+	box.set_anchors_preset(Control.PRESET_CENTER)
+	box.offset_left = -260
+	box.offset_right = 260
+	box.offset_top = -320
+	box.offset_bottom = 320
+	box.add_theme_stylebox_override("panel", _make_panel_style())
+	_enemy_editor_panel.add_child(box)
+
+	var outer_vbox = VBoxContainer.new()
+	outer_vbox.add_theme_constant_override("separation", 8)
+	box.add_child(outer_vbox)
+
+	var title = Label.new()
+	title.text = "Editor de Enemigo"
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	title.add_theme_font_size_override("font_size", 22)
+	title.add_theme_color_override("font_color", Color(0.9, 0.8, 0.4))
+	outer_vbox.add_child(title)
+
+	var note = Label.new()
+	note.text = "Los enemigos son data global: esto afecta a TODOS los encuentros que usen este enemigo."
+	note.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	note.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	note.add_theme_font_size_override("font_size", 12)
+	note.add_theme_color_override("font_color", Color(0.7, 0.6, 0.3))
+	outer_vbox.add_child(note)
+
+	var scroll = ScrollContainer.new()
+	scroll.custom_minimum_size = Vector2(460, 480)
+	outer_vbox.add_child(scroll)
+
+	_enemy_editor_fields_container = VBoxContainer.new()
+	_enemy_editor_fields_container.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_enemy_editor_fields_container.add_theme_constant_override("separation", 6)
+	scroll.add_child(_enemy_editor_fields_container)
+
+	var buttons = HBoxContainer.new()
+	buttons.alignment = BoxContainer.ALIGNMENT_CENTER
+	buttons.add_theme_constant_override("separation", 20)
+	outer_vbox.add_child(buttons)
+
+	var save_btn = Button.new()
+	save_btn.text = "Guardar"
+	save_btn.pressed.connect(_on_enemy_editor_save)
+	buttons.add_child(save_btn)
+
+	var cancel_btn = Button.new()
+	cancel_btn.text = "Cancelar"
+	cancel_btn.pressed.connect(func(): _enemy_editor_panel.visible = false)
+	buttons.add_child(cancel_btn)
+
+func _open_enemy_editor(enemy_id: String) -> void:
+	_enemy_editor_current_id = enemy_id
+	var enemy = DataLoader.get_enemy(enemy_id)
+	_enemy_editor_fields.clear()
+	for child in _enemy_editor_fields_container.get_children():
+		child.queue_free()
+
+	_add_enemy_field("name", "Nombre", str(enemy.get("name", enemy_id)))
+	_add_enemy_field("hp", "HP", str(enemy.get("hp", 10)))
+	_add_enemy_field("ca", "CA", str(enemy.get("ca", 10)))
+	_add_enemy_field("hit_die", "Dado de golpe", str(enemy.get("hit_die", 8)))
+	_add_enemy_field("attack_bonus", "Bono de ataque", str(enemy.get("attack_bonus", 0)))
+	_add_enemy_field("damage", "Daño (dado, ej: 1d6+2)", str(enemy.get("damage", "1d6")))
+	var attrs: Dictionary = enemy.get("attributes", {})
+	for attr_key in ["fuerza", "agilidad", "constitucion", "sabiduria", "inteligencia", "carisma"]:
+		_add_enemy_field("attr_%s" % attr_key, attr_key.capitalize(), str(attrs.get(attr_key, 10)))
+	_add_enemy_field("xp_reward", "XP otorgada", str(enemy.get("xp_reward", 0)))
+	_add_enemy_field("gold_reward", "Oro otorgado", str(enemy.get("gold_reward", 0)))
+	_add_enemy_field("skills", "Skills (separadas por coma)", ",".join(enemy.get("skills", [])))
+	_add_enemy_field("item_drops", "Items que dropea (separados por coma, garantizado)", ",".join(enemy.get("item_drops", [])))
+
+	_enemy_editor_panel.visible = true
+
+func _add_enemy_field(key: String, label_text: String, default_value: String) -> void:
+	var lbl = Label.new()
+	lbl.text = label_text
+	lbl.add_theme_font_size_override("font_size", 13)
+	_enemy_editor_fields_container.add_child(lbl)
+	var edit = LineEdit.new()
+	edit.text = default_value
+	_enemy_editor_fields_container.add_child(edit)
+	_enemy_editor_fields[key] = edit
+
+func _on_enemy_editor_save() -> void:
+	if _enemy_editor_current_id == "":
+		return
+	var data = DataLoader.get_enemy(_enemy_editor_current_id).duplicate(true)
+	data["id"] = _enemy_editor_current_id
+	for key in _enemy_editor_fields.keys():
+		var raw: String = _enemy_editor_fields[key].text
+		if key.begins_with("attr_"):
+			if not data.has("attributes"):
+				data["attributes"] = {}
+			data["attributes"][key.substr(5)] = int(raw) if raw.is_valid_int() else 10
+			continue
+		match key:
+			"hp", "ca", "hit_die", "attack_bonus", "xp_reward", "gold_reward":
+				data[key] = int(raw) if raw.is_valid_int() else 0
+			"skills", "item_drops":
+				var parts = raw.split(",")
+				var clean: Array = []
+				for p in parts:
+					var trimmed = p.strip_edges()
+					if trimmed != "":
+						clean.append(trimmed)
+				data[key] = clean
+			_:
+				data[key] = raw
+
+	DataLoader.update_enemy(_enemy_editor_current_id, data)
+	_enemy_editor_panel.visible = false
+	_set_status("Enemigo actualizado: %s" % str(data.get("name", _enemy_editor_current_id)))
+	_refresh_encounter_enemies_section()
+
+# --- Crear enemigo nuevo ---
+
+## _open_enemy_editor already handles a non-existent id gracefully (DataLoader.get_enemy
+## returns {} and every field falls back to a sane default), so "create" and "edit" are the
+## same modal — we only need an entry point that asks for a fresh id first.
+func _on_new_enemy_pressed() -> void:
+	_show_text_prompt("Nuevo enemigo (ID)", "nuevo_enemigo", _do_new_enemy)
+
+func _do_new_enemy(raw_id: String) -> void:
+	var regex = RegEx.new()
+	regex.compile("[^a-z0-9_]")
+	var slug = regex.sub(raw_id.strip_edges().to_lower().replace(" ", "_"), "", true)
+	if slug == "":
+		_set_status("ID de enemigo inválido")
+		return
+	_open_enemy_editor(slug)
+
+# --- Crear encuentro nuevo ---
+
+func _build_new_encounter_panel() -> void:
+	_new_encounter_panel = Control.new()
+	_new_encounter_panel.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_new_encounter_panel.visible = false
+	_root.add_child(_new_encounter_panel)
+
+	var dim = ColorRect.new()
+	dim.color = Color(0, 0, 0, 0.7)
+	dim.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_new_encounter_panel.add_child(dim)
+
+	var box = PanelContainer.new()
+	box.set_anchors_preset(Control.PRESET_CENTER)
+	box.offset_left = -240
+	box.offset_right = 240
+	box.offset_top = -160
+	box.offset_bottom = 160
+	box.add_theme_stylebox_override("panel", _make_panel_style())
+	_new_encounter_panel.add_child(box)
+
+	var vbox = VBoxContainer.new()
+	vbox.add_theme_constant_override("separation", 10)
+	box.add_child(vbox)
+
+	var title = Label.new()
+	title.text = "Nuevo Encuentro"
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	title.add_theme_font_size_override("font_size", 20)
+	title.add_theme_color_override("font_color", Color(0.9, 0.8, 0.4))
+	vbox.add_child(title)
+
+	var id_lbl = Label.new()
+	id_lbl.text = "ID del encuentro"
+	vbox.add_child(id_lbl)
+	_new_encounter_id_field = LineEdit.new()
+	vbox.add_child(_new_encounter_id_field)
+
+	var enemies_lbl = Label.new()
+	enemies_lbl.text = "Enemigos (ids separados por coma)"
+	vbox.add_child(enemies_lbl)
+	_new_encounter_enemies_field = LineEdit.new()
+	vbox.add_child(_new_encounter_enemies_field)
+
+	_new_encounter_hint_label = Label.new()
+	_new_encounter_hint_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_new_encounter_hint_label.add_theme_font_size_override("font_size", 12)
+	_new_encounter_hint_label.add_theme_color_override("font_color", Color(0.6, 0.6, 0.6))
+	vbox.add_child(_new_encounter_hint_label)
+
+	var buttons = HBoxContainer.new()
+	buttons.alignment = BoxContainer.ALIGNMENT_CENTER
+	buttons.add_theme_constant_override("separation", 20)
+	vbox.add_child(buttons)
+
+	var save_btn = Button.new()
+	save_btn.text = "Crear"
+	save_btn.pressed.connect(_on_new_encounter_save)
+	buttons.add_child(save_btn)
+
+	var cancel_btn = Button.new()
+	cancel_btn.text = "Cancelar"
+	cancel_btn.pressed.connect(func(): _new_encounter_panel.visible = false)
+	buttons.add_child(cancel_btn)
+
+func _on_new_encounter_pressed() -> void:
+	_new_encounter_id_field.text = ""
+	_new_encounter_enemies_field.text = ""
+	_new_encounter_hint_label.text = "Enemigos disponibles: %s" % ", ".join(DataLoader.get_all_enemy_ids())
+	_new_encounter_panel.visible = true
+
+func _on_new_encounter_save() -> void:
+	var id = _new_encounter_id_field.text.strip_edges()
+	if id == "":
+		_set_status("El encuentro necesita un ID")
+		return
+
+	var enemy_ids: Array = []
+	var xp := 0
+	var gold := 0
+	for p in _new_encounter_enemies_field.text.split(","):
+		var trimmed = p.strip_edges()
+		if trimmed == "":
+			continue
+		var e = DataLoader.get_enemy(trimmed)
+		if e.is_empty():
+			_set_status("Enemigo desconocido: %s" % trimmed)
+			return
+		enemy_ids.append(trimmed)
+		xp += int(e.get("xp_reward", 0))
+		gold += int(e.get("gold_reward", 0))
+
+	if enemy_ids.is_empty():
+		_set_status("El encuentro necesita al menos un enemigo")
+		return
+
+	DataLoader.update_encounter(id, {"id": id, "enemies": enemy_ids, "rewards": {"xp": xp, "gold": gold}})
+	_new_encounter_panel.visible = false
+	_set_status("Encuentro creado: %s (xp %d, oro %d)" % [id, xp, gold])
+
+	# Refresh the currently-open panel's "Encuentro" dropdown so the new option shows up
+	# immediately, instead of only after reselecting the tile.
+	if _selected_kind in ["combat_trigger", "boss_trigger", "riddle_gate"]:
+		_open_property_panel(_selected_kind, _selected_list_key, _selected_entry)
+
+# --- Door key-location modal ("Ubicar la llave...") ---
+
+func _on_generate_key_pressed() -> void:
+	if _selected_entry.is_empty() or _selected_kind != "door":
+		return
+	var row = int(_selected_entry.get("row", 0))
+	var col = int(_selected_entry.get("col", 0))
+	var item_id = "key_%d_%d" % [row, col]
+	DataLoader.add_item_definition(item_id, {
+		"id": item_id,
+		"name": "Llave (%d,%d)" % [row, col],
+		"effect": "key",
+		"power": 0,
+		"description": "Abre una puerta bloqueada.",
+	})
+	_selected_entry["required_item_id"] = item_id
+	if _prop_fields.has("required_item_id"):
+		_prop_fields["required_item_id"].text = item_id
+	_set_status("Llave generada: %s" % item_id)
+
+func _build_key_location_panel() -> void:
+	_key_location_panel = Control.new()
+	_key_location_panel.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_key_location_panel.visible = false
+	_root.add_child(_key_location_panel)
+
+	var dim = ColorRect.new()
+	dim.color = Color(0, 0, 0, 0.65)
+	dim.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_key_location_panel.add_child(dim)
+
+	var box = PanelContainer.new()
+	box.set_anchors_preset(Control.PRESET_CENTER)
+	box.offset_left = -220
+	box.offset_right = 220
+	box.offset_top = -200
+	box.offset_bottom = 200
+	box.add_theme_stylebox_override("panel", _make_panel_style())
+	_key_location_panel.add_child(box)
+
+	var vbox = VBoxContainer.new()
+	vbox.add_theme_constant_override("separation", 8)
+	box.add_child(vbox)
+
+	_key_location_title = Label.new()
+	_key_location_title.text = "¿Dónde está la llave?"
+	_key_location_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_key_location_title.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	vbox.add_child(_key_location_title)
+
+	_key_location_list_container = VBoxContainer.new()
+	vbox.add_child(_key_location_list_container)
+
+	var cancel_btn = Button.new()
+	cancel_btn.text = "Cancelar"
+	cancel_btn.pressed.connect(func(): _key_location_panel.visible = false)
+	vbox.add_child(cancel_btn)
+
+func _on_locate_key_pressed() -> void:
+	if _selected_entry.is_empty() or _selected_kind != "door":
+		return
+	var required_item_id = str(_selected_entry.get("required_item_id", ""))
+	if required_item_id == "":
+		_set_status("Primero generá o asigná una llave.")
+		return
+
+	for child in _key_location_list_container.get_children():
+		child.queue_free()
+
+	var chest_btn = Button.new()
+	chest_btn.text = "Cofre existente"
+	chest_btn.pressed.connect(_show_key_chest_list.bind(required_item_id))
+	_key_location_list_container.add_child(chest_btn)
+
+	var floor_btn = Button.new()
+	floor_btn.text = "Suelo (colocar con un click)"
+	floor_btn.pressed.connect(_place_key_on_floor.bind(required_item_id))
+	_key_location_list_container.add_child(floor_btn)
+
+	var enemy_btn = Button.new()
+	enemy_btn.text = "La dropea un enemigo"
+	enemy_btn.pressed.connect(_show_key_enemy_list.bind(required_item_id))
+	_key_location_list_container.add_child(enemy_btn)
+
+	_key_location_title.text = "¿Dónde está la llave? (%s)" % required_item_id
+	_key_location_panel.visible = true
+
+func _show_key_chest_list(item_id: String) -> void:
+	for child in _key_location_list_container.get_children():
+		child.queue_free()
+	var chests: Array = _entities.get("chests", [])
+	if chests.is_empty():
+		var lbl = Label.new()
+		lbl.text = "No hay cofres en el mapa todavía."
+		lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		_key_location_list_container.add_child(lbl)
+	else:
+		for chest in chests:
+			var btn = Button.new()
+			btn.text = "Cofre (%s, %s)" % [str(chest.get("row", "")), str(chest.get("col", ""))]
+			btn.pressed.connect(_assign_key_to_chest.bind(chest, item_id))
+			_key_location_list_container.add_child(btn)
+
+func _assign_key_to_chest(chest: Dictionary, item_id: String) -> void:
+	chest["item_id"] = item_id
+	chest["quantity"] = 1
+	_key_location_panel.visible = false
+	_grid.set_data(_tiles, _entities)
+	_set_status("Llave asignada al cofre (%s, %s)" % [str(chest.get("row", "")), str(chest.get("col", ""))])
+
+func _place_key_on_floor(item_id: String) -> void:
+	_pending_key_item_id = item_id
+	_select_tool_by_id("floor_item")
+	_key_location_panel.visible = false
+	_set_status("Hacé click en el piso para colocar la llave (%s)" % item_id)
+
+func _show_key_enemy_list(item_id: String) -> void:
+	for child in _key_location_list_container.get_children():
+		child.queue_free()
+	var ids = DataLoader.get_all_enemy_ids()
+	if ids.is_empty():
+		var lbl = Label.new()
+		lbl.text = "No hay enemigos definidos."
+		_key_location_list_container.add_child(lbl)
+	else:
+		for enemy_id in ids:
+			var enemy_def = DataLoader.get_enemy(enemy_id)
+			var btn = Button.new()
+			btn.text = str(enemy_def.get("name", enemy_id))
+			btn.pressed.connect(_assign_key_to_enemy.bind(enemy_id, item_id))
+			_key_location_list_container.add_child(btn)
+
+func _assign_key_to_enemy(enemy_id: String, item_id: String) -> void:
+	var data = DataLoader.get_enemy(enemy_id).duplicate(true)
+	var drops: Array = data.get("item_drops", []).duplicate()
+	if not drops.has(item_id):
+		drops.append(item_id)
+	data["item_drops"] = drops
+	DataLoader.update_enemy(enemy_id, data)
+	_key_location_panel.visible = false
+	_set_status("Llave agregada a los drops de %s" % str(data.get("name", enemy_id)))
+
+## Programmatically selects a tool by id (used by the key-location flow to arm "floor_item"
+## without a real button click).
+func _select_tool_by_id(tool_id: String) -> void:
+	for i in range(TOOLS.size()):
+		if TOOLS[i]["id"] == tool_id:
+			_select_tool(TOOLS[i], _tool_buttons[i])
+			return
 
 # --- Resize (grow/shrink the tileset, no upper limit) ---
 
@@ -622,7 +1193,7 @@ func _resize_map(new_cols: int, new_rows: int) -> void:
 		new_tiles.append(row)
 	_tiles = new_tiles
 
-	for list_key in ["npcs", "chests", "traps", "combat_triggers", "riddle_gates", "boss_triggers", "story_triggers"]:
+	for list_key in ["npcs", "chests", "doors", "floor_items", "rest_zones", "traps", "combat_triggers", "riddle_gates", "boss_triggers", "story_triggers", "exits"]:
 		var list: Array = _entities.get(list_key, [])
 		var kept: Array = []
 		for entry in list:

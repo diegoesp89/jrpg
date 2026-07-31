@@ -33,7 +33,10 @@ func _get_initiative(c: Dictionary) -> int:
 	var attrs = c.get("attributes", {})
 	var dex = attrs.get("agilidad", 10)
 	var dex_mod = _get_modifier(dex)
-	return LEVEL + dex_mod + randi_range(1, 20)
+	var initiative = LEVEL + dex_mod + randi_range(1, 20)
+	if c.get("feat", "") == "atleta":
+		initiative = int(round(initiative * 1.5))
+	return initiative
 
 func setup(combatants: Array[Dictionary]) -> void:
 	_combatants = combatants
@@ -64,12 +67,18 @@ func get_current_combatant() -> Dictionary:
 
 func advance_turn() -> bool:
 	_current_turn_index += 1
-	# Skip dead combatants
+	# Skip dead combatants and burn a stunned/immobilized turn (martial_adept / grappler feats)
+	# instead of letting them act.
 	while _current_turn_index < _turn_queue.size():
 		var c = _turn_queue[_current_turn_index]["combatant"]
-		if c.get("hp", 0) > 0:
-			return true
-		_current_turn_index += 1
+		if c.get("hp", 0) <= 0:
+			_current_turn_index += 1
+			continue
+		if c.get("stunned_turns", 0) > 0:
+			c["stunned_turns"] -= 1
+			_current_turn_index += 1
+			continue
+		return true
 	# All turns exhausted, need new round
 	return false
 

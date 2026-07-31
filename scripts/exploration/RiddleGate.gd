@@ -1,22 +1,24 @@
 extends StaticBody3D
 class_name RiddleGate
 ## RiddleGate — Entrance puzzle: type the answer to a riddle (picked at random from
-## data/riddles.json) to pass peacefully (plays success_event_id), or give up and fight
-## the guardian instead (plays combat_event_id on victory). Blocks the corridor until
+## data/riddles.json) to pass peacefully (plays success_event_id), or fail your attempts and
+## fight the guardian instead (plays combat_event_id on victory). Blocks the corridor until
 ## resolved; stays open permanently afterward.
 
 @export var encounter_id: String = "encounter_sphinx"
-@export var success_event_id: String = "WP02"
-@export var combat_event_id: String = "WP02F"
+@export var success_event_id: String = "WP1A"
+@export var combat_event_id: String = "WP1B"
 
 const FLAG_OPEN := "riddle_gate_open"
 const ACCENTED := "áéíóúñ"
 const PLAIN := "aeioun"
+const BASE_ATTEMPTS := 1
 
 var _collision: CollisionShape3D = null
 var _riddle: Dictionary = {}
 var _input_box: RiddleInputBox = null
 var _awaiting_answer: bool = false
+var _attempts_left: int = 0
 
 func _ready() -> void:
 	for child in get_children():
@@ -44,12 +46,21 @@ func interact() -> void:
 	if player and player.has_method("set_movement_disabled"):
 		player.set_movement_disabled(true)
 
+	# Mente Aguda: one extra wrong guess allowed before the guardian fight is forced —
+	# it doesn't reveal the answer, just buys you a second try.
+	_attempts_left = BASE_ATTEMPTS + (1 if _party_has_feat("keen_mind") else 0)
 	_awaiting_answer = true
 	if not _input_box.answered.is_connected(_on_answered):
 		_input_box.answered.connect(_on_answered)
 	if not _input_box.cancelled.is_connected(_on_cancelled):
 		_input_box.cancelled.connect(_on_cancelled)
 	_input_box.show_riddle(_riddle.get("question", "¿?"))
+
+func _party_has_feat(feat_id: String) -> bool:
+	for member in GameState.party:
+		if member.get("feat", "") == feat_id:
+			return true
+	return false
 
 func _on_answered(text: String) -> void:
 	if not _awaiting_answer:
@@ -66,8 +77,16 @@ func _on_answered(text: String) -> void:
 		_awaiting_answer = false
 		_input_box.hide_box()
 		_resolve_success()
+		return
+
+	_attempts_left -= 1
+	if _attempts_left > 0:
+		var word = "intento" if _attempts_left == 1 else "intentos"
+		_input_box.show_feedback("No es correcto... te queda %d %s más." % [_attempts_left, word])
 	else:
-		_input_box.show_feedback("No es correcto... intentá de nuevo, o Esc para atacar.")
+		_awaiting_answer = false
+		_input_box.hide_box()
+		_start_combat()
 
 func _on_cancelled() -> void:
 	if not _awaiting_answer:

@@ -5,7 +5,7 @@ class_name DungeonBuilder
 const TILE_SIZE: float = 2.0
 
 # Tile types
-enum Tile { EMPTY = 0, FLOOR = 1, WALL = 2, DOOR = 3, NPC = 4, CHEST = 5, COMBAT_TRIGGER = 6, TRAP = 7, BOSS_TRIGGER = 8, EXIT = 9, RIDDLE_GATE = 10, FLOOR_ITEM = 11 }
+enum Tile { EMPTY = 0, FLOOR = 1, WALL = 2, DOOR = 3, NPC = 4, CHEST = 5, COMBAT_TRIGGER = 6, TRAP = 7, BOSS_TRIGGER = 8, EXIT = 9, RIDDLE_GATE = 10, FLOOR_ITEM = 11, REST_ZONE = 12 }
 
 # Colors for placeholder sprites
 const WALL_COLOR = Color(0.4, 0.4, 0.45)
@@ -18,6 +18,8 @@ const DOOR_COLOR = Color(0.55, 0.35, 0.15)
 const DOOR_BORDER = Color(0.35, 0.2, 0.05)
 const FLOOR_ITEM_COLOR = Color(0.3, 0.9, 0.8)
 const FLOOR_ITEM_BORDER = Color(0.1, 0.6, 0.55)
+const REST_ZONE_COLOR = Color(1.0, 0.85, 0.4)
+const REST_ZONE_BORDER = Color(0.7, 0.55, 0.1)
 const FLOOR_COLOR = Color(0.25, 0.22, 0.2)
 const FLOOR_ALT_COLOR = Color(0.28, 0.25, 0.22)
 
@@ -176,6 +178,8 @@ func _build_walls_and_entities() -> void:
 					_create_riddle_gate(pos, _get_entity_at("riddle_gates", row, col))
 				Tile.FLOOR_ITEM:
 					_create_floor_item(pos, _get_entity_at("floor_items", row, col))
+				Tile.REST_ZONE:
+					_create_rest_zone(pos, _get_entity_at("rest_zones", row, col))
 
 func _create_wall(pos: Vector3, col: int, row: int) -> void:
 	var wall = StaticBody3D.new()
@@ -303,6 +307,35 @@ func _create_npc(pos: Vector3, config: Dictionary = {}) -> void:
 			npc.dialogue_id = config["dialogue_id"]
 
 	add_child(npc)
+
+func _create_rest_zone(pos: Vector3, config: Dictionary = {}) -> void:
+	var rest_script = load("res://scripts/exploration/RestZone.gd")
+	var rest = StaticBody3D.new()
+	rest.name = "RestZone"
+	rest.position = pos
+	rest.collision_layer = 1 | 4  # world (blocks player) + interactable
+	rest.collision_mask = 0
+
+	var col_shape = CollisionShape3D.new()
+	var box = BoxShape3D.new()
+	box.size = Vector3(0.7, 0.7, 0.7)
+	col_shape.shape = box
+	col_shape.position = Vector3(0, 0.35, 0)
+	rest.add_child(col_shape)
+
+	var sprite = Sprite3D.new()
+	sprite.name = "Sprite3D"
+	sprite.pixel_size = 0.03
+	sprite.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	sprite.alpha_cut = SpriteBase3D.ALPHA_CUT_OPAQUE_PREPASS
+	sprite.texture = _create_rect_texture(REST_ZONE_COLOR, REST_ZONE_BORDER, 32, 32)
+	sprite.position = Vector3(0, 0.5, 0)
+	rest.add_child(sprite)
+
+	if rest_script:
+		rest.set_script(rest_script)
+
+	add_child(rest)
 
 func _create_chest(pos: Vector3, config: Dictionary = {}) -> void:
 	var pickup_script = load("res://scripts/exploration/Pickup.gd")
@@ -561,13 +594,25 @@ func _create_exit(pos: Vector3, row: int, col: int) -> void:
 	_wp30_trigger.auto_trigger = false
 	add_child(_wp30_trigger)
 
+	# Exit condition: the map can require holding specific items (e.g. the 3 legendary
+	# weapons) before stepping on the exit actually ends the run. Missing items = the tile
+	# is just floor, nothing happens yet.
+	var exit_cfg = _get_entity_at("exits", row, col)
+	_exit_required_items = exit_cfg.get("requires_items", [])
+
 var _exit_triggered: bool = false
 var _wp30_trigger: Area3D = null
+var _exit_required_items: Array = []
 
 func _on_exit_entered(body: Node3D) -> void:
 	if _exit_triggered:
 		return
 	if body is CharacterBody3D:
+		for item_id in _exit_required_items:
+			if not GameState.has_item(item_id):
+				var item = DataLoader.get_item(item_id)
+				print("Te falta: %s" % item.get("name", item_id))
+				return
 		_exit_triggered = true
 		# Disable player movement
 		if body.has_method("set_movement_disabled"):
@@ -575,6 +620,7 @@ func _on_exit_entered(body: Node3D) -> void:
 		if _wp30_trigger:
 			await _wp30_trigger.play_for_current_party()
 		print("Victory! You have escaped White Plume Mountain!")
+		SaveManager.record_profile_completion()
 		# Show victory screen
 		_show_victory_screen()
 

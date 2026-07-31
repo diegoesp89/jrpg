@@ -3,6 +3,8 @@ class_name CombatTrigger
 ## CombatTrigger — Initiates a battle encounter
 
 @export var encounter_id: String = ""
+@export var intro_message: String = ""
+@export var death_message: String = ""
 var _triggered: bool = false
 var _flag_id: String = ""
 
@@ -36,7 +38,7 @@ func _on_body_entered(body: Node3D) -> void:
 		# This allows re-triggering the encounter if the player loses/flees.
 		print("Combat triggered: %s" % encounter_id)
 		var dungeon_path = "res://scenes/exploration/Dungeon.tscn"
-		SceneFlow.start_battle(encounter_id, dungeon_path, body.global_position)
+		SceneFlow.start_battle(encounter_id, dungeon_path, body.global_position, intro_message, death_message)
 
 func get_prompt_text() -> String:
 	return ""

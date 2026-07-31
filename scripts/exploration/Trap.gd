@@ -17,5 +17,8 @@ func _on_body_entered(body: Node3D) -> void:
 		# Damage leader
 		if GameState.party.size() > 0:
 			var leader = GameState.party[0]
-			leader["hp"] = maxi(leader["hp"] - damage, 0)
-			print("Trampa! %s recibe %d de dano!" % [leader["name"], damage])
+			var final_damage = damage
+			if leader.get("feat", "") == "dungeon_delver":
+				final_damage = int(ceil(damage / 2.0))
+			leader["hp"] = maxi(leader["hp"] - final_damage, 0)
+			print("Trampa! %s recibe %d de dano!" % [leader["name"], final_damage])

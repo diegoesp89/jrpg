@@ -11,6 +11,13 @@ var revealed_cells: Dictionary = {}
 var return_scene_path: String = ""
 var return_position: Vector3 = Vector3.ZERO
 var current_encounter_id: String = ""
+var current_intro_message: String = ""
+var current_death_message: String = ""
+
+## Global pool shared across every rest zone on the map — not per-zone. Once it hits 0, no
+## rest zone anywhere restores HP/MP for the rest of this save.
+const MAX_REST_CHARGES: int = 3
+var rest_charges_left: int = MAX_REST_CHARGES
 
 const LEVEL: int = 1
 
@@ -194,10 +201,13 @@ func add_gold(amount: int) -> void:
 	gold += amount
 
 # --- Combat state ---
-func prepare_combat(encounter_id: String, scene_path: String, position: Vector3) -> void:
+func prepare_combat(encounter_id: String, scene_path: String, position: Vector3, intro_message: String = "", death_message: String = "") -> void:
 	current_encounter_id = encounter_id
 	return_scene_path = scene_path
 	return_position = position
+	# Reset every time so a message from a previous fixed encounter never leaks into the next.
+	current_intro_message = intro_message
+	current_death_message = death_message
 
 func restore_party_from_combat(party_state: Array) -> void:
 	for ps in party_state:
@@ -216,12 +226,19 @@ func reset() -> void:
 	return_scene_path = ""
 	return_position = Vector3.ZERO
 	current_encounter_id = ""
+	current_intro_message = ""
+	current_death_message = ""
+	rest_charges_left = MAX_REST_CHARGES
 	_init_inventory()
 
 func _init_inventory() -> void:
 	inventory.clear()
 	var items = DataLoader.get_all_items()
 	for item in items:
+		# Quest items (e.g. the legendary weapons) must be found in the dungeon, not
+		# handed to the player for free at the start — skip them here.
+		if item.get("effect", "") == "quest_item":
+			continue
 		inventory.append({
 			"id": item["id"],
 			"name": item["name"],

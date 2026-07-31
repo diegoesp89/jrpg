@@ -488,9 +488,10 @@ func _on_turn_changed(combatant: Dictionary, is_player: bool) -> void:
 	_turn_indicator.text = "Turno: %s" % combatant.get("name", "???")
 	_current_turn_combatant = combatant
 	_current_turn_is_player = is_player
-	# Refresh boss flag (encounter data available after start_battle)
+	# Refresh flee-availability flag (encounter data available after start_battle) — covers
+	# both real bosses and the sphinx guardian fight, either of which blocks fleeing.
 	if _battle_controller:
-		_is_boss = _battle_controller.is_boss_encounter()
+		_is_boss = not _battle_controller.can_flee()
 	if is_player:
 		_show_main_menu()
 	else:

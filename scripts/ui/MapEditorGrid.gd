@@ -28,6 +28,8 @@ const TILE_COLORS := {
 	8: Color(0.6, 0.05, 0.05),
 	9: Color(0.2, 0.8, 0.8),
 	10: Color(0.6, 0.3, 0.8),
+	11: Color(0.3, 0.9, 0.8),
+	12: Color(1.0, 0.85, 0.4),
 }
 
 # Marker/zone colors — shared with MapEditor's palette legend so the swatches always match

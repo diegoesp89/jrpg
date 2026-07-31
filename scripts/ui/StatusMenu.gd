@@ -5,7 +5,7 @@ class_name StatusMenu
 
 enum MenuState { MAIN, STATUS, MESSAGE, ABILITIES, ABILITY_TARGET, ITEMS, ITEM_TARGET, QUIT_CONFIRM }
 
-const MAIN_OPTIONS := ["Estado", "Habilidades", "Objetos", "Salir del juego"]
+const MAIN_OPTIONS := ["Estado", "Habilidades", "Objetos", "Guardar partida", "Salir del juego"]
 
 var _is_open: bool = false
 var _menu_state: MenuState = MenuState.MAIN
@@ -171,7 +171,16 @@ func _select_main_option(idx: int) -> void:
 		0: _show_status()
 		1: _show_abilities()
 		2: _show_items()
-		3: _show_quit_confirm()
+		3: _save_game()
+		4: _show_quit_confirm()
+
+# --- Guardar partida ---
+
+func _save_game() -> void:
+	var player = get_tree().get_first_node_in_group("player")
+	var pos = player.global_position if player else Vector3.ZERO
+	SaveManager.save_game(DataLoader.get_current_map_path(), pos)
+	_show_message("Partida guardada.")
 
 # --- Estado ---
 
@@ -242,7 +251,7 @@ func _show_items() -> void:
 			_item_options.append(item)
 
 	if _item_options.is_empty():
-		_add_row("No tenés objetos.", 20)
+		_add_row("No tienes objetos.", 20)
 	else:
 		for item in _item_options:
 			_add_row("%s x%d" % [item["name"], item["quantity"]])

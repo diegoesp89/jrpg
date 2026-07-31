@@ -32,6 +32,10 @@ func interact() -> void:
 	print("Obtained: %s x%d!" % [item_name, item_quantity])
 	_hide_chest()
 
+	var player = get_tree().get_first_node_in_group("player")
+	if player:
+		SaveManager.save_game(DataLoader.get_current_map_path(), player.global_position)
+
 func _hide_chest() -> void:
 	if _sprite:
 		_sprite.modulate = Color(0.3, 0.3, 0.3, 0.5)

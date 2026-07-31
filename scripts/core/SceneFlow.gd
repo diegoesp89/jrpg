@@ -35,8 +35,8 @@ func change_scene(scene_path: String) -> void:
 	_is_transitioning = false
 
 ## Start a battle encounter
-func start_battle(encounter_id: String, return_scene: String, return_pos: Vector3) -> void:
-	GameState.prepare_combat(encounter_id, return_scene, return_pos)
+func start_battle(encounter_id: String, return_scene: String, return_pos: Vector3, intro_message: String = "", death_message: String = "") -> void:
+	GameState.prepare_combat(encounter_id, return_scene, return_pos, intro_message, death_message)
 	await change_scene("res://scenes/combat/Battle.tscn")
 
 ## Return from battle to exploration

@@ -34,7 +34,7 @@
 	"smash": {
 		"id": "smash",
 		"name": "Aplastamiento",
-		"mp_cost": 0,
+		"mp_cost": 5,
 		"target_type": "single_enemy",
 		"power": 18,
 		"effect_type": "physical"
@@ -50,7 +50,7 @@
 	"reckless": {
 		"id": "reckless",
 		"name": "Ataque Temerario",
-		"mp_cost": 0,
+		"mp_cost": 7,
 		"target_type": "single_enemy",
 		"power": 0,
 		"effect_type": "reckless"
@@ -58,7 +58,7 @@
 	"flurry": {
 		"id": "flurry",
 		"name": "Ráfaga de Golpes",
-		"mp_cost": 0,
+		"mp_cost": 4,
 		"target_type": "single_enemy",
 		"power": 0,
 		"effect_type": "flurry"
@@ -66,7 +66,7 @@
 	"recoil": {
 		"id": "recoil",
 		"name": "Retroceso",
-		"mp_cost": 0,
+		"mp_cost": 6,
 		"target_type": "single_enemy",
 		"power": 0,
 		"effect_type": "recoil"
@@ -74,7 +74,7 @@
 	"shadow": {
 		"id": "shadow",
 		"name": "Sombra",
-		"mp_cost": 0,
+		"mp_cost": 8,
 		"target_type": "single_enemy",
 		"power": 0,
 		"effect_type": "shadow"
@@ -82,9 +82,81 @@
 	"call_lathander": {
 		"id": "call_lathander",
 		"name": "Llamar a Lathander",
-		"mp_cost": 0,
+		"mp_cost": 12,
 		"target_type": "all_enemies",
 		"power": 0,
 		"effect_type": "call_lathander"
+	},
+	"hypnotic_gaze": {
+		"id": "hypnotic_gaze",
+		"name": "Mirada Hipnotica",
+		"mp_cost": 0,
+		"target_type": "single_enemy",
+		"power": 8,
+		"effect_type": "magical"
+	},
+	"paralyzing_claw": {
+		"id": "paralyzing_claw",
+		"name": "Garra Paralizante",
+		"mp_cost": 0,
+		"target_type": "single_enemy",
+		"power": 6,
+		"effect_type": "physical"
+	},
+	"moonlight_curse": {
+		"id": "moonlight_curse",
+		"name": "Maldicion Lunar",
+		"mp_cost": 0,
+		"target_type": "single_enemy",
+		"power": 16,
+		"effect_type": "magical"
+	},
+	"spike_volley": {
+		"id": "spike_volley",
+		"name": "Lluvia de Pinchos",
+		"mp_cost": 0,
+		"target_type": "all_enemies",
+		"power": 8,
+		"effect_type": "magical"
+	},
+	"corrosive_touch": {
+		"id": "corrosive_touch",
+		"name": "Toque Corrosivo",
+		"mp_cost": 0,
+		"target_type": "single_enemy",
+		"power": 6,
+		"effect_type": "physical"
+	},
+	"life_drain": {
+		"id": "life_drain",
+		"name": "Drenar Vida",
+		"mp_cost": 0,
+		"target_type": "single_enemy",
+		"power": 10,
+		"effect_type": "physical"
+	},
+	"whirlwind_gust": {
+		"id": "whirlwind_gust",
+		"name": "Rafaga Torbellino",
+		"mp_cost": 0,
+		"target_type": "all_enemies",
+		"power": 6,
+		"effect_type": "physical"
+	},
+	"shifting_strike": {
+		"id": "shifting_strike",
+		"name": "Golpe Cambiante",
+		"mp_cost": 0,
+		"target_type": "single_enemy",
+		"power": 14,
+		"effect_type": "physical"
+	},
+	"champion_strike": {
+		"id": "champion_strike",
+		"name": "Golpe de Campeon",
+		"mp_cost": 0,
+		"target_type": "single_enemy",
+		"power": 18,
+		"effect_type": "physical"
 	}
 }

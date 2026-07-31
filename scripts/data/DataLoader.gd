@@ -27,8 +27,12 @@ func _load_all() -> void:
 	_dialogues = _load_json_dict("res://data/dialogues/dialogues.json")
 	_feats = _load_json_dict("res://data/feats.json")
 	_riddles = _load_json_array("res://data/riddles.json")
-	_adventure = _load_adventure_scenes("res://data/adventure/")
+	_adventure = _load_adventure_scenes("res://data/dialogues/")
 
+## data/dialogues/ holds both dialogues.json (a Dictionary of NPC dialogue_id -> lines,
+## loaded separately above) and the narrative waypoint scene files (WP1A.json, WP2.json, ...,
+## each a JSON Array of party-specific variants). Skip dialogues.json here since it isn't a
+## scene array, or it would trip the "expected Array root" parse error on every boot.
 func _load_adventure_scenes(dir_path: String) -> Array:
 	var scenes: Array = []
 	var dir = DirAccess.open(dir_path)
@@ -38,7 +42,7 @@ func _load_adventure_scenes(dir_path: String) -> Array:
 	dir.list_dir_begin()
 	var file_name = dir.get_next()
 	while file_name != "":
-		if not dir.current_is_dir() and file_name.ends_with(".json"):
+		if not dir.current_is_dir() and file_name.ends_with(".json") and file_name != "dialogues.json":
 			scenes.append_array(_load_json_array(dir_path + file_name))
 		file_name = dir.get_next()
 	dir.list_dir_end()
@@ -205,11 +209,46 @@ func get_all_item_ids() -> Array:
 func get_all_encounter_ids() -> Array:
 	return _encounters.keys()
 
+## Unique event ids (e.g. "WP1A", "WP2", "WP12B") derived from the loaded scene files' own
+## "<event_id>_<NN>" ids — this is what StoryTrigger/RiddleGate's event_id fields reference,
+## so the map editor can offer a real selectable list instead of free-text.
+func get_all_event_ids() -> Array:
+	var ids := {}
+	for entry in _adventure:
+		var full_id = str(entry.get("id", ""))
+		var idx = full_id.rfind("_")
+		if idx > 0:
+			ids[full_id.substr(0, idx)] = true
+	var result = ids.keys()
+	# Plain string sort puts "WP10" before "WP2" (lexicographic, not numeric). Sort by the
+	# zero-padded numeric part instead so the list reads WP1A, WP1B, WP2, ..., WP9, WP10, ...
+	result.sort_custom(func(a, b): return _event_sort_key(a) < _event_sort_key(b))
+	return result
+
+func _event_sort_key(event_id: String) -> String:
+	var regex = RegEx.new()
+	regex.compile("^WP(\\d+)(.*)$")
+	var m = regex.search(event_id)
+	if m:
+		return "%03d%s" % [int(m.get_string(1)), m.get_string(2)]
+	return event_id
+
+## Returns any one variant of the scene matching event_id, regardless of party composition —
+## used for previews (e.g. the map editor showing "what does this event contain") where an
+## exact party match isn't the point, unlike get_waypoint_scene.
+func get_any_waypoint_variant(event_id: String) -> Dictionary:
+	var prefix = event_id + "_"
+	for entry in _adventure:
+		if str(entry.get("id", "")).begins_with(prefix):
+			return entry
+	return {}
+
 func get_all_enemy_ids() -> Array:
 	return _enemies.keys()
 
 const ENEMIES_PATH := "res://data/enemies/enemies.json"
 const ITEMS_PATH := "res://data/items/items.json"
+const ENCOUNTERS_PATH := "res://data/encounters/encounters.json"
 
 ## Updates one enemy's definition in memory and writes the whole enemies.json back to disk
 ## (used by the map editor's enemy stat/drop editor — this is global game data, not part of
@@ -217,6 +256,13 @@ const ITEMS_PATH := "res://data/items/items.json"
 func update_enemy(enemy_id: String, data: Dictionary) -> void:
 	_enemies[enemy_id] = data
 	_write_json_file(ENEMIES_PATH, _enemies)
+
+## Adds or overwrites one encounter definition (id -> {enemies, rewards}) and writes
+## encounters.json back to disk, same rationale as update_enemy — encounters are global data
+## shared across maps, not part of any one .map file.
+func update_encounter(encounter_id: String, data: Dictionary) -> void:
+	_encounters[encounter_id] = data
+	_write_json_file(ENCOUNTERS_PATH, _encounters)
 
 ## Adds or overwrites one item definition (e.g. an auto-generated door key) and writes
 ## items.json back to disk, same rationale as update_enemy.

@@ -1,34 +1,315 @@
 {
-	"encounter_hallway": {
-		"id": "encounter_hallway",
-		"enemies": ["skeleton", "skeleton"],
+	"encounter_air_elemental": {
+		"enemies": [
+			"air_elemental"
+		],
+		"id": "encounter_air_elemental",
 		"rewards": {
-			"xp": 30,
-			"gold": 20
+			"gold": 0.0,
+			"xp": 26.0
 		}
 	},
-	"encounter_golem": {
-		"id": "encounter_golem",
-		"enemies": ["golem"],
+	"encounter_black_pudding": {
+		"enemies": [
+			"black_pudding"
+		],
+		"id": "encounter_black_pudding",
 		"rewards": {
-			"xp": 30,
-			"gold": 20
-		}
-	},
-	"encounter_sphinx": {
-		"id": "encounter_sphinx",
-		"enemies": ["guardiana_enigma"],
-		"rewards": {
-			"xp": 40,
-			"gold": 25
+			"gold": 12.0,
+			"xp": 24.0
 		}
 	},
 	"encounter_boss": {
+		"enemies": [
+			"flame_guardian"
+		],
 		"id": "encounter_boss",
-		"enemies": ["flame_guardian"],
 		"rewards": {
-			"xp": 80,
-			"gold": 50
+			"gold": 50.0,
+			"xp": 80.0
+		},
+		"is_boss": true,
+		"can_flee": false
+	},
+	"encounter_bugbears": {
+		"enemies": [
+			"bugbear",
+			"bugbear"
+		],
+		"id": "encounter_bugbears",
+		"rewards": {
+			"gold": 12.0,
+			"xp": 20.0
+		}
+	},
+	"encounter_burket": {
+		"enemies": [
+			"burket_veteran"
+		],
+		"id": "encounter_burket",
+		"rewards": {
+			"gold": 20.0,
+			"xp": 32.0
+		}
+	},
+	"encounter_efreet_duo": {
+		"enemies": [
+			"efreet_nix",
+			"efreet_nox"
+		],
+		"id": "encounter_efreet_duo",
+		"rewards": {
+			"gold": 160.0,
+			"xp": 200.0
+		},
+		"is_boss": true,
+		"can_flee": false
+	},
+	"encounter_flesh_golems": {
+		"enemies": [
+			"flesh_golem",
+			"flesh_golem"
+		],
+		"id": "encounter_flesh_golems",
+		"rewards": {
+			"gold": 20.0,
+			"xp": 56.0
+		}
+	},
+	"encounter_gargoyles": {
+		"enemies": [
+			"gargoyle",
+			"gargoyle"
+		],
+		"id": "encounter_gargoyles",
+		"rewards": {
+			"gold": 16.0,
+			"xp": 40.0
+		}
+	},
+	"encounter_ghouls": {
+		"enemies": [
+			"ghoul",
+			"ghoul",
+			"ghoul",
+			"ghoul"
+		],
+		"id": "encounter_ghouls",
+		"rewards": {
+			"gold": 24.0,
+			"xp": 64.0
+		}
+	},
+	"encounter_giant_crab_improved": {
+		"enemies": [
+			"giant_crab_improved"
+		],
+		"id": "encounter_giant_crab_improved",
+		"rewards": {
+			"gold": 15.0,
+			"xp": 40.0
+		}
+	},
+	"encounter_giant_crayfish": {
+		"enemies": [
+			"giant_crayfish",
+			"giant_crayfish"
+		],
+		"id": "encounter_giant_crayfish",
+		"rewards": {
+			"gold": 8.0,
+			"xp": 20.0
+		}
+	},
+	"encounter_giant_scorpions": {
+		"enemies": [
+			"giant_scorpion",
+			"giant_scorpion"
+		],
+		"id": "encounter_giant_scorpions",
+		"rewards": {
+			"gold": 10.0,
+			"xp": 28.0
+		}
+	},
+	"encounter_golem": {
+		"enemies": [
+			"golem"
+		],
+		"id": "encounter_golem",
+		"rewards": {
+			"gold": 20.0,
+			"xp": 30.0
+		}
+	},
+	"encounter_gray_ooze": {
+		"enemies": [
+			"gray_ooze"
+		],
+		"id": "encounter_gray_ooze",
+		"rewards": {
+			"gold": 3.0,
+			"xp": 10.0
+		}
+	},
+	"encounter_green_slime": {
+		"enemies": [
+			"green_slime"
+		],
+		"id": "encounter_green_slime",
+		"rewards": {
+			"gold": 2.0,
+			"xp": 8.0
+		}
+	},
+	"encounter_hallway": {
+		"enemies": [
+			"skeleton",
+			"skeleton"
+		],
+		"id": "encounter_hallway",
+		"rewards": {
+			"gold": 20.0,
+			"xp": 30.0
+		}
+	},
+	"encounter_invisible_stalker": {
+		"enemies": [
+			"invisible_stalker"
+		],
+		"id": "encounter_invisible_stalker",
+		"rewards": {
+			"gold": 10.0,
+			"xp": 24.0
+		}
+	},
+	"encounter_kelpies": {
+		"enemies": [
+			"kelpie",
+			"kelpie"
+		],
+		"id": "encounter_kelpies",
+		"rewards": {
+			"gold": 20.0,
+			"xp": 44.0
+		}
+	},
+	"encounter_manticores": {
+		"enemies": [
+			"manticore_flightless",
+			"manticore_flightless",
+			"manticore_flightless"
+		],
+		"id": "encounter_manticores",
+		"rewards": {
+			"gold": 36.0,
+			"xp": 72.0
+		}
+	},
+	"encounter_ogres": {
+		"enemies": [
+			"ogre",
+			"ogre"
+		],
+		"id": "encounter_ogres",
+		"rewards": {
+			"gold": 24.0,
+			"xp": 40.0
+		}
+	},
+	"encounter_qesnef": {
+		"enemies": [
+			"qesnef_oni"
+		],
+		"id": "encounter_qesnef",
+		"rewards": {
+			"gold": 35.0,
+			"xp": 65.0
+		},
+		"is_boss": true,
+		"can_flee": false
+	},
+	"encounter_sea_lions": {
+		"enemies": [
+			"sea_lion",
+			"sea_lion",
+			"sea_lion",
+			"sea_lion"
+		],
+		"id": "encounter_sea_lions",
+		"rewards": {
+			"gold": 8.0,
+			"xp": 32.0
+		}
+	},
+	"encounter_shadows": {
+		"enemies": [
+			"shadow",
+			"shadow",
+			"shadow"
+		],
+		"id": "encounter_shadows",
+		"rewards": {
+			"gold": 0.0,
+			"xp": 36.0
+		}
+	},
+	"encounter_sir_bluto": {
+		"enemies": [
+			"sir_bluto",
+			"human_knight",
+			"human_knight"
+		],
+		"id": "encounter_sir_bluto",
+		"rewards": {
+			"gold": 60.0,
+			"xp": 96.0
+		},
+		"is_boss": true,
+		"can_flee": false
+	},
+	"encounter_snarla": {
+		"enemies": [
+			"snarla_werewolf"
+		],
+		"id": "encounter_snarla",
+		"rewards": {
+			"gold": 25.0,
+			"xp": 36.0
+		}
+	},
+	"encounter_sphinx": {
+		"enemies": [
+			"guardiana_enigma"
+		],
+		"id": "encounter_sphinx",
+		"rewards": {
+			"gold": 25.0,
+			"xp": 40.0
+		},
+		"can_flee": false
+	},
+	"encounter_vampire_ctenmiir": {
+		"enemies": [
+			"ctenmiir_vampire"
+		],
+		"id": "encounter_vampire_ctenmiir",
+		"rewards": {
+			"gold": 60.0,
+			"xp": 90.0
+		},
+		"is_boss": true,
+		"can_flee": false
+	},
+	"encounter_wights": {
+		"enemies": [
+			"wight",
+			"wight"
+		],
+		"id": "encounter_wights",
+		"rewards": {
+			"gold": 16.0,
+			"xp": 36.0
 		}
 	}
 }

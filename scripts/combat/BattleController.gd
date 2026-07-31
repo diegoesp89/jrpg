@@ -34,6 +34,8 @@ func start_battle(encounter_id: String) -> void:
 	_battle_active = true
 
 	action_performed.emit("--- Comienza el combate! ---")
+	if GameState.current_intro_message != "":
+		action_performed.emit(GameState.current_intro_message)
 	_apply_alert_feat()
 
 	# Combine all combatants for turn system
@@ -54,6 +56,7 @@ func _setup_party() -> void:
 		battle_member["position"] = 0  # adelante, por defecto al empezar cada combate
 		battle_member["focus"] = 0
 		battle_member["blind_turns"] = 0
+		battle_member["stunned_turns"] = 0
 		battle_member["grants_advantage"] = false
 		battle_member["marked"] = false
 		if battle_member.get("class", "") == "Hechicera":
@@ -61,6 +64,12 @@ func _setup_party() -> void:
 		if battle_member.get("feat", "") == "lucky":
 			var lucky_feat = DataLoader.get_feat("lucky")
 			battle_member["lucky_charges"] = lucky_feat.get("value", 3)
+		if battle_member.get("feat", "") == "martial_adept":
+			var martial_adept_feat = DataLoader.get_feat("martial_adept")
+			battle_member["martial_adept_charges"] = martial_adept_feat.get("value", 1)
+		if battle_member.get("feat", "") == "grappler":
+			var grappler_feat = DataLoader.get_feat("grappler")
+			battle_member["grappler_charges"] = grappler_feat.get("value", 1)
 		_party.append(battle_member)
 
 func _setup_enemies() -> void:
@@ -85,6 +94,13 @@ func _setup_enemies() -> void:
 			"is_player": false,
 			"defending": false,
 			"position": 0,
+			"stunned_turns": 0,
+			# Enemies don't manage MP as a real resource (no regen, no player-facing bar) — some
+			# of their skills are shared with player classes (smash, fireball, fire_breath) which
+			# now cost MP for balance reasons. Without this, Combatant.use_mp's check against a
+			# missing "mp" key (defaults to 0) would silently block enemies from ever casting them.
+			"mp": 999,
+			"max_mp": 999,
 		}
 		_enemies.append(battle_enemy)
 
@@ -257,6 +273,14 @@ func player_action(action: Dictionary) -> void:
 				damage_dealt.emit(target, final_dmg, false)
 				var dmg_str = "daño!" if not result.crit else "daño CRÍTICO!"
 				action_performed.emit("%s: %d(1d20)+%d(Fue) = %d vs %d CA -> Golpe! Dañó %d a %s" % [current["name"], result.roll, result.bonus, result.total, target.get("ca", 10), final_dmg, target["name"]])
+				if current.get("martial_adept_charges", 0) > 0:
+					current["martial_adept_charges"] -= 1
+					target["stunned_turns"] = target.get("stunned_turns", 0) + 1
+					action_performed.emit("%s usa Adepta Marcial: %s queda aturdida y pierde su próximo turno!" % [current["name"], target["name"]])
+				elif current.get("grappler_charges", 0) > 0:
+					current["grappler_charges"] -= 1
+					target["stunned_turns"] = target.get("stunned_turns", 0) + 1
+					action_performed.emit("%s usa Forcejeadora: %s queda inmovilizada y pierde su próximo turno!" % [current["name"], target["name"]])
 			else:
 				action_performed.emit("%s: %d(1d20)+%d(Fue) = %d vs %d CA -> %s" % [current["name"], result.roll, result.bonus, result.total, target.get("ca", 10), result.message])
 
@@ -326,6 +350,10 @@ func player_action(action: Dictionary) -> void:
 			var position_names = ["adelante", "medio", "retaguardia"]
 			current["position"] = target_position
 			action_performed.emit("%s se mueve a la posición %s!" % [current["name"], position_names[target_position]])
+			if current.get("feat", "") == "mobile":
+				action_performed.emit("%s usa Móvil: cambiar de posición no gasta el turno!" % current["name"])
+				_waiting_for_player = true
+				return
 
 		"item":
 			var item = action.get("item", {})
@@ -338,12 +366,12 @@ func player_action(action: Dictionary) -> void:
 				action_performed.emit("%s usa %s en %s!" % [current["name"], item["name"], target["name"]])
 
 		"flee":
-			if is_boss_encounter():
+			if not can_flee():
 				action_performed.emit("No se puede huir de este combate!")
 				_waiting_for_player = true
 				return
 			var chance = Combatant.calculate_flee_chance(_party, _enemies)
-			if randf() < chance:
+			if randf() < chance / 100.0:
 				action_performed.emit("Huida exitosa!")
 				await get_tree().create_timer(0.5).timeout
 				_flee()
@@ -516,12 +544,30 @@ func _victory() -> void:
 	GameState.add_gold(gold)
 
 	action_performed.emit("--- Victoria! +%d XP, +%d Oro ---" % [xp, gold])
+	if GameState.current_death_message != "":
+		action_performed.emit(GameState.current_death_message)
+
+	_grant_enemy_drops()
 
 	# Sync party HP/MP back to GameState
 	_sync_party_to_gamestate()
 
+	# Auto-save at this safe checkpoint. return_position is exactly where exploration will
+	# resume (set by GameState.prepare_combat before the battle started), so no scene-tree
+	# player lookup is needed here.
+	SaveManager.save_game(DataLoader.get_current_map_path(), GameState.return_position)
+
 	await get_tree().create_timer(1.5).timeout
 	battle_ended.emit("victory")
+
+## Guaranteed item drops per defeated enemy INSTANCE (not per unique enemy type) — if the
+## encounter had 2 skeletons and each drops a potion, the player gets 2 potions.
+func _grant_enemy_drops() -> void:
+	for enemy in _enemies:
+		var enemy_def = DataLoader.get_enemy(enemy.get("base_id", ""))
+		for item_id in enemy_def.get("item_drops", []):
+			GameState.add_item(item_id, 1)
+			action_performed.emit("%s dropea: %s" % [enemy["name"], DataLoader.get_item(item_id).get("name", item_id)])
 
 func _defeat() -> void:
 	_battle_active = false
@@ -557,4 +603,11 @@ func is_waiting_for_player() -> bool:
 	return _waiting_for_player
 
 func is_boss_encounter() -> bool:
-	return "boss" in _encounter_data.get("id", "")
+	return bool(_encounter_data.get("is_boss", false))
+
+## Whether the Flee action is usable in this encounter. Bosses and the sphinx guardian fight
+## are both unfleeable (set via "can_flee": false in encounters.json) even though the sphinx
+## isn't itself a boss (is_boss_encounter() stays false for her — she's not immune to the
+## natural-20 Call Lathander instakill, just not something you can run away from).
+func can_flee() -> bool:
+	return bool(_encounter_data.get("can_flee", true))

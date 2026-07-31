@@ -287,8 +287,11 @@ func _show_feat_step() -> void:
 
 	_feat_title.text = "%s — elige un feat" % char_data["name"]
 
+	# free() (not queue_free()) — queue_free defers removal to end-of-frame, so the very next
+	# line's get_children() (inside _update_feat_highlight, called below) would still see last
+	# character's stale labels mixed in with the new ones, coloring the wrong entry yellow.
 	for child in _feat_options_container.get_children():
-		child.queue_free()
+		child.free()
 
 	for feat_id in pool:
 		var feat = DataLoader.get_feat(feat_id)
@@ -366,6 +369,9 @@ func _apply_feat_effects(member: Dictionary, feat_id: String) -> void:
 			member["damage_bonus_flat"] = int(feat.get("value", 0))
 		"heal_double":
 			member["heal_multiplier"] = 2.0
+		"heal_bonus_pct":
+			var heal_bonus: float = feat.get("value", 20)
+			member["heal_multiplier"] = 1.0 + (heal_bonus / 100.0)
 		"bonus_skill":
 			var skill_id = str(feat.get("value", ""))
 			if skill_id != "" and not member["skills"].has(skill_id):

@@ -5,5 +5,26 @@
 		"effect": "heal",
 		"power": 30,
 		"description": "Restaura 30 HP a un aliado."
+	},
+	"whelm": {
+		"id": "whelm",
+		"name": "Whelm",
+		"effect": "quest_item",
+		"power": 0,
+		"description": "El martillo legendario del trueno. Una de las tres armas legendarias necesarias para escapar de la Montana del Penacho Blanco."
+	},
+	"wave": {
+		"id": "wave",
+		"name": "Wave",
+		"effect": "quest_item",
+		"power": 0,
+		"description": "El tridente legendario de las mareas. Una de las tres armas legendarias necesarias para escapar de la Montana del Penacho Blanco."
+	},
+	"blackrazor": {
+		"id": "blackrazor",
+		"name": "Blackrazor",
+		"effect": "quest_item",
+		"power": 0,
+		"description": "La espada legendaria consciente que susurra promesas de poder. Una de las tres armas legendarias necesarias para escapar de la Montana del Penacho Blanco."
 	}
 }
