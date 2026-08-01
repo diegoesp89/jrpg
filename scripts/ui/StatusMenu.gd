@@ -5,7 +5,7 @@ class_name StatusMenu
 
 enum MenuState { MAIN, STATUS, MESSAGE, ABILITIES, ABILITY_TARGET, ITEMS, ITEM_TARGET, QUIT_CONFIRM }
 
-const MAIN_OPTIONS := ["Estado", "Habilidades", "Objetos", "Guardar partida", "Salir del juego"]
+const MAIN_OPTIONS := ["Estado", "Habilidades", "Objetos", "Guardar partida", "Opciones", "Salir del juego"]
 
 var _is_open: bool = false
 var _menu_state: MenuState = MenuState.MAIN
@@ -21,6 +21,7 @@ var _item_options: Array = []
 var _target_options: Array = []
 var _pending_ability: Dictionary = {}
 var _pending_item: Dictionary = {}
+var _options_panel: OptionsPanel
 
 func _ready() -> void:
 	layer = 60
@@ -66,7 +67,13 @@ func _build_ui() -> void:
 	hint.offset_bottom = -15
 	_root.add_child(hint)
 
+	_options_panel = OptionsPanel.new()
+	add_child(_options_panel)
+	_options_panel.closed.connect(_show_main)
+
 func _unhandled_input(event: InputEvent) -> void:
+	if _options_panel.is_open():
+		return
 	if not _is_open:
 		if (event.is_action_pressed("ui_cancel") or event.is_action_pressed("ui_accept")) and _can_open():
 			_open_menu()
@@ -172,7 +179,8 @@ func _select_main_option(idx: int) -> void:
 		1: _show_abilities()
 		2: _show_items()
 		3: _save_game()
-		4: _show_quit_confirm()
+		4: _options_panel.open()
+		5: _show_quit_confirm()
 
 # --- Guardar partida ---
 
@@ -189,13 +197,24 @@ func _show_status() -> void:
 	_title.text = "Estado de la party"
 	_clear_content()
 	for m in GameState.party:
-		var feat = DataLoader.get_feat(m.get("feat", ""))
-		var feat_name = feat.get("name", "-")
-		_add_row("%s — %s %s" % [m["name"], m.get("race", ""), m.get("class", "")], 22)
-		_add_row("HP %d/%d   MP %d/%d   CA %d   Feat: %s" % [
-			m.get("hp", 0), m.get("max_hp", 0), m.get("mp", 0), m.get("max_mp", 0), m.get("ca", 10), feat_name
+		var feat_names: Array = []
+		for feat_id in m.get("feats", []):
+			feat_names.append(DataLoader.get_feat(feat_id).get("name", feat_id))
+		var feats_text = ", ".join(feat_names) if not feat_names.is_empty() else "-"
+		_add_row("%s — %s %s (Nivel %d)" % [m["name"], m.get("race", ""), m.get("class", ""), m.get("level", 1)], 22)
+		_add_row("HP %d/%d   MP %d/%d   CA %d" % [
+			m.get("hp", 0), m.get("max_hp", 0), m.get("mp", 0), m.get("max_mp", 0), m.get("ca", 10)
 		], 18)
+		_add_row("Feats: %s" % feats_text, 16)
+	_add_row(_xp_progress_text(), 16)
 	_root.visible = true
+
+func _xp_progress_text() -> String:
+	var level = int(GameState.party[0].get("level", 1)) if not GameState.party.is_empty() else 1
+	if level >= GameState.MAX_LEVEL:
+		return "XP total: %d (nivel máximo alcanzado)" % GameState.total_xp
+	var next_threshold = GameState.XP_LEVEL_THRESHOLDS[level]
+	return "XP: %d / %d para nivel %d" % [GameState.total_xp, next_threshold, level + 1]
 
 # --- Habilidades (solo curación, usable fuera de combate) ---
 

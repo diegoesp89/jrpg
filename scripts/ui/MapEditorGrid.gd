@@ -38,14 +38,19 @@ const PLAYER_START_COLOR := Color(1, 1, 0)
 const STORY_TRIGGER_COLOR := Color(1, 0.4, 0.8)
 const ZONE_FILL_COLOR := Color(0.2, 0.4, 0.9, 0.35)
 const ZONE_BORDER_COLOR := Color(0.3, 0.6, 1.0, 0.9)
+const DOOR_LOCKED_GRID_COLOR := Color(0.75, 0.15, 0.15)
 
 var tiles: Array = []
 var entities: Dictionary = {}
 var highlight_rect: Rect2i = Rect2i(-1, -1, 0, 0)
+var _door_locked_by_pos: Dictionary = {}
 
 func set_data(new_tiles: Array, new_entities: Dictionary) -> void:
 	tiles = new_tiles
 	entities = new_entities
+	_door_locked_by_pos.clear()
+	for door in entities.get("doors", []):
+		_door_locked_by_pos[Vector2i(int(door.get("col", -1)), int(door.get("row", -1)))] = bool(door.get("locked", false))
 	_update_size()
 	queue_redraw()
 
@@ -60,6 +65,8 @@ func _draw() -> void:
 		for col in range(tiles[row].size()):
 			var tile = int(tiles[row][col])
 			var color = TILE_COLORS.get(tile, Color(0.08, 0.08, 0.08))
+			if tile == 3 and _door_locked_by_pos.get(Vector2i(col, row), false):
+				color = DOOR_LOCKED_GRID_COLOR
 			draw_rect(Rect2(col * cell_size, row * cell_size, cell_size - 1, cell_size - 1), color)
 
 	for zone in entities.get("random_encounter_zones", []):

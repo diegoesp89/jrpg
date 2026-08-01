@@ -257,6 +257,13 @@ func update_enemy(enemy_id: String, data: Dictionary) -> void:
 	_enemies[enemy_id] = data
 	_write_json_file(ENEMIES_PATH, _enemies)
 
+## Removes an enemy definition entirely and writes enemies.json back to disk. Does not touch
+## any encounter that still references this enemy_id — the map editor's orphaned-reference
+## check surfaces that at save time instead of blocking the delete here.
+func delete_enemy(enemy_id: String) -> void:
+	_enemies.erase(enemy_id)
+	_write_json_file(ENEMIES_PATH, _enemies)
+
 ## Adds or overwrites one encounter definition (id -> {enemies, rewards}) and writes
 ## encounters.json back to disk, same rationale as update_enemy — encounters are global data
 ## shared across maps, not part of any one .map file.

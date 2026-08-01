@@ -73,8 +73,8 @@
 			}
 		],
 		"player_start": {
-			"col": 17.0,
-			"row": 47.0
+			"col": 17,
+			"row": 46
 		},
 		"random_encounter_zones": [
 			{
@@ -98,10 +98,10 @@
 				"success_event_id": "WP1A"
 			},
 			{
-				"col": 23,
+				"col": 23.0,
 				"combat_event_id": "WP1A",
 				"encounter_id": "encounter_sphinx",
-				"row": 44,
+				"row": 44.0,
 				"success_event_id": "WP1A"
 			}
 		],

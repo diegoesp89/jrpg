@@ -18,6 +18,13 @@ var _battle_active: bool = false
 var _waiting_for_player: bool = false
 var _selected_action: Dictionary = {}
 
+# Persistent damage-over-time durations/amounts, applied once per round in _start_round()
+# alongside blind_turns — see _apply_dot_from_skill().
+const POISON_DURATION := 3
+const POISON_DAMAGE := 4
+const BURN_DURATION := 3
+const BURN_DAMAGE := 6
+
 func _ready() -> void:
 	_turn_system = TurnSystem.new()
 	add_child(_turn_system)
@@ -57,19 +64,20 @@ func _setup_party() -> void:
 		battle_member["focus"] = 0
 		battle_member["blind_turns"] = 0
 		battle_member["stunned_turns"] = 0
+		battle_member["poison_turns"] = 0
+		battle_member["poison_damage"] = 0
+		battle_member["burn_turns"] = 0
+		battle_member["burn_damage"] = 0
 		battle_member["grants_advantage"] = false
 		battle_member["marked"] = false
 		if battle_member.get("class", "") == "Hechicera":
 			battle_member["premonition_roll"] = randi_range(1, 20)
-		if battle_member.get("feat", "") == "lucky":
-			var lucky_feat = DataLoader.get_feat("lucky")
-			battle_member["lucky_charges"] = lucky_feat.get("value", 3)
-		if battle_member.get("feat", "") == "martial_adept":
-			var martial_adept_feat = DataLoader.get_feat("martial_adept")
-			battle_member["martial_adept_charges"] = martial_adept_feat.get("value", 1)
-		if battle_member.get("feat", "") == "grappler":
-			var grappler_feat = DataLoader.get_feat("grappler")
-			battle_member["grappler_charges"] = grappler_feat.get("value", 1)
+		if Combatant.has_feat_effect(battle_member, "reroll_miss_charges"):
+			battle_member["lucky_charges"] = Combatant.max_feat_value(battle_member, "reroll_miss_charges", 3)
+		if Combatant.has_feat_effect(battle_member, "stun_on_attack_charges"):
+			battle_member["martial_adept_charges"] = Combatant.sum_feat_value(battle_member, "stun_on_attack_charges")
+		if Combatant.has_feat_effect(battle_member, "immobilize_charges"):
+			battle_member["grappler_charges"] = Combatant.sum_feat_value(battle_member, "immobilize_charges")
 		_party.append(battle_member)
 
 func _setup_enemies() -> void:
@@ -95,6 +103,10 @@ func _setup_enemies() -> void:
 			"defending": false,
 			"position": 0,
 			"stunned_turns": 0,
+			"poison_turns": 0,
+			"poison_damage": 0,
+			"burn_turns": 0,
+			"burn_damage": 0,
 			# Enemies don't manage MP as a real resource (no regen, no player-facing bar) — some
 			# of their skills are shared with player classes (smash, fireball, fire_breath) which
 			# now cost MP for balance reasons. Without this, Combatant.use_mp's check against a
@@ -111,9 +123,36 @@ func _start_round() -> void:
 		c["grants_advantage"] = false
 		if c.get("blind_turns", 0) > 0:
 			c["blind_turns"] -= 1
+		if c.get("hp", 0) > 0:
+			if c.get("poison_turns", 0) > 0:
+				Combatant.apply_damage(c, c.get("poison_damage", 0))
+				damage_dealt.emit(c, c.get("poison_damage", 0), false)
+				c["poison_turns"] -= 1
+				action_performed.emit("%s sufre %d de daño por veneno! (%d turno(s) restante(s))" % [c["name"], c.get("poison_damage", 0), c["poison_turns"]])
+			if c.get("hp", 0) > 0 and c.get("burn_turns", 0) > 0:
+				Combatant.apply_damage(c, c.get("burn_damage", 0))
+				damage_dealt.emit(c, c.get("burn_damage", 0), false)
+				c["burn_turns"] -= 1
+				action_performed.emit("%s sufre %d de daño por quemadura! (%d turno(s) restante(s))" % [c["name"], c.get("burn_damage", 0), c["burn_turns"]])
+	hp_updated.emit()
 
 	_turn_system.start_new_round()
 	_process_current_turn()
+
+## poison_blade inflicts poison, fireball/fire_breath inflict burn — checked by skill id (not
+## effect_type, which is shared by many non-DOT skills). Returns a short suffix to append to
+## the existing damage log line, or "" if this skill doesn't apply a DOT.
+func _apply_dot_from_skill(skill: Dictionary, target: Dictionary) -> String:
+	match skill.get("id", ""):
+		"poison_blade":
+			target["poison_turns"] = POISON_DURATION
+			target["poison_damage"] = POISON_DAMAGE
+			return " (envenenada)"
+		"fireball", "fire_breath":
+			target["burn_turns"] = BURN_DURATION
+			target["burn_damage"] = BURN_DAMAGE
+			return " (quemada)"
+	return ""
 
 func _process_current_turn() -> void:
 	if not _battle_active:
@@ -195,7 +234,7 @@ func _execute_enemy_turn(enemy: Dictionary) -> void:
 					dmg = Combatant.apply_position_modifiers(dmg, enemy, t)
 					Combatant.apply_damage(t, dmg)
 					damage_dealt.emit(t, dmg, false)
-					hit_log.append("%s -%d" % [t["name"], dmg])
+					hit_log.append("%s -%d%s" % [t["name"], dmg, _apply_dot_from_skill(skill, t)])
 				action_performed.emit("%s usa %s (%d poder+%d mod cada uno): %s" % [enemy["name"], skill_name, skill_power, stat_mod, ", ".join(hit_log)])
 			else:
 				var target = action.get("target", {})
@@ -214,7 +253,8 @@ func _execute_enemy_turn(enemy: Dictionary) -> void:
 						var dmg = Combatant.apply_position_modifiers(result.damage + skill_power, enemy, target)
 						Combatant.apply_damage(target, dmg)
 						damage_dealt.emit(target, dmg, false)
-						action_performed.emit("%s usa %s en %s: %d(1d20)+%d = %d vs %d CA -> Golpe! %d de daño!" % [enemy["name"], skill_name, target["name"], result.roll, result.bonus, result.total, target.get("ca", 10), dmg])
+						var dot_suffix = _apply_dot_from_skill(skill, target)
+						action_performed.emit("%s usa %s en %s: %d(1d20)+%d = %d vs %d CA -> Golpe! %d de daño!%s" % [enemy["name"], skill_name, target["name"], result.roll, result.bonus, result.total, target.get("ca", 10), dmg, dot_suffix])
 					else:
 						action_performed.emit("%s usa %s en %s: %d(1d20)+%d = %d vs %d CA -> %s" % [enemy["name"], skill_name, target["name"], result.roll, result.bonus, result.total, target.get("ca", 10), result.message])
 				else:
@@ -223,7 +263,8 @@ func _execute_enemy_turn(enemy: Dictionary) -> void:
 					dmg = Combatant.apply_position_modifiers(dmg, enemy, target)
 					Combatant.apply_damage(target, dmg)
 					damage_dealt.emit(target, dmg, false)
-					action_performed.emit("%s usa %s en %s: %d(poder)+%d(mod) = %d de daño!" % [enemy["name"], skill_name, target["name"], skill_power, stat_mod, dmg])
+					var dot_suffix = _apply_dot_from_skill(skill, target)
+					action_performed.emit("%s usa %s en %s: %d(poder)+%d(mod) = %d de daño!%s" % [enemy["name"], skill_name, target["name"], skill_power, stat_mod, dmg, dot_suffix])
 
 	hp_updated.emit()
 	await get_tree().create_timer(0.8).timeout
@@ -320,7 +361,7 @@ func player_action(action: Dictionary) -> void:
 						dmg = Combatant.apply_position_modifiers(dmg, current, e)
 						Combatant.apply_damage(e, dmg)
 						damage_dealt.emit(e, dmg, false)
-						hit_log.append("%s -%d" % [e["name"], dmg])
+						hit_log.append("%s -%d%s" % [e["name"], dmg, _apply_dot_from_skill(skill, e)])
 				action_performed.emit("%s usa %s (%d poder+%d mod cada uno): %s" % [current["name"], skill_name, power, stat_mod, ", ".join(hit_log)])
 			else:
 				var target = action.get("target", {})
@@ -330,7 +371,8 @@ func player_action(action: Dictionary) -> void:
 						var dmg = Combatant.apply_position_modifiers(result.damage + power, current, target)
 						Combatant.apply_damage(target, dmg)
 						damage_dealt.emit(target, dmg, false)
-						action_performed.emit("%s usa %s en %s: %d(1d20)+%d = %d vs %d CA -> Golpe! %d de daño!" % [current["name"], skill_name, target["name"], result.roll, result.bonus, result.total, target.get("ca", 10), dmg])
+						var dot_suffix = _apply_dot_from_skill(skill, target)
+						action_performed.emit("%s usa %s en %s: %d(1d20)+%d = %d vs %d CA -> Golpe! %d de daño!%s" % [current["name"], skill_name, target["name"], result.roll, result.bonus, result.total, target.get("ca", 10), dmg, dot_suffix])
 					else:
 						action_performed.emit("%s usa %s en %s: %d(1d20)+%d = %d vs %d CA -> %s" % [current["name"], skill_name, target["name"], result.roll, result.bonus, result.total, target.get("ca", 10), result.message])
 				else:
@@ -339,7 +381,8 @@ func player_action(action: Dictionary) -> void:
 					dmg = Combatant.apply_position_modifiers(dmg, current, target)
 					Combatant.apply_damage(target, dmg)
 					damage_dealt.emit(target, dmg, false)
-					action_performed.emit("%s usa %s en %s: %d(poder)+%d(mod) = %d de daño!" % [current["name"], skill_name, target["name"], power, stat_mod, dmg])
+					var dot_suffix = _apply_dot_from_skill(skill, target)
+					action_performed.emit("%s usa %s en %s: %d(poder)+%d(mod) = %d de daño!%s" % [current["name"], skill_name, target["name"], power, stat_mod, dmg, dot_suffix])
 
 		"defend":
 			current["defending"] = true
@@ -350,7 +393,7 @@ func player_action(action: Dictionary) -> void:
 			var position_names = ["adelante", "medio", "retaguardia"]
 			current["position"] = target_position
 			action_performed.emit("%s se mueve a la posición %s!" % [current["name"], position_names[target_position]])
-			if current.get("feat", "") == "mobile":
+			if Combatant.has_feat_effect(current, "free_move"):
 				action_performed.emit("%s usa Móvil: cambiar de posición no gasta el turno!" % current["name"])
 				_waiting_for_player = true
 				return
@@ -387,7 +430,7 @@ func player_action(action: Dictionary) -> void:
 ## party member with this feat gets one free basic attack against a random alive enemy.
 func _apply_alert_feat() -> void:
 	for p in _party:
-		if p.get("feat", "") != "alert":
+		if not Combatant.has_feat_effect(p, "free_attack_on_start"):
 			continue
 		var alive_enemies: Array = []
 		for e in _enemies:
@@ -542,6 +585,7 @@ func _victory() -> void:
 	var gold = rewards.get("gold", 0)
 	GameState.add_xp(xp)
 	GameState.add_gold(gold)
+	GameState.check_level_ups()
 
 	action_performed.emit("--- Victoria! +%d XP, +%d Oro ---" % [xp, gold])
 	if GameState.current_death_message != "":

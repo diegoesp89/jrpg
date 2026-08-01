@@ -4,6 +4,94 @@ extends Node
 
 const LEVEL: int = 1
 
+# --- Feat helpers ---
+## A combatant can now own several feats at once (chargen pick + one gained per level-up, see
+## GameState.check_level_ups). These read member["feats"]: Array[String] live, every time —
+## nothing here is precomputed, so multiple feats with the same effect just combine naturally
+## (sum/max/best-of), with no order-of-acquisition footgun.
+
+static func _owned_feats(member: Dictionary) -> Array:
+	var result: Array = []
+	for feat_id in member.get("feats", []):
+		var feat = DataLoader.get_feat(feat_id)
+		if not feat.is_empty():
+			result.append(feat)
+	return result
+
+static func has_feat(member: Dictionary, feat_id: String) -> bool:
+	return member.get("feats", []).has(feat_id)
+
+static func has_feat_effect(member: Dictionary, effect: String) -> bool:
+	for feat in _owned_feats(member):
+		if feat.get("effect", "") == effect:
+			return true
+	return false
+
+## Adds up `value` across every owned feat whose effect matches — how flat bonuses (e.g.
+## magical_damage_bonus_flat) stack when a level-up feat reuses an effect already owned.
+static func sum_feat_value(member: Dictionary, effect: String) -> int:
+	var total = 0
+	for feat in _owned_feats(member):
+		if feat.get("effect", "") == effect:
+			total += int(feat.get("value", 0))
+	return total
+
+## Best (largest) value across owned feats with this effect — for charge counts where a
+## stronger later feat (e.g. a capstone) should simply replace a weaker earlier one, not stack.
+static func max_feat_value(member: Dictionary, effect: String, default_value: int = 0) -> int:
+	var best = default_value
+	var found = false
+	for feat in _owned_feats(member):
+		if feat.get("effect", "") == effect:
+			var value = int(feat.get("value", 0))
+			best = value if not found else maxi(best, value)
+			found = true
+	return best
+
+## Smallest (easiest to reach) crit threshold among owned crit_range_bonus feats; 20 (only a
+## natural 20 crits) if none.
+static func crit_threshold(member: Dictionary) -> int:
+	var best = 20
+	for feat in _owned_feats(member):
+		if feat.get("effect", "") == "crit_range_bonus":
+			best = mini(best, int(feat.get("value", 19)))
+	return best
+
+## Applies the feats whose effect can be resolved once, into a derived stat field (a flat stat
+## change or a bonus skill), at the moment the feat is gained (chargen pick or a level-up
+## choice — see GameState.apply_level_up_choice). The rest (per-battle charges, combat-time
+## hooks) are read live from member["feats"] via the helpers above, wherever relevant. Combines
+## with `+=`/`*=` rather than overwriting, so gaining a second feat with the same effect later
+## (e.g. Daragat's healer + inspiring_leader, both touching heal_multiplier) stacks correctly
+## regardless of which order they were acquired in.
+static func apply_feat_effects(member: Dictionary, feat_id: String) -> void:
+	if feat_id == "":
+		return
+	var feat = DataLoader.get_feat(feat_id)
+	match feat.get("effect", ""):
+		"hp_bonus_pct":
+			var bonus: float = feat.get("value", 0)
+			member["max_hp"] = int(member["max_hp"] * (1.0 + bonus / 100.0))
+			member["hp"] = member["max_hp"]
+		"ca_bonus_flat":
+			member["ca"] = member.get("ca", 10) + int(feat.get("value", 0))
+		"damage_bonus_flat":
+			member["damage_bonus_flat"] = member.get("damage_bonus_flat", 0) + int(feat.get("value", 0))
+		"heal_double":
+			member["heal_multiplier"] = member.get("heal_multiplier", 1.0) * 2.0
+		"heal_bonus_pct":
+			var heal_bonus: float = feat.get("value", 20)
+			member["heal_multiplier"] = member.get("heal_multiplier", 1.0) * (1.0 + heal_bonus / 100.0)
+		"bonus_skill":
+			var skill_id = str(feat.get("value", ""))
+			if skill_id != "" and not member["skills"].has(skill_id):
+				member["skills"].append(skill_id)
+
+## Public wrapper around the D&D attribute-modifier table below, for callers outside this file
+## (e.g. Trap's saving throw) that need a single attribute's modifier without duplicating it.
+static func attribute_modifier(value: int) -> int:
+	return _get_modifier(value)
+
 static func _get_modifier(attribute_value: int) -> int:
 	if attribute_value >= 18:
 		return +4
@@ -93,7 +181,7 @@ static func _roll_attack_d20(attacker: Dictionary, defender: Dictionary, force_a
 		return forced_roll
 	var advantage = force_advantage or defender.get("blind_turns", 0) > 0 or defender.get("grants_advantage", false)
 	# Skulker feat: natural evasion forces attackers targeting you to roll with disadvantage.
-	var disadvantage = attacker.get("blind_turns", 0) > 0 or defender.get("feat", "") == "skulker"
+	var disadvantage = attacker.get("blind_turns", 0) > 0 or has_feat_effect(defender, "attacker_disadvantage")
 	if advantage and not disadvantage:
 		return maxi(randi_range(1, 20), randi_range(1, 20))
 	elif disadvantage and not advantage:
@@ -106,9 +194,9 @@ static func attack_roll(attacker: Dictionary, defender: Dictionary, force_advant
 	var total_attack = roll + attack_bonus
 	
 	var defender_ca = defender.get("ca", 10)
-	var is_crit = roll == 20
+	var is_crit = roll >= crit_threshold(attacker)
 	var is_fumble = roll == 1
-	
+
 	var damage_dice = get_damage_dice(attacker)
 	
 	var result = {
@@ -154,7 +242,7 @@ static func attack_roll(attacker: Dictionary, defender: Dictionary, force_advant
 			stat_mod = _get_modifier(dex_val)
 
 		# Savage Attacker feat: never stuck with a low damage roll — roll the die twice, keep the better.
-		if attacker.get("feat", "") == "savage_attacker":
+		if has_feat_effect(attacker, "reroll_damage_best_of_two"):
 			result.damage = maxi(_roll_dice(damage_dice), _roll_dice(damage_dice)) + stat_mod
 		else:
 			result.damage = _roll_dice(damage_dice) + stat_mod
@@ -164,8 +252,8 @@ static func attack_roll(attacker: Dictionary, defender: Dictionary, force_advant
 
 	# Mage Slayer feat: flat bonus on basic-attack hits against enemies with special abilities
 	# (their skills[] list) — the closest existing stand-in for "spellcaster" in this data model.
-	if result.hit and attacker.get("feat", "") == "mage_slayer" and defender.get("skills", []).size() > 0:
-		result.damage += int(DataLoader.get_feat("mage_slayer").get("value", 3))
+	if result.hit and defender.get("skills", []).size() > 0:
+		result.damage += sum_feat_value(attacker, "bonus_vs_casters")
 
 	return result
 
@@ -175,9 +263,9 @@ static func enemy_attack(enemy: Dictionary, defender: Dictionary) -> Dictionary:
 	var total_attack = roll + enemy_attack_bonus
 	
 	var defender_ca = defender.get("ca", 10)
-	var is_crit = roll == 20
+	var is_crit = roll >= crit_threshold(enemy)
 	var is_fumble = roll == 1
-	
+
 	var damage_dice = enemy.get("damage", "1d6")
 	
 	var result = {
@@ -221,8 +309,8 @@ static func enemy_attack(enemy: Dictionary, defender: Dictionary) -> Dictionary:
 
 static func apply_damage(target: Dictionary, damage: int) -> void:
 	var reduced = damage
-	if target.get("feat", "") == "durable":
-		var reduction = int(DataLoader.get_feat("durable").get("value", 1))
+	var reduction = sum_feat_value(target, "damage_reduction_flat")
+	if reduction > 0:
 		reduced = maxi(1, damage - reduction)
 	target["hp"] = maxi(0, target.get("hp", 0) - reduced)
 
@@ -280,9 +368,7 @@ static func get_caster_stat_mod(caster: Dictionary) -> int:
 
 static func calculate_magical_damage(attacker: Dictionary, defender: Dictionary, power: int) -> int:
 	var stat_mod = get_caster_stat_mod(attacker)
-	var damage = power + stat_mod
-	if attacker.get("feat", "") == "elemental_adept":
-		damage += int(DataLoader.get_feat("elemental_adept").get("value", 3))
+	var damage = power + stat_mod + sum_feat_value(attacker, "magical_damage_bonus_flat")
 	return max(1, damage)
 
 static func calculate_heal(caster: Dictionary, power: int) -> int:
@@ -297,7 +383,7 @@ static func calculate_flee_chance(party: Array, enemies: Array) -> int:
 	var party_size = party.size()
 	var chance = base + (party_size * 10)
 	for p in party:
-		if p.get("feat", "") == "actor":
-			chance += int(DataLoader.get_feat("actor").get("value", 20))
+		if has_feat_effect(p, "flee_bonus_flat"):
+			chance += sum_feat_value(p, "flee_bonus_flat")
 			break
 	return mini(100, chance)

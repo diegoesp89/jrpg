@@ -58,7 +58,7 @@ func interact() -> void:
 
 func _party_has_feat(feat_id: String) -> bool:
 	for member in GameState.party:
-		if member.get("feat", "") == feat_id:
+		if Combatant.has_feat(member, feat_id):
 			return true
 	return false
 

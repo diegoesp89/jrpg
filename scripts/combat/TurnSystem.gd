@@ -34,8 +34,7 @@ func _get_initiative(c: Dictionary) -> int:
 	var dex = attrs.get("agilidad", 10)
 	var dex_mod = _get_modifier(dex)
 	var initiative = LEVEL + dex_mod + randi_range(1, 20)
-	if c.get("feat", "") == "atleta":
-		initiative = int(round(initiative * 1.5))
+	initiative = int(round(initiative * (1.0 + Combatant.sum_feat_value(c, "initiative_bonus_pct") / 100.0)))
 	return initiative
 
 func setup(combatants: Array[Dictionary]) -> void:

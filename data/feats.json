@@ -42,7 +42,7 @@
 	"dungeon_delver": {
 		"id": "dungeon_delver",
 		"name": "Exploradora de Mazmorras",
-		"description": "Tu instinto para el peligro reduce a la mitad el daño que recibes de las trampas de la mazmorra (redondeando hacia arriba). Solo aplica si eres la líder de la party, que es quien recibe el golpe de las trampas.",
+		"description": "Tu instinto para el peligro reduce a la mitad el daño que recibís de las trampas de la mazmorra (redondeando hacia arriba). Solo aplica si sos vos quien falla la tirada de salvación contra la trampa (siempre intenta esquivarla quien tenga mayor Agilidad en la party).",
 		"effect": "trap_damage_half"
 	},
 	"martial_adept": {
@@ -138,5 +138,54 @@
 		"name": "Sanadora",
 		"description": "Todas las curaciones que haces (con hechizos, objetos, o cualquier otra fuente que pase por el cálculo de curación) sanan el doble de HP de lo normal. Se aplica siempre, sin límite de usos.",
 		"effect": "heal_double"
+	},
+	"barbara_ultimate": {
+		"id": "barbara_ultimate",
+		"name": "Furia Definitiva",
+		"description": "Feat final de Barbara, solo disponible al alcanzar el nivel 5. Tus golpes básicos y ataques cuerpo a cuerpo son críticos con una tirada de 19 o 20 en el d20 (no solo con 20 natural).",
+		"effect": "crit_range_bonus",
+		"value": 19
+	},
+	"huguito_ultimate": {
+		"id": "huguito_ultimate",
+		"name": "Trascendencia del Viento",
+		"description": "Feat final de Huguito, solo disponible al alcanzar el nivel 5. Tu iniciativa suma otro +100% (se acumula con el +50% de Atleta), así que casi siempre actuás primero.",
+		"effect": "initiative_bonus_pct",
+		"value": 100
+	},
+	"rosa_ultimate": {
+		"id": "rosa_ultimate",
+		"name": "Puntería Legendaria",
+		"description": "Feat final de Rosa, solo disponible al alcanzar el nivel 5. Tenés 99 cargas de re-tirada por combate en vez de las 3 de Afortunada — en la práctica, nunca fallás un ataque básico.",
+		"effect": "reroll_miss_charges",
+		"value": 99
+	},
+	"azafran_ultimate": {
+		"id": "azafran_ultimate",
+		"name": "Pacto Definitivo",
+		"description": "Feat final de Azafran, solo disponible al alcanzar el nivel 5. Tus habilidades mágicas suman +6 de daño plano adicional (se acumula con el +3 de Adepta Elemental).",
+		"effect": "magical_damage_bonus_flat",
+		"value": 6
+	},
+	"lulu_ultimate": {
+		"id": "lulu_ultimate",
+		"name": "Zarpazo Perfecto",
+		"description": "Feat final de Lulu, solo disponible al alcanzar el nivel 5. Tus golpes básicos y ataques cuerpo a cuerpo son críticos con una tirada de 19 o 20 en el d20 (no solo con 20 natural).",
+		"effect": "crit_range_bonus",
+		"value": 19
+	},
+	"daragat_ultimate": {
+		"id": "daragat_ultimate",
+		"name": "Bendición de Lathander",
+		"description": "Feat final de Daragat, solo disponible al alcanzar el nivel 5. Reduces en 3 puntos planos el daño que recibís de cualquier fuente (en vez del 1 de Resiliente; nunca baja de 1 de daño mínimo por golpe).",
+		"effect": "damage_reduction_flat",
+		"value": 3
+	},
+	"solana_ultimate": {
+		"id": "solana_ultimate",
+		"name": "Premonición Arcana",
+		"description": "Feat final de Solana, solo disponible al alcanzar el nivel 5. Tus habilidades mágicas suman +6 de daño plano adicional.",
+		"effect": "magical_damage_bonus_flat",
+		"value": 6
 	}
 }

@@ -76,6 +76,8 @@ var _enemy_editor_panel: Control
 var _enemy_editor_fields_container: VBoxContainer
 var _enemy_editor_fields: Dictionary = {}
 var _enemy_editor_current_id: String = ""
+var _enemy_editor_delete_btn: Button
+var _enemy_editor_delete_armed: bool = false
 
 var _new_encounter_panel: Control
 var _new_encounter_id_field: LineEdit
@@ -444,6 +446,8 @@ func _apply_default_props(kind: String, entry: Dictionary) -> void:
 			entry["death_message"] = ""
 		"trap":
 			entry["damage"] = 10
+			entry["dc"] = 12
+			entry["trap_id"] = "trap_%d_%d" % [entry["row"], entry["col"]]
 		"riddle_gate":
 			entry["encounter_id"] = "encounter_sphinx"
 			entry["success_event_id"] = ""
@@ -560,12 +564,13 @@ func _open_property_panel(kind: String, list_key: String, entry: Dictionary) -> 
 			_refresh_encounter_enemies_section()
 		"trap":
 			_add_text_field("damage", "Daño", str(entry.get("damage", 10)))
+			_add_text_field("dc", "Dificultad de Salvación", str(entry.get("dc", 12)))
 		"riddle_gate":
 			_add_option_field("encounter_id", "Encuentro (guardiana)", DataLoader.get_all_encounter_ids(), str(entry.get("encounter_id", "")))
 			_add_option_field("success_event_id", "Evento (éxito)", DataLoader.get_all_event_ids(), str(entry.get("success_event_id", "")))
 			_add_option_field("combat_event_id", "Evento (post-combate)", DataLoader.get_all_event_ids(), str(entry.get("combat_event_id", "")))
 		"zone":
-			_add_text_field("encounter_ids", "Encuentros (separados por coma)", ",".join(entry.get("encounter_ids", [])))
+			_add_multi_checkbox_field("encounter_ids", "Encuentros", entry.get("encounter_ids", []), DataLoader.get_all_encounter_ids())
 			_add_text_field("chance", "Probabilidad (0-1)", str(entry.get("chance", 0.25)))
 			_add_text_field("interval", "Intervalo (seg)", str(entry.get("interval", 8.0)))
 		"story_trigger":
@@ -624,6 +629,32 @@ func _add_option_field(key: String, label_text: String, options: Array, current_
 	if on_change.is_valid():
 		opt.item_selected.connect(on_change)
 
+## Checklist of CheckBox rows, one per entry in all_options, pre-ticked if present in
+## current_values. Registered in _prop_fields like every other field, but as the VBoxContainer
+## itself — _apply_property_changes special-cases VBoxContainer fields to read ticked boxes
+## instead of a single text/OptionButton value.
+func _add_multi_checkbox_field(key: String, label_text: String, current_values: Array, all_options: Array) -> void:
+	var lbl = Label.new()
+	lbl.text = label_text
+	lbl.add_theme_font_size_override("font_size", 14)
+	_props_container.add_child(lbl)
+	var list_box = VBoxContainer.new()
+	list_box.add_theme_constant_override("separation", 2)
+	if all_options.is_empty():
+		var empty_lbl = Label.new()
+		empty_lbl.text = "(sin encuentros definidos todavía)"
+		empty_lbl.add_theme_color_override("font_color", Color(0.6, 0.6, 0.6))
+		list_box.add_child(empty_lbl)
+	else:
+		for option_id in all_options:
+			var cb = CheckBox.new()
+			cb.text = str(option_id)
+			cb.set_meta("value", option_id)
+			cb.button_pressed = current_values.has(option_id)
+			list_box.add_child(cb)
+	_props_container.add_child(list_box)
+	_prop_fields[key] = list_box
+
 func _add_bool_field(key: String, label_text: String, current_value: bool) -> void:
 	var lbl = Label.new()
 	lbl.text = label_text
@@ -641,6 +672,13 @@ func _apply_property_changes() -> void:
 		return
 	for key in _prop_fields.keys():
 		var field = _prop_fields[key]
+		if field is VBoxContainer:
+			var checked: Array = []
+			for cb in field.get_children():
+				if cb is CheckBox and cb.button_pressed:
+					checked.append(cb.get_meta("value"))
+			_selected_entry[key] = checked
+			continue
 		var raw: String
 		if field is OptionButton:
 			raw = field.get_item_text(field.selected) if field.selected >= 0 else ""
@@ -649,11 +687,11 @@ func _apply_property_changes() -> void:
 		match key:
 			"locked":
 				_selected_entry[key] = (raw == "Sí")
-			"quantity", "damage":
+			"quantity", "damage", "dc":
 				_selected_entry[key] = int(raw) if raw.is_valid_int() else 0
 			"chance", "interval":
 				_selected_entry[key] = float(raw) if raw.is_valid_float() else 0.0
-			"encounter_ids", "requires_items":
+			"requires_items":
 				var parts = raw.split(",")
 				var clean: Array = []
 				for p in parts:
@@ -819,9 +857,17 @@ func _build_enemy_editor_panel() -> void:
 	save_btn.pressed.connect(_on_enemy_editor_save)
 	buttons.add_child(save_btn)
 
+	_enemy_editor_delete_btn = Button.new()
+	_enemy_editor_delete_btn.text = "Eliminar enemigo"
+	_enemy_editor_delete_btn.pressed.connect(_on_enemy_editor_delete_pressed)
+	buttons.add_child(_enemy_editor_delete_btn)
+
 	var cancel_btn = Button.new()
 	cancel_btn.text = "Cancelar"
-	cancel_btn.pressed.connect(func(): _enemy_editor_panel.visible = false)
+	cancel_btn.pressed.connect(func():
+		_enemy_editor_delete_armed = false
+		_enemy_editor_panel.visible = false
+	)
 	buttons.add_child(cancel_btn)
 
 func _open_enemy_editor(enemy_id: String) -> void:
@@ -845,6 +891,8 @@ func _open_enemy_editor(enemy_id: String) -> void:
 	_add_enemy_field("skills", "Skills (separadas por coma)", ",".join(enemy.get("skills", [])))
 	_add_enemy_field("item_drops", "Items que dropea (separados por coma, garantizado)", ",".join(enemy.get("item_drops", [])))
 
+	_enemy_editor_delete_armed = false
+	_enemy_editor_delete_btn.text = "Eliminar enemigo"
 	_enemy_editor_panel.visible = true
 
 func _add_enemy_field(key: String, label_text: String, default_value: String) -> void:
@@ -886,6 +934,22 @@ func _on_enemy_editor_save() -> void:
 	DataLoader.update_enemy(_enemy_editor_current_id, data)
 	_enemy_editor_panel.visible = false
 	_set_status("Enemigo actualizado: %s" % str(data.get("name", _enemy_editor_current_id)))
+	_refresh_encounter_enemies_section()
+
+## Two-click confirm (no extra modal): first click arms it and relabels the button; a second
+## click actually deletes. Closing the panel without a second click discards the armed state.
+func _on_enemy_editor_delete_pressed() -> void:
+	if _enemy_editor_current_id == "":
+		return
+	if not _enemy_editor_delete_armed:
+		_enemy_editor_delete_armed = true
+		_enemy_editor_delete_btn.text = "¿Confirmar eliminación?"
+		return
+	var deleted_id = _enemy_editor_current_id
+	DataLoader.delete_enemy(deleted_id)
+	_enemy_editor_delete_armed = false
+	_enemy_editor_panel.visible = false
+	_set_status("Enemigo eliminado: %s" % deleted_id)
 	_refresh_encounter_enemies_section()
 
 # --- Crear enemigo nuevo ---
@@ -1379,12 +1443,19 @@ func _write_current_map_to(path: String) -> void:
 	_map_data["entities"] = _entities
 	if not _map_data.has("name") or str(_map_data["name"]) == "":
 		_map_data["name"] = path.get_file().get_basename()
+
+	var warnings: Array = []
 	if not _entities.has("player_start"):
-		_set_status("Guardado (advertencia: sin player_start)")
-	elif not _has_exit_tile():
-		_set_status("Guardado (advertencia: sin salida/Exit)")
-	else:
+		warnings.append("sin player_start")
+	if not _has_exit_tile():
+		warnings.append("sin salida/Exit")
+	warnings.append_array(_find_orphaned_warnings())
+
+	if warnings.is_empty():
 		_set_status("Mapa guardado: %s" % path)
+	else:
+		_set_status("Guardado (advertencias: %s)" % " | ".join(warnings))
+
 	DataLoader.save_map(path, _map_data)
 	DataLoader.load_map(path)
 	_map_path = path
@@ -1394,6 +1465,79 @@ func _has_exit_tile() -> bool:
 		if 9 in row:
 			return true
 	return false
+
+## Warn-only (never blocks saving, same convention as the player_start/exit checks above):
+## scans every placed entity for a reference (item/encounter/enemy/event id) that no longer
+## exists in the corresponding global data file — most likely because it was deleted or
+## renamed after the entity was placed.
+func _find_orphaned_warnings() -> Array:
+	var warnings: Array = []
+	var item_ids = DataLoader.get_all_item_ids()
+	var encounter_ids = DataLoader.get_all_encounter_ids()
+	var event_ids = DataLoader.get_all_event_ids()
+
+	for door in _entities.get("doors", []):
+		var req = str(door.get("required_item_id", ""))
+		if req != "" and not item_ids.has(req):
+			warnings.append("Puerta (%s,%s): item '%s' no existe" % [str(door.get("row", "")), str(door.get("col", "")), req])
+
+	for list_key in ["chests", "floor_items"]:
+		for entry in _entities.get(list_key, []):
+			var item_id = str(entry.get("item_id", ""))
+			if item_id != "" and not item_ids.has(item_id):
+				warnings.append("%s (%s,%s): item '%s' no existe" % [list_key, str(entry.get("row", "")), str(entry.get("col", "")), item_id])
+
+	for list_key in ["combat_triggers", "boss_triggers", "riddle_gates"]:
+		for entry in _entities.get(list_key, []):
+			var encounter_id = str(entry.get("encounter_id", ""))
+			if encounter_id == "":
+				continue
+			if not encounter_ids.has(encounter_id):
+				warnings.append("%s (%s,%s): encuentro '%s' no existe" % [list_key, str(entry.get("row", "")), str(entry.get("col", "")), encounter_id])
+			else:
+				warnings.append_array(_check_encounter_enemies(encounter_id))
+
+	for zone in _entities.get("random_encounter_zones", []):
+		for eid in zone.get("encounter_ids", []):
+			var encounter_id = str(eid)
+			if not encounter_ids.has(encounter_id):
+				warnings.append("Zona (%s,%s): encuentro '%s' no existe" % [str(zone.get("row", "")), str(zone.get("col", "")), encounter_id])
+			else:
+				warnings.append_array(_check_encounter_enemies(encounter_id))
+
+	for entry in _entities.get("riddle_gates", []):
+		for field in ["success_event_id", "combat_event_id"]:
+			var event_id = str(entry.get(field, ""))
+			if event_id != "" and not event_ids.has(event_id):
+				warnings.append("Esfinge (%s,%s): evento '%s' no existe" % [str(entry.get("row", "")), str(entry.get("col", "")), event_id])
+
+	for entry in _entities.get("story_triggers", []):
+		var event_id = str(entry.get("event_id", ""))
+		if event_id != "" and not event_ids.has(event_id):
+			warnings.append("Story trigger (%s,%s): evento '%s' no existe" % [str(entry.get("row", "")), str(entry.get("col", "")), event_id])
+
+	var unique: Array = []
+	for w in warnings:
+		if not unique.has(w):
+			unique.append(w)
+	return unique
+
+## Checks one encounter's own enemies[] against DataLoader.get_all_enemy_ids() — catches an
+## enemy that was deleted (via the Enemy Editor's "Eliminar enemigo") while an encounter still
+## references it.
+func _check_encounter_enemies(encounter_id: String) -> Array:
+	var warnings: Array = []
+	var encounter = DataLoader.get_encounter(encounter_id)
+	var enemy_ids = DataLoader.get_all_enemy_ids()
+	var seen := {}
+	for enemy_id in encounter.get("enemies", []):
+		var eid = str(enemy_id)
+		if seen.has(eid):
+			continue
+		seen[eid] = true
+		if not enemy_ids.has(eid):
+			warnings.append("Encuentro '%s': enemigo '%s' no existe" % [encounter_id, eid])
+	return warnings
 
 func _on_new_map_pressed() -> void:
 	_show_text_prompt("Nuevo mapa (nombre)", "Nuevo Mapa", _do_new_map)

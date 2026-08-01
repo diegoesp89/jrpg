@@ -13,6 +13,7 @@ var _root: Control
 var _title: Label
 var _list_container: VBoxContainer
 var _option_labels: Array[Label] = []
+var _options_panel: OptionsPanel
 
 func _ready() -> void:
 	_build_ui()
@@ -61,6 +62,10 @@ func _build_ui() -> void:
 	hint.offset_bottom = -20
 	_root.add_child(hint)
 
+	_options_panel = OptionsPanel.new()
+	add_child(_options_panel)
+	_options_panel.closed.connect(_show_main)
+
 func _show_main() -> void:
 	_state = State.MAIN
 	_title.text = "La Montana del Penacho Blanco"
@@ -69,6 +74,7 @@ func _show_main() -> void:
 		_options.append("Continuar partida")
 	_options.append("Nueva partida")
 	_options.append("Ver perfil")
+	_options.append("Opciones")
 	_options.append("Resetear progreso")
 	_rebuild_list()
 
@@ -102,6 +108,8 @@ func _update_highlight() -> void:
 			_option_labels[i].add_theme_color_override("font_color", Color(0.6, 0.6, 0.6))
 
 func _unhandled_input(event: InputEvent) -> void:
+	if _options_panel.is_open():
+		return
 	if _option_labels.is_empty():
 		return
 	if event.is_action_pressed("move_up"):
@@ -134,6 +142,8 @@ func _select_main(option: String) -> void:
 			SceneFlow.change_scene("res://scenes/boot/MapSelection.tscn")
 		"Ver perfil":
 			SceneFlow.change_scene("res://scenes/boot/ProfileScreen.tscn")
+		"Opciones":
+			_options_panel.open()
 		"Resetear progreso":
 			_show_reset_confirm()
 

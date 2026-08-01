@@ -51,6 +51,7 @@ func _on_battle_ended(result: String) -> void:
 			var flag_id = "combat_" + GameState.current_encounter_id + "_done"
 			GameState.set_flag(flag_id)
 			await get_tree().create_timer(1.0).timeout
+			await _run_level_up_panel()
 			SceneFlow.end_battle()
 		"fled":
 			await get_tree().create_timer(1.0).timeout
@@ -59,3 +60,16 @@ func _on_battle_ended(result: String) -> void:
 			await get_tree().create_timer(1.5).timeout
 			GameState.reset()
 			SceneFlow.change_scene("res://scenes/boot/CharacterSelection.tscn")
+
+## Shows LevelUpPanel (feat-choice overlay) when GameState.check_level_ups() queued any pending
+## choices during this battle's victory, and re-saves once resolved so the freshly chosen feat(s)
+## persist immediately rather than waiting for the next autosave checkpoint.
+func _run_level_up_panel() -> void:
+	if GameState.pending_level_ups.is_empty():
+		return
+	var panel = LevelUpPanel.new()
+	add_child(panel)
+	panel.open()
+	await panel.finished
+	panel.queue_free()
+	SaveManager.save_game(DataLoader.get_current_map_path(), GameState.return_position)

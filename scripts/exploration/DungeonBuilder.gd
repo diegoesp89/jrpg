@@ -16,6 +16,8 @@ const CHEST_COLOR = Color(0.85, 0.7, 0.1)
 const CHEST_BORDER = Color(0.6, 0.5, 0.05)
 const DOOR_COLOR = Color(0.55, 0.35, 0.15)
 const DOOR_BORDER = Color(0.35, 0.2, 0.05)
+const DOOR_LOCKED_COLOR = Color(0.75, 0.15, 0.15)
+const DOOR_LOCKED_BORDER = Color(0.4, 0.05, 0.05)
 const FLOOR_ITEM_COLOR = Color(0.3, 0.9, 0.8)
 const FLOOR_ITEM_BORDER = Color(0.1, 0.6, 0.55)
 const REST_ZONE_COLOR = Color(1.0, 0.85, 0.4)
@@ -260,12 +262,14 @@ func _create_door(pos: Vector3, config: Dictionary = {}) -> void:
 	col_shape.position = Vector3(0, 1.5, 0)
 	door.add_child(col_shape)
 
+	var unlocked_texture = _create_rect_texture(DOOR_COLOR, DOOR_BORDER, 32, 48)
+	var locked_texture = _create_rect_texture(DOOR_LOCKED_COLOR, DOOR_LOCKED_BORDER, 32, 48)
+
 	var sprite = Sprite3D.new()
 	sprite.name = "Sprite3D"
 	sprite.pixel_size = 0.03
 	sprite.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 	sprite.alpha_cut = SpriteBase3D.ALPHA_CUT_OPAQUE_PREPASS
-	sprite.texture = _create_rect_texture(DOOR_COLOR, DOOR_BORDER, 32, 48)
 	sprite.position = Vector3(0, 1.2, 0)
 	door.add_child(sprite)
 
@@ -274,6 +278,10 @@ func _create_door(pos: Vector3, config: Dictionary = {}) -> void:
 		door.door_id = config.get("door_id", "")
 		door.locked = bool(config.get("locked", false))
 		door.required_item_id = config.get("required_item_id", "")
+		door.unlocked_texture = unlocked_texture
+		door.locked_texture = locked_texture
+	else:
+		sprite.texture = unlocked_texture
 
 	add_child(door)
 
@@ -448,21 +456,28 @@ func _create_trap(pos: Vector3, config: Dictionary = {}) -> void:
 	col_shape.position = Vector3(0, 0.5, 0)
 	trap.add_child(col_shape)
 
-	# Visual indicator (red-ish floor)
+	# Sprung-trap marker (red-ish floor) — stays hidden until the trap actually triggers (see
+	# Trap.gd), so an armed trap looks like ordinary floor to the player and doesn't give itself
+	# away; only reveals itself once triggered, as a permanent "already dealt with" indicator.
 	var mesh = MeshInstance3D.new()
 	var plane = PlaneMesh.new()
 	plane.size = Vector2(TILE_SIZE - 0.1, TILE_SIZE - 0.1)
 	mesh.mesh = plane
 	mesh.material_override = _make_fog_color_material(Color(0.5, 0.15, 0.1))
 	mesh.position = Vector3(0, 0.01, 0)
+	mesh.visible = false
 	trap.add_child(mesh)
 
 	# Use proper script file for trap logic
 	var trap_script = load("res://scripts/exploration/Trap.gd")
 	if trap_script:
 		trap.set_script(trap_script)
+		trap.triggered_marker = mesh
+		trap.trap_id = str(config.get("trap_id", "trap_%d_%d" % [int(config.get("row", -1)), int(config.get("col", -1))]))
 		if config.has("damage"):
 			trap.damage = int(config["damage"])
+		if config.has("dc"):
+			trap.dc = int(config["dc"])
 
 	add_child(trap)
 

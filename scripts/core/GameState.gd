@@ -21,6 +21,18 @@ var rest_charges_left: int = MAX_REST_CHARGES
 
 const LEVEL: int = 1
 
+# --- Level progression ---
+## Party-wide level (every member levels together — total_xp is a shared pool, not tracked per
+## character). Index i -> total_xp required to reach level i+1. Level 5 (the cap) sits at ~45%
+## of the ~1319 XP available across every fixed encounter in the game, leaving random-encounter
+## XP as margin, so it's reachable without requiring every fight in the dungeon.
+const XP_LEVEL_THRESHOLDS: Array[int] = [0, 80, 200, 380, 600]
+const MAX_LEVEL: int = 5
+
+## Queue of level-ups still awaiting a feat choice from the player, filled by check_level_ups()
+## and drained one entry at a time by LevelUpPanel via apply_level_up_choice().
+var pending_level_ups: Array[Dictionary] = []
+
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	_init_inventory()
@@ -121,6 +133,7 @@ func create_party_member(char_data: Dictionary) -> Dictionary:
 		"mdef": stats["mdef"],
 		"spd": stats["spd"],
 		"skills": char_data.get("skills", []).duplicate(),
+		"feats": [],
 		"sprite_path": char_data.get("sprite_path", CharacterSprites.DEFAULT_SHEET_PATH),
 	}
 
@@ -200,6 +213,67 @@ func add_xp(amount: int) -> void:
 func add_gold(amount: int) -> void:
 	gold += amount
 
+func _level_for_xp(xp: int) -> int:
+	var lvl = 1
+	for i in range(1, XP_LEVEL_THRESHOLDS.size()):
+		if xp >= XP_LEVEL_THRESHOLDS[i]:
+			lvl = i + 1
+	return lvl
+
+## Called after add_xp(). Bumps every party member's level to match total_xp (they always level
+## together — see XP_LEVEL_THRESHOLDS) and queues one pending_level_ups entry per member per
+## level gained, for LevelUpPanel to resolve one feat choice at a time. Can cross several levels
+## in a single call if a big XP reward jumps past more than one threshold at once — the actual
+## feat *options* for each queued step are deliberately NOT computed here (see
+## get_level_up_options): a multi-level jump queues several steps for the same member before any
+## of them are resolved, so precomputing options against member["feats"] here would show the same
+## stale, not-yet-narrowed pool at every one of those steps instead of a properly shrinking list.
+func check_level_ups() -> void:
+	if party.is_empty():
+		return
+	var target_level = _level_for_xp(total_xp)
+	var current_level = int(party[0].get("level", 1))
+	if target_level <= current_level:
+		return
+	for lvl in range(current_level + 1, target_level + 1):
+		for member in party:
+			member["level"] = lvl
+			pending_level_ups.append({
+				"member_id": member["id"],
+				"member_name": member["name"],
+				"level": lvl,
+			})
+
+## Computes, at display time, which feats a pending_level_ups step should offer — always against
+## the member's CURRENT feats, so a step queued behind an already-resolved one in the same batch
+## correctly excludes whatever was just picked. Empty if the member already owns everything
+## available at this level (LevelUpPanel skips straight past such a step).
+func get_level_up_options(member_id: String, level: int) -> Array[String]:
+	var member = get_party_member(member_id)
+	if member.is_empty():
+		return []
+	var char_data = DataLoader.get_character(member.get("id", ""))
+	var owned: Array = member.get("feats", [])
+	var options: Array[String] = []
+	if level >= MAX_LEVEL:
+		var final_feat = str(char_data.get("final_feat", ""))
+		if final_feat != "" and not owned.has(final_feat):
+			options = [final_feat]
+	else:
+		for feat_id in char_data.get("feat_pool", []):
+			if not owned.has(feat_id):
+				options.append(feat_id)
+	return options
+
+## Called by LevelUpPanel when the player confirms one pending_level_ups step.
+func apply_level_up_choice(member_id: String, feat_id: String) -> void:
+	var member = get_party_member(member_id)
+	if member.is_empty() or feat_id == "":
+		return
+	if not member.get("feats", []).has(feat_id):
+		member["feats"].append(feat_id)
+		Combatant.apply_feat_effects(member, feat_id)
+
 # --- Combat state ---
 func prepare_combat(encounter_id: String, scene_path: String, position: Vector3, intro_message: String = "", death_message: String = "") -> void:
 	current_encounter_id = encounter_id
@@ -219,6 +293,7 @@ func restore_party_from_combat(party_state: Array) -> void:
 func reset() -> void:
 	party.clear()
 	inventory.clear()
+	pending_level_ups.clear()
 	gold = 0
 	total_xp = 0
 	flags.clear()

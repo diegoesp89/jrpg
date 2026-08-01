@@ -22,6 +22,7 @@
 			"savage_attacker",
 			"heavily_armored"
 		],
+		"final_feat": "barbara_ultimate",
 		"sprite_path": "res://assets/sprites/spritesheet.png"
 	},
 	"huguito": {
@@ -47,6 +48,7 @@
 			"dungeon_delver",
 			"martial_adept"
 		],
+		"final_feat": "huguito_ultimate",
 		"sprite_path": "res://assets/sprites/spritesheet.png"
 	},
 	"rosa": {
@@ -72,6 +74,7 @@
 			"inspiring_leader",
 			"alert"
 		],
+		"final_feat": "rosa_ultimate",
 		"sprite_path": "res://assets/sprites/spritesheet.png"
 	},
 	"azafran": {
@@ -97,6 +100,7 @@
 			"magic_initiate",
 			"mage_slayer"
 		],
+		"final_feat": "azafran_ultimate",
 		"sprite_path": "res://assets/sprites/spritesheet.png"
 	},
 	"lulu": {
@@ -122,6 +126,7 @@
 			"dual_wielder",
 			"grappler"
 		],
+		"final_feat": "lulu_ultimate",
 		"sprite_path": "res://assets/sprites/spritesheet.png"
 	},
 	"daragat": {
@@ -148,6 +153,7 @@
 			"durable",
 			"magic_initiate"
 		],
+		"final_feat": "daragat_ultimate",
 		"sprite_path": "res://assets/sprites/spritesheet.png"
 	},
 	"solana": {
@@ -173,6 +179,7 @@
 			"durable",
 			"inspiring_leader"
 		],
+		"final_feat": "solana_ultimate",
 		"sprite_path": "res://assets/sprites/spritesheet.png"
 	}
 }

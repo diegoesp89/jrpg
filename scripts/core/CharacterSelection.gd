@@ -345,37 +345,12 @@ func _finish_feat_selection() -> void:
 		var c = _available_characters[i]
 		var member = GameState.create_party_member(c)
 		var feat_id = _chosen_feats.get(i, "")
-		member["feat"] = feat_id
-		_apply_feat_effects(member, feat_id)
+		if feat_id != "":
+			member["feats"].append(feat_id)
+			Combatant.apply_feat_effects(member, feat_id)
 		GameState.party.append(member)
 
 	SceneFlow.change_scene("res://scenes/exploration/Dungeon.tscn")
-
-## Applies the feats whose effect can be resolved once, at party creation (a flat stat
-## change or a bonus skill). The rest (per-battle charges, combat-time hooks) are read
-## directly from member["feat"] by BattleController where relevant.
-func _apply_feat_effects(member: Dictionary, feat_id: String) -> void:
-	if feat_id == "":
-		return
-	var feat = DataLoader.get_feat(feat_id)
-	match feat.get("effect", ""):
-		"hp_bonus_pct":
-			var bonus: float = feat.get("value", 0)
-			member["max_hp"] = int(member["max_hp"] * (1.0 + bonus / 100.0))
-			member["hp"] = member["max_hp"]
-		"ca_bonus_flat":
-			member["ca"] += int(feat.get("value", 0))
-		"damage_bonus_flat":
-			member["damage_bonus_flat"] = int(feat.get("value", 0))
-		"heal_double":
-			member["heal_multiplier"] = 2.0
-		"heal_bonus_pct":
-			var heal_bonus: float = feat.get("value", 20)
-			member["heal_multiplier"] = 1.0 + (heal_bonus / 100.0)
-		"bonus_skill":
-			var skill_id = str(feat.get("value", ""))
-			if skill_id != "" and not member["skills"].has(skill_id):
-				member["skills"].append(skill_id)
 
 func _unhandled_input(event: InputEvent) -> void:
 	if _choosing_feats:

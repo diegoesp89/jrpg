@@ -9,6 +9,11 @@ var is_open: bool = false
 @export var locked: bool = false
 @export var required_item_id: String = ""
 
+## Set by DungeonBuilder right after construction (plain vars, not @export — these are
+## generated ImageTextures, not map-editor config data).
+var unlocked_texture: Texture2D = null
+var locked_texture: Texture2D = null
+
 @onready var _collision: CollisionShape3D = null
 @onready var _sprite: Sprite3D = null
 
@@ -22,6 +27,7 @@ func _ready() -> void:
 
 	if locked and door_id != "" and GameState.get_flag(door_id + "_unlocked"):
 		locked = false
+	_update_lock_visual()
 
 func interact() -> void:
 	if locked:
@@ -31,6 +37,7 @@ func interact() -> void:
 		locked = false
 		if door_id != "":
 			GameState.set_flag(door_id + "_unlocked")
+		_update_lock_visual()
 		print("Puerta desbloqueada con %s!" % required_item_id)
 
 	if is_open:
@@ -53,6 +60,17 @@ func _close() -> void:
 	if _sprite:
 		_sprite.modulate = Color(1, 1, 1, 1.0)
 	print("Door closed!")
+
+## Swaps the sprite to the locked (red) or unlocked (brown) texture to match current state.
+## Called on _ready and again the instant a key unlocks the door, so the color change is
+## immediate instead of only visible after a scene reload.
+func _update_lock_visual() -> void:
+	if _sprite == null:
+		return
+	if locked and locked_texture:
+		_sprite.texture = locked_texture
+	elif unlocked_texture:
+		_sprite.texture = unlocked_texture
 
 func get_prompt_text() -> String:
 	if locked:
