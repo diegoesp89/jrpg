@@ -32,6 +32,7 @@ func _ready() -> void:
 func interact() -> void:
 	if locked:
 		if not GameState.has_item(required_item_id):
+			AudioManager.play_sfx("door_locked")
 			return
 		GameState.remove_item(required_item_id, 1)
 		locked = false
@@ -51,6 +52,7 @@ func _open() -> void:
 		_collision.disabled = true
 	if _sprite:
 		_sprite.modulate = Color(1, 1, 1, 0.3)
+	AudioManager.play_sfx("door_open")
 	print("Door opened!")
 
 func _close() -> void:

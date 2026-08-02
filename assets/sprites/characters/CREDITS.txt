@@ -1,0 +1,31 @@
+Playable character sprites (placeholder art) — source and mapping
+====================================================================
+
+Source: "Dungeon Crawl 32x32 tiles" (from Dungeon Crawl Stone Soup)
+https://opengameart.org/content/dungeon-crawl-32x32-tiles
+License: CC0 (public domain) — no attribution required, credited here as a courtesy.
+Same pack as ../enemies/CREDITS.txt and ../dungeon/CREDITS.txt.
+
+None of our races/classes (Goliat, Owlin, Tiefling, Catfolk, Grung, Vistani) exist in this
+older tileset, so every pick below is a best-effort substitute, not a real match — replace any
+file with real art whenever it's ready (same filename, same folder, no code changes needed).
+
+character  race/class            -> source tile                          notes
+------------------------------------------------------------------------------------------------
+barbara    Goliat Barbaro        -> dc-mon/orc_warrior.png               no goliath tile; armored,
+                                                                          tough warrior silhouette
+huguito    Owlin Monje           -> player/base/kenku_winged_m.png       closest bird-person (kenku,
+                                                                          not owlfolk)
+rosa       Tiefling Gunslinger   -> player/base/demonspawn_red_f.png     closest demon-blooded
+                                                                          humanoid (DCSS's own
+                                                                          tiefling-equivalent race)
+azafran    Humano Warlock        -> dc-mon/wizard.png                   robed human spellcaster
+lulu       Catfolk Monje         -> dc-mon/halfling.png                 no catfolk tile; small,
+                                                                          nimble humanoid stand-in
+daragat    Grung Clerigo         -> dc-mon/animals/giant_frog.png       no frog-folk tile; a literal
+                                                                          frog is the closest we have
+solana     Vistani Hechicera     -> dc-mon/necromancer.png              hooded human spellcaster
+
+Used for both the dialogue-box portrait and the battle-scene side pose (CharacterSprites.gd no
+longer crops sub-regions out of one shared walk-cycle sheet — each character now has its own
+full standalone image, same model as EnemySprites.gd).

@@ -2,6 +2,7 @@
 	"power_strike": {
 		"id": "power_strike",
 		"name": "Golpe de Poder",
+		"description": "Ataque cuerpo a cuerpo potenciado: tirada normal (1d20 vs CA) que, si conecta, suma +15 de daño plano.",
 		"mp_cost": 5,
 		"target_type": "single_enemy",
 		"power": 15,
@@ -10,6 +11,7 @@
 	"fireball": {
 		"id": "fireball",
 		"name": "Bola de Fuego",
+		"description": "Bola de fuego que impacta automáticamente (sin tirada): 22 + tu modificador mágico de daño, y además incendia al objetivo (quemadura, 3 turnos).",
 		"mp_cost": 10,
 		"target_type": "single_enemy",
 		"power": 22,
@@ -18,6 +20,7 @@
 	"heal": {
 		"id": "heal",
 		"name": "Curar",
+		"description": "Cura a un aliado 30 + tu modificador mágico de HP.",
 		"mp_cost": 8,
 		"target_type": "single_ally",
 		"power": 30,
@@ -26,6 +29,7 @@
 	"poison_blade": {
 		"id": "poison_blade",
 		"name": "Hoja Venenosa",
+		"description": "Ataque cuerpo a cuerpo (1d20 vs CA) que, si conecta, suma +12 de daño plano y envenena al objetivo (veneno, 3 turnos).",
 		"mp_cost": 6,
 		"target_type": "single_enemy",
 		"power": 12,
@@ -34,6 +38,7 @@
 	"smash": {
 		"id": "smash",
 		"name": "Aplastamiento",
+		"description": "Golpe contundente: tirada normal (1d20 vs CA) que, si conecta, suma +18 de daño plano.",
 		"mp_cost": 5,
 		"target_type": "single_enemy",
 		"power": 18,
@@ -42,6 +47,7 @@
 	"fire_breath": {
 		"id": "fire_breath",
 		"name": "Aliento de Fuego",
+		"description": "Aliento de fuego que golpea automáticamente a TODOS los enemigos por 14 + tu modificador mágico cada uno, incendiándolos (quemadura, 3 turnos).",
 		"mp_cost": 10,
 		"target_type": "all_enemies",
 		"power": 14,
@@ -50,6 +56,7 @@
 	"reckless": {
 		"id": "reckless",
 		"name": "Ataque Temerario",
+		"description": "Ataque con ventaja en la tirada (tirás el d20 dos veces y te quedás con el mejor), pero dejás que el próximo ataque enemigo contra vos también tenga ventaja.",
 		"mp_cost": 7,
 		"target_type": "single_enemy",
 		"power": 0,
@@ -58,6 +65,7 @@
 	"flurry": {
 		"id": "flurry",
 		"name": "Ráfaga de Golpes",
+		"description": "Desata tantos golpes como puntos de Enfoque hayas acumulado (mínimo 1), cada uno con su propia tirada de ataque; consume todo el Enfoque.",
 		"mp_cost": 4,
 		"target_type": "single_enemy",
 		"power": 0,
@@ -66,6 +74,7 @@
 	"recoil": {
 		"id": "recoil",
 		"name": "Retroceso",
+		"description": "Disparo que golpea al objetivo con daño normal y además rebota, infligiendo la mitad de ese daño a otro enemigo al azar (o al mismo si es el único).",
 		"mp_cost": 6,
 		"target_type": "single_enemy",
 		"power": 0,
@@ -74,6 +83,7 @@
 	"shadow": {
 		"id": "shadow",
 		"name": "Sombra",
+		"description": "Ataque con ventaja en la tirada; si sale crítico, además deja ciego al objetivo entre 1 y 3 turnos.",
 		"mp_cost": 8,
 		"target_type": "single_enemy",
 		"power": 0,
@@ -82,6 +92,7 @@
 	"call_lathander": {
 		"id": "call_lathander",
 		"name": "Llamar a Lathander",
+		"description": "Invoca a Lathander: tira 1d20 aparte — con un 20 natural (y solo fuera de peleas de jefe) elimina instantáneamente a un enemigo al azar; cualquier otro resultado no hace nada.",
 		"mp_cost": 12,
 		"target_type": "all_enemies",
 		"power": 0,
@@ -90,6 +101,7 @@
 	"hypnotic_gaze": {
 		"id": "hypnotic_gaze",
 		"name": "Mirada Hipnotica",
+		"description": "Ataque mágico que impacta automáticamente por 8 + modificador de daño.",
 		"mp_cost": 0,
 		"target_type": "single_enemy",
 		"power": 8,
@@ -98,6 +110,7 @@
 	"paralyzing_claw": {
 		"id": "paralyzing_claw",
 		"name": "Garra Paralizante",
+		"description": "Ataque cuerpo a cuerpo (1d20 vs CA) que, si conecta, suma +6 de daño plano.",
 		"mp_cost": 0,
 		"target_type": "single_enemy",
 		"power": 6,
@@ -106,6 +119,7 @@
 	"moonlight_curse": {
 		"id": "moonlight_curse",
 		"name": "Maldicion Lunar",
+		"description": "Ataque mágico que impacta automáticamente por 16 + modificador de daño.",
 		"mp_cost": 0,
 		"target_type": "single_enemy",
 		"power": 16,
@@ -114,6 +128,7 @@
 	"spike_volley": {
 		"id": "spike_volley",
 		"name": "Lluvia de Pinchos",
+		"description": "Ataque mágico que golpea automáticamente a todos los enemigos por 8 + modificador cada uno.",
 		"mp_cost": 0,
 		"target_type": "all_enemies",
 		"power": 8,
@@ -122,6 +137,7 @@
 	"corrosive_touch": {
 		"id": "corrosive_touch",
 		"name": "Toque Corrosivo",
+		"description": "Ataque cuerpo a cuerpo (1d20 vs CA) que, si conecta, suma +6 de daño plano.",
 		"mp_cost": 0,
 		"target_type": "single_enemy",
 		"power": 6,
@@ -130,6 +146,7 @@
 	"life_drain": {
 		"id": "life_drain",
 		"name": "Drenar Vida",
+		"description": "Ataque cuerpo a cuerpo (1d20 vs CA) que, si conecta, suma +10 de daño plano.",
 		"mp_cost": 0,
 		"target_type": "single_enemy",
 		"power": 10,
@@ -138,6 +155,7 @@
 	"whirlwind_gust": {
 		"id": "whirlwind_gust",
 		"name": "Rafaga Torbellino",
+		"description": "Ataque que golpea automáticamente a todos los enemigos por 6 + modificador cada uno.",
 		"mp_cost": 0,
 		"target_type": "all_enemies",
 		"power": 6,
@@ -146,6 +164,7 @@
 	"shifting_strike": {
 		"id": "shifting_strike",
 		"name": "Golpe Cambiante",
+		"description": "Ataque cuerpo a cuerpo (1d20 vs CA) que, si conecta, suma +14 de daño plano.",
 		"mp_cost": 0,
 		"target_type": "single_enemy",
 		"power": 14,
@@ -154,6 +173,7 @@
 	"champion_strike": {
 		"id": "champion_strike",
 		"name": "Golpe de Campeon",
+		"description": "Ataque cuerpo a cuerpo (1d20 vs CA) que, si conecta, suma +18 de daño plano.",
 		"mp_cost": 0,
 		"target_type": "single_enemy",
 		"power": 18,

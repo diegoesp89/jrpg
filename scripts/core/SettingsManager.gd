@@ -1,8 +1,10 @@
 extends Node
 ## SettingsManager — Autoload singleton. Persists user-configurable settings (resolution,
 ## fullscreen, key bindings, volume) to user://settings.json (player data, never res://) and
-## applies them to the engine. Volume is stored but not wired to any audio bus yet — there is
-## no audio in this build.
+## applies them to the engine. Volume changes are broadcast via volume_changed — AudioManager
+## listens and applies it to the Music/SFX buses.
+
+signal volume_changed(value: float)
 
 const SETTINGS_PATH := "user://settings.json"
 
@@ -87,6 +89,7 @@ func set_fullscreen(value: bool) -> void:
 func set_volume(value: float) -> void:
 	volume = clampf(value, 0.0, 1.0)
 	save_settings()
+	volume_changed.emit(volume)
 
 func get_key_for_action(action: String) -> int:
 	return int(key_bindings.get(action, DEFAULT_KEYS.get(action, 0)))
@@ -112,6 +115,7 @@ func reset_to_defaults() -> void:
 	for action in REBINDABLE_ACTIONS:
 		_restore_original_binding(action)
 	save_settings()
+	volume_changed.emit(volume)
 
 func _apply_resolution() -> void:
 	var parts = resolution.split("x")

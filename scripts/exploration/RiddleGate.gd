@@ -79,6 +79,7 @@ func _on_answered(text: String) -> void:
 		_resolve_success()
 		return
 
+	AudioManager.play_sfx("riddle_wrong")
 	_attempts_left -= 1
 	if _attempts_left > 0:
 		var word = "intento" if _attempts_left == 1 else "intentos"
@@ -102,6 +103,7 @@ func _normalize(s: String) -> String:
 	return result
 
 func _resolve_success() -> void:
+	AudioManager.play_sfx("riddle_correct")
 	GameState.set_flag(FLAG_OPEN)
 	_set_open(true)
 	_play_scene(success_event_id, {"respuesta": _riddle.get("answer_display", "")})

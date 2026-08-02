@@ -126,7 +126,11 @@ func _show_node(node_id: String) -> void:
 	else:
 		var char_data = DataLoader.get_character_by_name(speaker)
 		var portrait = CharacterSprites.get_portrait_texture(char_data) if not char_data.is_empty() else null
-		_dialogue_box.show_text(speaker, text, _current_emoji, portrait)
+		# A waypoint scene's mood is a single tag meant for its opening line (typically whoever
+		# leads that scene) — showing the same emoji glued to every later speaker misrepresents
+		# their own, often very different, reaction, so it only shows on line_0.
+		var emoji = _current_emoji if node_id == "line_0" else ""
+		_dialogue_box.show_text(speaker, text, emoji, portrait)
 
 	# Process flags
 	if node_data.has("set_flag"):

@@ -19,7 +19,8 @@
 		"skills": [
 			"whirlwind_gust"
 		],
-		"xp_reward": 26.0
+		"xp_reward": 26.0,
+		"sprite_path": "res://assets/sprites/enemies/air_elemental.png"
 	},
 	"black_pudding": {
 		"attack_bonus": 5.0,
@@ -41,7 +42,8 @@
 		"skills": [
 			"corrosive_touch"
 		],
-		"xp_reward": 24.0
+		"xp_reward": 24.0,
+		"sprite_path": "res://assets/sprites/enemies/black_pudding.png"
 	},
 	"bugbear": {
 		"attack_bonus": 4.0,
@@ -61,7 +63,8 @@
 		"id": "bugbear",
 		"name": "Bugbear",
 		"skills": [],
-		"xp_reward": 10.0
+		"xp_reward": 10.0,
+		"sprite_path": "res://assets/sprites/enemies/bugbear.png"
 	},
 	"burket_veteran": {
 		"attack_bonus": 6.0,
@@ -81,7 +84,8 @@
 		"id": "burket_veteran",
 		"name": "Burket, Veterano",
 		"skills": [],
-		"xp_reward": 32.0
+		"xp_reward": 32.0,
+		"sprite_path": "res://assets/sprites/enemies/burket_veteran.png"
 	},
 	"ctenmiir_vampire": {
 		"attack_bonus": 9.0,
@@ -104,7 +108,8 @@
 			"life_drain",
 			"hypnotic_gaze"
 		],
-		"xp_reward": 90.0
+		"xp_reward": 90.0,
+		"sprite_path": "res://assets/sprites/enemies/ctenmiir_vampire.png"
 	},
 	"efreet_nix": {
 		"attack_bonus": 9.0,
@@ -127,7 +132,8 @@
 			"fireball",
 			"fire_breath"
 		],
-		"xp_reward": 100.0
+		"xp_reward": 100.0,
+		"sprite_path": "res://assets/sprites/enemies/efreet_nix.png"
 	},
 	"efreet_nox": {
 		"attack_bonus": 9.0,
@@ -150,7 +156,8 @@
 			"fire_breath",
 			"fireball"
 		],
-		"xp_reward": 100.0
+		"xp_reward": 100.0,
+		"sprite_path": "res://assets/sprites/enemies/efreet_nox.png"
 	},
 	"flame_guardian": {
 		"attack_bonus": 6.0,
@@ -173,7 +180,8 @@
 			"fire_breath",
 			"smash"
 		],
-		"xp_reward": 80.0
+		"xp_reward": 80.0,
+		"sprite_path": "res://assets/sprites/enemies/flame_guardian.png"
 	},
 	"flesh_golem": {
 		"attack_bonus": 6.0,
@@ -195,7 +203,8 @@
 		"skills": [
 			"smash"
 		],
-		"xp_reward": 28.0
+		"xp_reward": 28.0,
+		"sprite_path": "res://assets/sprites/enemies/flesh_golem.png"
 	},
 	"gargoyle": {
 		"attack_bonus": 5.0,
@@ -215,7 +224,8 @@
 		"id": "gargoyle",
 		"name": "Gargola",
 		"skills": [],
-		"xp_reward": 20.0
+		"xp_reward": 20.0,
+		"sprite_path": "res://assets/sprites/enemies/gargoyle.png"
 	},
 	"ghoul": {
 		"attack_bonus": 4.0,
@@ -237,7 +247,8 @@
 		"skills": [
 			"paralyzing_claw"
 		],
-		"xp_reward": 16.0
+		"xp_reward": 16.0,
+		"sprite_path": "res://assets/sprites/enemies/ghoul.png"
 	},
 	"giant_crab_improved": {
 		"attack_bonus": 7.0,
@@ -257,7 +268,8 @@
 		"id": "giant_crab_improved",
 		"name": "Cangrejo Gigante Mejorado",
 		"skills": [],
-		"xp_reward": 40.0
+		"xp_reward": 40.0,
+		"sprite_path": "res://assets/sprites/enemies/giant_crab_improved.png"
 	},
 	"giant_crayfish": {
 		"attack_bonus": 3.0,
@@ -277,7 +289,8 @@
 		"id": "giant_crayfish",
 		"name": "Langostino Gigante",
 		"skills": [],
-		"xp_reward": 10.0
+		"xp_reward": 10.0,
+		"sprite_path": "res://assets/sprites/enemies/giant_crayfish.png"
 	},
 	"giant_scorpion": {
 		"attack_bonus": 4.0,
@@ -299,7 +312,8 @@
 		"skills": [
 			"paralyzing_claw"
 		],
-		"xp_reward": 14.0
+		"xp_reward": 14.0,
+		"sprite_path": "res://assets/sprites/enemies/giant_scorpion.png"
 	},
 	"goblin": {
 		"attack_bonus": 4.0,
@@ -319,7 +333,8 @@
 		"id": "goblin",
 		"name": "Goblin",
 		"skills": [],
-		"xp_reward": 10.0
+		"xp_reward": 10.0,
+		"sprite_path": "res://assets/sprites/enemies/goblin.png"
 	},
 	"golem": {
 		"attack_bonus": 7.0,
@@ -341,7 +356,8 @@
 		"skills": [
 			"smash"
 		],
-		"xp_reward": 30.0
+		"xp_reward": 30.0,
+		"sprite_path": "res://assets/sprites/enemies/golem.png"
 	},
 	"gray_ooze": {
 		"attack_bonus": 3.0,
@@ -363,7 +379,8 @@
 		"skills": [
 			"corrosive_touch"
 		],
-		"xp_reward": 10.0
+		"xp_reward": 10.0,
+		"sprite_path": "res://assets/sprites/enemies/gray_ooze.png"
 	},
 	"green_slime": {
 		"attack_bonus": 2.0,
@@ -385,7 +402,8 @@
 		"skills": [
 			"corrosive_touch"
 		],
-		"xp_reward": 8.0
+		"xp_reward": 8.0,
+		"sprite_path": "res://assets/sprites/enemies/green_slime.png"
 	},
 	"guardiana_enigma": {
 		"attack_bonus": 5.0,
@@ -407,7 +425,8 @@
 		"skills": [
 			"fireball"
 		],
-		"xp_reward": 40.0
+		"xp_reward": 40.0,
+		"sprite_path": "res://assets/sprites/enemies/guardiana_enigma.png"
 	},
 	"human_knight": {
 		"attack_bonus": 5.0,
@@ -427,7 +446,8 @@
 		"id": "human_knight",
 		"name": "Caballero Humano",
 		"skills": [],
-		"xp_reward": 18.0
+		"xp_reward": 18.0,
+		"sprite_path": "res://assets/sprites/enemies/human_knight.png"
 	},
 	"invisible_stalker": {
 		"attack_bonus": 6.0,
@@ -447,7 +467,8 @@
 		"id": "invisible_stalker",
 		"name": "Acechador Invisible",
 		"skills": [],
-		"xp_reward": 24.0
+		"xp_reward": 24.0,
+		"sprite_path": "res://assets/sprites/enemies/invisible_stalker.png"
 	},
 	"kelpie": {
 		"attack_bonus": 4.0,
@@ -469,7 +490,8 @@
 		"skills": [
 			"hypnotic_gaze"
 		],
-		"xp_reward": 22.0
+		"xp_reward": 22.0,
+		"sprite_path": "res://assets/sprites/enemies/kelpie.png"
 	},
 	"manticore_flightless": {
 		"attack_bonus": 5.0,
@@ -491,7 +513,8 @@
 		"skills": [
 			"spike_volley"
 		],
-		"xp_reward": 24.0
+		"xp_reward": 24.0,
+		"sprite_path": "res://assets/sprites/enemies/manticore_flightless.png"
 	},
 	"ogre": {
 		"attack_bonus": 5.0,
@@ -511,7 +534,8 @@
 		"id": "ogre",
 		"name": "Ogro",
 		"skills": [],
-		"xp_reward": 20.0
+		"xp_reward": 20.0,
+		"sprite_path": "res://assets/sprites/enemies/ogre.png"
 	},
 	"qesnef_oni": {
 		"attack_bonus": 7.0,
@@ -534,7 +558,8 @@
 			"shifting_strike",
 			"fireball"
 		],
-		"xp_reward": 65.0
+		"xp_reward": 65.0,
+		"sprite_path": "res://assets/sprites/enemies/qesnef_oni.png"
 	},
 	"sea_lion": {
 		"attack_bonus": 3.0,
@@ -554,7 +579,8 @@
 		"id": "sea_lion",
 		"name": "Leon Marino",
 		"skills": [],
-		"xp_reward": 8.0
+		"xp_reward": 8.0,
+		"sprite_path": "res://assets/sprites/enemies/sea_lion.png"
 	},
 	"shadow": {
 		"attack_bonus": 3.0,
@@ -576,7 +602,8 @@
 		"skills": [
 			"life_drain"
 		],
-		"xp_reward": 12.0
+		"xp_reward": 12.0,
+		"sprite_path": "res://assets/sprites/enemies/shadow.png"
 	},
 	"sir_bluto": {
 		"attack_bonus": 8.0,
@@ -598,7 +625,8 @@
 		"skills": [
 			"champion_strike"
 		],
-		"xp_reward": 60.0
+		"xp_reward": 60.0,
+		"sprite_path": "res://assets/sprites/enemies/sir_bluto.png"
 	},
 	"skeleton": {
 		"attack_bonus": 2.0,
@@ -618,7 +646,8 @@
 		"id": "skeleton",
 		"name": "Esqueleto",
 		"skills": [],
-		"xp_reward": 15.0
+		"xp_reward": 15.0,
+		"sprite_path": "res://assets/sprites/enemies/skeleton.png"
 	},
 	"snarla_werewolf": {
 		"attack_bonus": 6.0,
@@ -640,7 +669,8 @@
 		"skills": [
 			"moonlight_curse"
 		],
-		"xp_reward": 36.0
+		"xp_reward": 36.0,
+		"sprite_path": "res://assets/sprites/enemies/snarla_werewolf.png"
 	},
 	"wight": {
 		"attack_bonus": 4.0,
@@ -662,6 +692,7 @@
 		"skills": [
 			"life_drain"
 		],
-		"xp_reward": 18.0
+		"xp_reward": 18.0,
+		"sprite_path": "res://assets/sprites/enemies/wight.png"
 	}
 }

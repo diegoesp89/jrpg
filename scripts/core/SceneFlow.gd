@@ -28,11 +28,21 @@ func change_scene(scene_path: String) -> void:
 	if _is_transitioning:
 		return
 	_is_transitioning = true
+	AudioManager.play_music(_music_track_for_scene(scene_path))
 	await _fade_out()
 	get_tree().change_scene_to_file(scene_path)
 	await get_tree().process_frame  # Wait one frame for scene to load
 	await _fade_in()
 	_is_transitioning = false
+
+## Every scene transition in the game passes through change_scene() (including
+## start_battle/end_battle below), so this is the single place background music gets decided.
+func _music_track_for_scene(scene_path: String) -> String:
+	if "Battle.tscn" in scene_path:
+		return "battle"
+	if "Dungeon.tscn" in scene_path:
+		return "exploration"
+	return "menu"
 
 ## Start a battle encounter
 func start_battle(encounter_id: String, return_scene: String, return_pos: Vector3, intro_message: String = "", death_message: String = "") -> void:

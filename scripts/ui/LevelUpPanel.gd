@@ -77,6 +77,7 @@ func _show_next_step() -> void:
 		GameState.pending_level_ups.remove_at(0)
 		_show_next_step()
 		return
+	AudioManager.play_sfx("level_up")
 	_title.text = "%s alcanza el nivel %d!" % [step.get("member_name", ""), step.get("level", 0)]
 
 	# free() (not queue_free()) — see CharacterSelection._show_feat_step for why: queue_free

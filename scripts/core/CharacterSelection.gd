@@ -136,6 +136,89 @@ func _build_ui() -> void:
 	_cursor_highlight.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_root.add_child(_cursor_highlight)
 
+	_build_combos_panel()
+
+## All C(7,4)=35 possible 4-character party combinations, each an Array[String] of ids already
+## sorted alphabetically — matching the exact key format SaveManager.record_profile_completion()
+## produces (combo.sort() before joining), so lookups against completed_party_combos work as
+## plain string comparisons with no reformatting.
+func _generate_all_combos() -> Array:
+	var ids: Array = []
+	for c in _available_characters:
+		ids.append(str(c["id"]))
+	ids.sort()
+	var combos: Array = []
+	for a in range(ids.size()):
+		for b in range(a + 1, ids.size()):
+			for c in range(b + 1, ids.size()):
+				for d in range(c + 1, ids.size()):
+					combos.append([ids[a], ids[b], ids[c], ids[d]])
+	return combos
+
+## Purely informational, always-visible reference panel (not an overlay like the feat picker —
+## doesn't take input, doesn't block card selection) listing every possible party combination
+## with a gold star if that exact combo already won the game, or a dim one if not yet.
+func _build_combos_panel() -> void:
+	var panel = PanelContainer.new()
+	panel.set_anchors_preset(Control.PRESET_RIGHT_WIDE)
+	panel.offset_left = -380
+	panel.offset_right = -20
+	panel.offset_top = 40
+	panel.offset_bottom = -20
+	var style = StyleBoxFlat.new()
+	style.bg_color = Color(0.08, 0.08, 0.15, 0.9)
+	style.border_color = Color(0.3, 0.3, 0.4)
+	style.set_border_width_all(1)
+	style.set_content_margin_all(10)
+	panel.add_theme_stylebox_override("panel", style)
+	_root.add_child(panel)
+
+	var outer_vbox = VBoxContainer.new()
+	outer_vbox.add_theme_constant_override("separation", 8)
+	panel.add_child(outer_vbox)
+
+	var combos = _generate_all_combos()
+	var title = Label.new()
+	title.text = "Combinaciones (%d)" % combos.size()
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	title.add_theme_font_size_override("font_size", 18)
+	title.add_theme_color_override("font_color", Color(0.8, 0.75, 0.5))
+	outer_vbox.add_child(title)
+
+	var scroll = ScrollContainer.new()
+	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	outer_vbox.add_child(scroll)
+
+	var combos_list = VBoxContainer.new()
+	combos_list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	combos_list.add_theme_constant_override("separation", 3)
+	scroll.add_child(combos_list)
+
+	var completed: Array = SaveManager.get_profile().get("completed_party_combos", [])
+	for combo_ids in combos:
+		var combo_key = ",".join(combo_ids)
+		var names: Array = []
+		for char_id in combo_ids:
+			var char_data = DataLoader.get_character(char_id)
+			names.append(str(char_data.get("name", char_id)) if not char_data.is_empty() else char_id)
+
+		var row = HBoxContainer.new()
+		row.add_theme_constant_override("separation", 6)
+
+		var star = Label.new()
+		star.text = "★"
+		star.add_theme_font_size_override("font_size", 14)
+		star.add_theme_color_override("font_color", Color(1, 0.85, 0.2) if completed.has(combo_key) else Color(0.35, 0.35, 0.35))
+		row.add_child(star)
+
+		var names_label = Label.new()
+		names_label.text = ", ".join(names)
+		names_label.add_theme_font_size_override("font_size", 14)
+		names_label.add_theme_color_override("font_color", Color(0.75, 0.75, 0.75))
+		row.add_child(names_label)
+
+		combos_list.add_child(row)
+
 func _create_character_card(index: int) -> PanelContainer:
 	var char = _available_characters[index]
 	

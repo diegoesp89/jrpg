@@ -117,7 +117,7 @@ func _row_text(row: Dictionary) -> String:
 		RowKind.FULLSCREEN:
 			return "Pantalla completa: %s" % ("Sí" if SettingsManager.fullscreen else "No")
 		RowKind.VOLUME:
-			return "Volumen: %d%% (sin efecto todavía, no hay audio)" % int(round(SettingsManager.volume * 100))
+			return "Volumen: %d%%" % int(round(SettingsManager.volume * 100))
 		RowKind.KEYBIND:
 			var action = row["action"]
 			if _awaiting_rebind_action == action:

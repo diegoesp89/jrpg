@@ -7,23 +7,13 @@ const TILE_SIZE: float = 2.0
 # Tile types
 enum Tile { EMPTY = 0, FLOOR = 1, WALL = 2, DOOR = 3, NPC = 4, CHEST = 5, COMBAT_TRIGGER = 6, TRAP = 7, BOSS_TRIGGER = 8, EXIT = 9, RIDDLE_GATE = 10, FLOOR_ITEM = 11, REST_ZONE = 12 }
 
-# Colors for placeholder sprites
-const WALL_COLOR = Color(0.4, 0.4, 0.45)
-const WALL_BORDER = Color(0.25, 0.25, 0.3)
-const NPC_COLOR = Color(0.2, 0.7, 0.3)
-const NPC_BORDER = Color(0.1, 0.5, 0.15)
-const CHEST_COLOR = Color(0.85, 0.7, 0.1)
-const CHEST_BORDER = Color(0.6, 0.5, 0.05)
+# Colors for placeholder sprites not yet reskinned with real/downloaded art
 const DOOR_COLOR = Color(0.55, 0.35, 0.15)
 const DOOR_BORDER = Color(0.35, 0.2, 0.05)
 const DOOR_LOCKED_COLOR = Color(0.75, 0.15, 0.15)
 const DOOR_LOCKED_BORDER = Color(0.4, 0.05, 0.05)
-const FLOOR_ITEM_COLOR = Color(0.3, 0.9, 0.8)
-const FLOOR_ITEM_BORDER = Color(0.1, 0.6, 0.55)
 const REST_ZONE_COLOR = Color(1.0, 0.85, 0.4)
 const REST_ZONE_BORDER = Color(0.7, 0.55, 0.1)
-const FLOOR_COLOR = Color(0.25, 0.22, 0.2)
-const FLOOR_ALT_COLOR = Color(0.28, 0.25, 0.22)
 
 # Dungeon layout is data-driven: loaded from the current map (res://maps/*.map, selected at
 # MapSelection) via DataLoader.get_current_map(). See _load_map_data(). Falls back to the
@@ -35,7 +25,17 @@ var _entities: Dictionary = {}
 
 var _wall_nodes: Array[Node3D] = []
 var _floor_mesh: MeshInstance3D = null
-var _wall_texture: ImageTexture = null
+var _wall_texture: Texture2D = null
+
+# Dungeon dressing textures (placeholder art — see assets/sprites/dungeon/CREDITS.txt),
+# loaded once and reused across every tile/entity instance.
+var _floor_texture_a: Texture2D = null
+var _floor_texture_b: Texture2D = null
+var _npc_texture: Texture2D = null
+var _chest_closed_texture: Texture2D = null
+var _chest_open_texture: Texture2D = null
+var _floor_item_texture: Texture2D = null
+var _trap_texture: Texture2D = null
 
 # Shared shader instances (created once, reused)
 var _fog_shader_color: Shader = null
@@ -75,7 +75,14 @@ func _register_fog_globals() -> void:
 		_fog_globals_registered = true
 
 func _build_dungeon() -> void:
-	_wall_texture = _create_rect_texture(WALL_COLOR, WALL_BORDER, 32, 48)
+	_wall_texture = load("res://assets/sprites/dungeon/wall_gray.png")
+	_floor_texture_a = load("res://assets/sprites/dungeon/floor_gray0.png")
+	_floor_texture_b = load("res://assets/sprites/dungeon/floor_gray1.png")
+	_npc_texture = load("res://assets/sprites/dungeon/npc_human.png")
+	_chest_closed_texture = load("res://assets/sprites/dungeon/chest_closed.png")
+	_chest_open_texture = load("res://assets/sprites/dungeon/chest_open.png")
+	_floor_item_texture = load("res://assets/sprites/dungeon/floor_item_box.png")
+	_trap_texture = load("res://assets/sprites/dungeon/trap_spear.png")
 	_build_floor()
 	_build_walls_and_entities()
 	_create_random_encounter_zones()
@@ -143,12 +150,8 @@ func _create_floor_tile(col: int, row: int) -> void:
 	mesh_instance.mesh = plane_mesh
 
 	# Checkerboard pattern with fog shader
-	var color: Color
-	if (col + row) % 2 == 0:
-		color = FLOOR_COLOR
-	else:
-		color = FLOOR_ALT_COLOR
-	mesh_instance.material_override = _make_fog_color_material(color)
+	var texture = _floor_texture_a if (col + row) % 2 == 0 else _floor_texture_b
+	mesh_instance.material_override = _make_fog_textured_material(texture)
 
 	mesh_instance.position = Vector3(col * TILE_SIZE, 0, row * TILE_SIZE)
 	add_child(mesh_instance)
@@ -305,7 +308,7 @@ func _create_npc(pos: Vector3, config: Dictionary = {}) -> void:
 	sprite.pixel_size = 0.03
 	sprite.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 	sprite.alpha_cut = SpriteBase3D.ALPHA_CUT_OPAQUE_PREPASS
-	sprite.texture = _create_rect_texture(NPC_COLOR, NPC_BORDER, 32, 32)
+	sprite.texture = _npc_texture
 	sprite.position = Vector3(0, 0.8, 0)
 	npc.add_child(sprite)
 
@@ -365,12 +368,14 @@ func _create_chest(pos: Vector3, config: Dictionary = {}) -> void:
 	sprite.pixel_size = 0.03
 	sprite.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 	sprite.alpha_cut = SpriteBase3D.ALPHA_CUT_OPAQUE_PREPASS
-	sprite.texture = _create_rect_texture(CHEST_COLOR, CHEST_BORDER, 32, 24)
+	sprite.texture = _chest_closed_texture
 	sprite.position = Vector3(0, 0.5, 0)
 	chest.add_child(sprite)
 
 	if pickup_script:
 		chest.set_script(pickup_script)
+		chest.closed_texture = _chest_closed_texture
+		chest.open_texture = _chest_open_texture
 		if config.has("item_id"):
 			chest.item_id = config["item_id"]
 		if config.has("quantity"):
@@ -402,7 +407,7 @@ func _create_floor_item(pos: Vector3, config: Dictionary = {}) -> void:
 	sprite.pixel_size = 0.03
 	sprite.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 	sprite.alpha_cut = SpriteBase3D.ALPHA_CUT_OPAQUE_PREPASS
-	sprite.texture = _create_rect_texture(FLOOR_ITEM_COLOR, FLOOR_ITEM_BORDER, 16, 16)
+	sprite.texture = _floor_item_texture
 	sprite.position = Vector3(0, 0.3, 0)
 	item.add_child(sprite)
 
@@ -456,14 +461,14 @@ func _create_trap(pos: Vector3, config: Dictionary = {}) -> void:
 	col_shape.position = Vector3(0, 0.5, 0)
 	trap.add_child(col_shape)
 
-	# Sprung-trap marker (red-ish floor) — stays hidden until the trap actually triggers (see
-	# Trap.gd), so an armed trap looks like ordinary floor to the player and doesn't give itself
-	# away; only reveals itself once triggered, as a permanent "already dealt with" indicator.
+	# Sprung-trap marker (spike floor decal) — stays hidden until the trap actually triggers
+	# (see Trap.gd), so an armed trap looks like ordinary floor to the player and doesn't give
+	# itself away; only reveals itself once triggered, as a permanent "already dealt with" marker.
 	var mesh = MeshInstance3D.new()
 	var plane = PlaneMesh.new()
 	plane.size = Vector2(TILE_SIZE - 0.1, TILE_SIZE - 0.1)
 	mesh.mesh = plane
-	mesh.material_override = _make_fog_color_material(Color(0.5, 0.15, 0.1))
+	mesh.material_override = _make_fog_textured_material(_trap_texture)
 	mesh.position = Vector3(0, 0.01, 0)
 	mesh.visible = false
 	trap.add_child(mesh)

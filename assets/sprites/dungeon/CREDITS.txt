@@ -1,0 +1,27 @@
+Dungeon dressing sprites (placeholder art) — source and mapping
+=================================================================
+
+Source: "Dungeon Crawl 32x32 tiles" (from Dungeon Crawl Stone Soup)
+https://opengameart.org/content/dungeon-crawl-32x32-tiles
+License: CC0 (public domain) — no attribution required, credited here as a courtesy.
+Same pack as ../enemies/CREDITS.txt.
+
+Temporary stand-ins — replace any file below with real art whenever it's ready (same
+filename, same folder, no code changes needed).
+
+file                    -> source tile
+------------------------------------------------------------
+floor_gray0.png         -> dc-dngn/floor/grey_dirt0.png
+floor_gray1.png         -> dc-dngn/floor/grey_dirt1.png (alternates with floor_gray0 for the
+                           existing checkerboard pattern)
+wall_gray.png           -> dc-dngn/wall/stone_gray0.png, tiled vertically into a 32x48 canvas
+                           to match the wall quad's 2:3 aspect ratio without stretching/distorting
+                           the stone texture (the source tile is a square 32x32)
+npc_human.png           -> dc-mon/human.png (generic placeholder for all NPCs regardless of
+                           dialogue content — no per-NPC art yet)
+chest_closed.png        -> UNUSED/other/chest2_closed.png
+chest_open.png          -> UNUSED/other/chest2_open.png (swapped in on Pickup.interact(),
+                           mirrors Door.gd's locked/unlocked texture swap)
+floor_item_box.png      -> item/misc/misc_box.png (loose item on the floor, no chest)
+trap_spear.png          -> dc-dngn/dngn_trap_spear.png (Trap.gd's "already sprung" marker,
+                           hidden until the trap triggers — see scripts/exploration/Trap.gd)

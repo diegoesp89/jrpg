@@ -1,0 +1,45 @@
+Enemy battle sprites (placeholder art) — source and mapping
+=============================================================
+
+Source: "Dungeon Crawl 32x32 tiles" (monster tiles from Dungeon Crawl Stone Soup)
+https://opengameart.org/content/dungeon-crawl-32x32-tiles
+License: CC0 (public domain) — no attribution required, credited here as a courtesy.
+Collected from many contributing artists; see the OGA page for the full credits list.
+
+These are temporary stand-ins, matched by closest available creature/theme (not all of
+our enemies have an exact equivalent in the pack). Replace any file below with real art
+whenever it's ready — same filename, same folder, no code changes needed.
+
+enemy_id                -> source tile (within dc-mon/)
+------------------------------------------------------------
+air_elemental           -> nonliving/air_elemental.png (exact match)
+black_pudding           -> brown_ooze.png (closest available ooze)
+bugbear                 -> hobgoblin.png (closest goblinoid)
+burket_veteran          -> vault_guard.png (generic human guard/veteran)
+ctenmiir_vampire        -> undead/vampire.png (exact match)
+efreet_nix              -> demons/efreet.png (exact match)
+efreet_nox              -> demons/efreet.png (same base art as efreet_nix)
+flame_guardian          -> nonliving/fire_elemental.png (closest fire boss)
+flesh_golem             -> nonliving/flesh_golem.png (exact match)
+gargoyle                -> nonliving/gargoyle.png (exact match)
+ghoul                   -> undead/ghoul.png (exact match)
+giant_crab_improved     -> animals/alligator_snapping_turtle.png (closest shelled creature)
+giant_crayfish          -> animals/big_fish.png (closest aquatic creature, no crustacean tile)
+giant_scorpion          -> animals/giant_scorpion.png (exact match)
+goblin                  -> goblin.png (exact match)
+golem                   -> nonliving/stone_golem.png (exact match)
+gray_ooze               -> ooze.png (exact match)
+green_slime             -> jelly.png (closest slime/jelly)
+guardiana_enigma        -> sphinx.png (exact thematic match — riddle guardian)
+human_knight            -> hell_knight.png (closest human armored knight)
+invisible_stalker       -> demons/unseen_horror.png (closest "unseen creature")
+kelpie                  -> nonliving/water_elemental.png (closest water spirit)
+manticore_flightless    -> manticore.png (exact match)
+ogre                    -> ogre.png (exact match)
+qesnef_oni              -> demons/rakshasa.png (closest Asian-mythology demon)
+sea_lion                -> animals/shark.png (closest aquatic predator)
+shadow                  -> undead/shadow.png (exact match)
+sir_bluto               -> unique/boris.png (named boss knight, closest available)
+skeleton                -> undead/skeletons/skeleton_humanoid_small.png (exact match)
+snarla_werewolf         -> animals/warg.png (closest wolf-like creature, no werewolf tile)
+wight                   -> undead/wight.png (exact match)

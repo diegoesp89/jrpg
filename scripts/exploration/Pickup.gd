@@ -6,6 +6,12 @@ class_name Pickup
 @export var item_quantity: int = 1
 @export var chest_id: String = "chest_sala3"
 
+## Set by DungeonBuilder for chests only (plain vars, not @export — generated textures, not
+## map-editor config data). Loose floor items leave these null and just dim on pickup instead,
+## same as before.
+var closed_texture: Texture2D = null
+var open_texture: Texture2D = null
+
 var _opened: bool = false
 
 @onready var _sprite: Sprite3D = null
@@ -25,6 +31,7 @@ func interact() -> void:
 	if _opened:
 		return
 	_opened = true
+	AudioManager.play_sfx("chest_open")
 	GameState.add_item(item_id, item_quantity)
 	GameState.set_flag(chest_id + "_opened")
 	var item_data = DataLoader.get_item(item_id)
@@ -38,7 +45,10 @@ func interact() -> void:
 
 func _hide_chest() -> void:
 	if _sprite:
-		_sprite.modulate = Color(0.3, 0.3, 0.3, 0.5)
+		if open_texture:
+			_sprite.texture = open_texture
+		else:
+			_sprite.modulate = Color(0.3, 0.3, 0.3, 0.5)
 	# Disable collision so player can walk through
 	for child in get_children():
 		if child is CollisionShape3D:

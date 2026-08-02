@@ -23,7 +23,7 @@
 			"heavily_armored"
 		],
 		"final_feat": "barbara_ultimate",
-		"sprite_path": "res://assets/sprites/spritesheet.png"
+		"sprite_path": "res://assets/sprites/characters/barbara.png"
 	},
 	"huguito": {
 		"id": "huguito",
@@ -49,7 +49,7 @@
 			"martial_adept"
 		],
 		"final_feat": "huguito_ultimate",
-		"sprite_path": "res://assets/sprites/spritesheet.png"
+		"sprite_path": "res://assets/sprites/characters/huguito.png"
 	},
 	"rosa": {
 		"id": "rosa",
@@ -75,7 +75,7 @@
 			"alert"
 		],
 		"final_feat": "rosa_ultimate",
-		"sprite_path": "res://assets/sprites/spritesheet.png"
+		"sprite_path": "res://assets/sprites/characters/rosa.png"
 	},
 	"azafran": {
 		"id": "azafran",
@@ -101,7 +101,7 @@
 			"mage_slayer"
 		],
 		"final_feat": "azafran_ultimate",
-		"sprite_path": "res://assets/sprites/spritesheet.png"
+		"sprite_path": "res://assets/sprites/characters/azafran.png"
 	},
 	"lulu": {
 		"id": "lulu",
@@ -127,7 +127,7 @@
 			"grappler"
 		],
 		"final_feat": "lulu_ultimate",
-		"sprite_path": "res://assets/sprites/spritesheet.png"
+		"sprite_path": "res://assets/sprites/characters/lulu.png"
 	},
 	"daragat": {
 		"id": "daragat",
@@ -154,7 +154,7 @@
 			"magic_initiate"
 		],
 		"final_feat": "daragat_ultimate",
-		"sprite_path": "res://assets/sprites/spritesheet.png"
+		"sprite_path": "res://assets/sprites/characters/daragat.png"
 	},
 	"solana": {
 		"id": "solana",
@@ -180,6 +180,6 @@
 			"inspiring_leader"
 		],
 		"final_feat": "solana_ultimate",
-		"sprite_path": "res://assets/sprites/spritesheet.png"
+		"sprite_path": "res://assets/sprites/characters/solana.png"
 	}
 }

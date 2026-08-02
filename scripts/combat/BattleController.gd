@@ -99,6 +99,7 @@ func _setup_enemies() -> void:
 			"attack_bonus": enemy_data.get("attack_bonus", 0),
 			"damage": enemy_data.get("damage", "1d6"),
 			"skills": enemy_data.get("skills", []).duplicate(),
+			"sprite_path": enemy_data.get("sprite_path", ""),
 			"is_player": false,
 			"defending": false,
 			"position": 0,

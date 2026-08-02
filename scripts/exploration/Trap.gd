@@ -63,6 +63,7 @@ func _resolve_trap() -> void:
 	if success:
 		lines.append("Trampa: %s tira 1d20%s = %d vs DC %d -> ¡Supera la salvación!" % [saver["name"], mod_str, total, dc])
 		lines.append("Trampa: %s esquiva la trampa sin recibir daño!" % saver["name"])
+		AudioManager.play_sfx("trap_success")
 	else:
 		var final_damage = damage
 		if Combatant.has_feat_effect(saver, "trap_damage_half"):
@@ -70,6 +71,7 @@ func _resolve_trap() -> void:
 		saver["hp"] = maxi(saver.get("hp", 0) - final_damage, 0)
 		lines.append("Trampa: %s tira 1d20%s = %d vs DC %d -> ¡Falla la salvación!" % [saver["name"], mod_str, total, dc])
 		lines.append("Trampa: %s recibe %d de daño!" % [saver["name"], final_damage])
+		AudioManager.play_sfx("trap_fail")
 
 	var dialogue_controller = _find_dialogue_controller()
 	if not dialogue_controller:

@@ -20,6 +20,7 @@ DataLoader="*res://scripts/data/DataLoader.gd"
 GameState="*res://scripts/core/GameState.gd"
 SaveManager="*res://scripts/core/SaveManager.gd"
 SettingsManager="*res://scripts/core/SettingsManager.gd"
+AudioManager="*res://scripts/core/AudioManager.gd"
 SceneFlow="*res://scripts/core/SceneFlow.gd"
 EventBus="*res://scripts/core/EventBus.gd"
 

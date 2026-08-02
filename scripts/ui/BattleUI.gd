@@ -7,15 +7,21 @@ var _battle_controller = null
 # UI Nodes
 var _party_stats_container: VBoxContainer = null
 var _action_menu: VBoxContainer = null
+var _skill_menu_wrapper: VBoxContainer = null  # holds _skill_menu + _skill_tooltip_label together
 var _skill_menu: VBoxContainer = null
+var _skill_tooltip_label: RichTextLabel = null
 var _item_menu: VBoxContainer = null
 var _target_menu: VBoxContainer = null
 var _position_menu: VBoxContainer = null
 var _premonition_menu: VBoxContainer = null
 var _log_label: RichTextLabel = null
 var _turn_indicator: Label = null
-var _battle_sprites_container: HBoxContainer = null
+var _battle_sprites_container: VBoxContainer = null
 var _enemy_sprites_container: HBoxContainer = null
+
+## One HBoxContainer per position zone (index-matched to POSITION_NAMES/combatant["position"]:
+## 0=Adelante, 1=Medio, 2=Retaguardia), holding whichever party members currently sit there.
+var _position_zone_boxes: Array[HBoxContainer] = []
 var _float_overlay: Control = null
 
 # Initiative panel reference
@@ -75,11 +81,28 @@ func _build_ui() -> void:
 	field.clip_contents = false
 	root.add_child(field)
 
-	# Party sprites (left side)
-	_battle_sprites_container = HBoxContainer.new()
-	_battle_sprites_container.position = Vector2(120, 220)
-	_battle_sprites_container.add_theme_constant_override("separation", 30)
+	# Party sprites (left side) — stacked top to bottom by position zone (Adelante at top,
+	# Retaguardia at bottom), each zone explicitly labeled so it's clear who's standing where.
+	_battle_sprites_container = VBoxContainer.new()
+	_battle_sprites_container.position = Vector2(120, 160)
+	_battle_sprites_container.add_theme_constant_override("separation", 14)
 	field.add_child(_battle_sprites_container)
+
+	_position_zone_boxes.clear()
+	for zone_name in POSITION_NAMES:
+		var zone_row = HBoxContainer.new()
+		zone_row.add_theme_constant_override("separation", 14)
+		var zone_label = Label.new()
+		zone_label.text = zone_name
+		zone_label.custom_minimum_size = Vector2(110, 0)
+		zone_label.add_theme_font_size_override("font_size", 20)
+		zone_label.add_theme_color_override("font_color", Color(0.6, 0.6, 0.65))
+		zone_row.add_child(zone_label)
+		var chars_box = HBoxContainer.new()
+		chars_box.add_theme_constant_override("separation", 24)
+		zone_row.add_child(chars_box)
+		_battle_sprites_container.add_child(zone_row)
+		_position_zone_boxes.append(chars_box)
 
 	# Enemy sprites (right side)
 	_enemy_sprites_container = HBoxContainer.new()
@@ -128,9 +151,23 @@ func _build_ui() -> void:
 	menu_panel.add_child(_action_menu)
 
 	# Also create hidden skill/item/target menus (reuse _action_menu by swapping content)
+	# The skill list and its tooltip are wrapped together so they stack instead of overlapping
+	# (menu_panel's other menus are toggled one-at-a-time as direct children; a tooltip sibling
+	# next to _skill_menu would render on top of it, not below).
+	_skill_menu_wrapper = VBoxContainer.new()
+	_skill_menu_wrapper.visible = false
+	menu_panel.add_child(_skill_menu_wrapper)
+
 	_skill_menu = VBoxContainer.new()
-	_skill_menu.visible = false
-	menu_panel.add_child(_skill_menu)
+	_skill_menu_wrapper.add_child(_skill_menu)
+
+	_skill_tooltip_label = RichTextLabel.new()
+	_skill_tooltip_label.bbcode_enabled = false
+	_skill_tooltip_label.fit_content = true
+	_skill_tooltip_label.custom_minimum_size = Vector2(0, 90)
+	_skill_tooltip_label.add_theme_font_size_override("normal_font_size", 26)
+	_skill_tooltip_label.add_theme_color_override("default_color", Color(0.7, 0.7, 0.75))
+	_skill_menu_wrapper.add_child(_skill_tooltip_label)
 
 	_item_menu = VBoxContainer.new()
 	_item_menu.visible = false
@@ -243,9 +280,13 @@ func _handle_sub_menu_input(event: InputEvent) -> void:
 	if event.is_action_pressed("move_up"):
 		_selected_index = maxi(0, _selected_index - 1)
 		_update_menu_highlight(container)
+		if _menu_state == MenuState.SKILL:
+			_update_skill_tooltip()
 	elif event.is_action_pressed("move_down"):
 		_selected_index = mini(_menu_items.size() - 1, _selected_index + 1)
 		_update_menu_highlight(container)
+		if _menu_state == MenuState.SKILL:
+			_update_skill_tooltip()
 	elif event.is_action_pressed("action1"):
 		_select_sub_option(_selected_index)
 	elif event.is_action_pressed("action2"):
@@ -370,8 +411,18 @@ func _show_skill_menu() -> void:
 	_menu_state = MenuState.SKILL
 	_selected_index = 0
 	_action_menu.visible = false
-	_skill_menu.visible = true
+	_skill_menu_wrapper.visible = true
 	_update_menu_highlight(_skill_menu)
+	_update_skill_tooltip()
+
+## Shows the currently-highlighted skill's description below the skill list (empty if there's
+## nothing selectable, e.g. "Sin habilidades").
+func _update_skill_tooltip() -> void:
+	if _menu_items.is_empty() or _selected_index >= _menu_items.size():
+		_skill_tooltip_label.text = ""
+		return
+	var skill = DataLoader.get_skill(_menu_items[_selected_index])
+	_skill_tooltip_label.text = skill.get("description", "")
 
 func _show_item_menu() -> void:
 	_menu_items.clear()
@@ -429,7 +480,7 @@ func _show_target_menu(ally: bool) -> void:
 	_menu_state = MenuState.TARGET_ENEMY if not ally else MenuState.TARGET_ALLY
 	_selected_index = 0
 	_action_menu.visible = false
-	_skill_menu.visible = false
+	_skill_menu_wrapper.visible = false
 	_item_menu.visible = false
 	_target_menu.visible = true
 	_update_menu_highlight(_target_menu)
@@ -468,7 +519,7 @@ func _select_target(idx: int) -> void:
 func _back_to_main() -> void:
 	_menu_state = MenuState.MAIN
 	_selected_index = 0
-	_skill_menu.visible = false
+	_skill_menu_wrapper.visible = false
 	_item_menu.visible = false
 	_target_menu.visible = false
 	_position_menu.visible = false
@@ -478,7 +529,7 @@ func _back_to_main() -> void:
 
 func _hide_all_menus() -> void:
 	_action_menu.visible = false
-	_skill_menu.visible = false
+	_skill_menu_wrapper.visible = false
 	_item_menu.visible = false
 	_target_menu.visible = false
 	_position_menu.visible = false
@@ -514,7 +565,7 @@ func _show_main_menu() -> void:
 	_menu_state = MenuState.MAIN
 	_selected_index = 0
 	_action_menu.visible = true
-	_skill_menu.visible = false
+	_skill_menu_wrapper.visible = false
 	_item_menu.visible = false
 	_target_menu.visible = false
 	_position_menu.visible = false
@@ -551,6 +602,8 @@ func _on_battle_ended(result: String) -> void:
 	_hide_all_menus()
 
 func _update_all_stats() -> void:
+	_refresh_party_position_zones()
+
 	# Party stats (text in bottom panel)
 	_clear_container(_party_stats_container)
 	if _battle_controller:
@@ -626,17 +679,32 @@ func _update_initiative_list() -> void:
 		_initiative_list.add_child(label)
 
 func _update_battle_sprites() -> void:
-	# Update party sprite tint based on alive/dead state
+	# Update party sprite tint based on alive/dead state. Looked up by id (via
+	# _combatant_sprite_map) rather than by container child index — the party sprites now live
+	# nested inside position-zone boxes, not as _battle_sprites_container's direct children.
 	if _battle_controller:
-		var party = _battle_controller.get_party()
-		var party_children = _battle_sprites_container.get_children()
-		for i in range(mini(party.size(), party_children.size())):
-			var vbox = party_children[i]
-			# First child is the sprite TextureRect
-			if vbox.get_child_count() > 0 and vbox.get_child(0) is TextureRect:
+		for p in _battle_controller.get_party():
+			var vbox = _combatant_sprite_map.get(p.get("id", ""))
+			if vbox and is_instance_valid(vbox) and vbox.get_child_count() > 0 and vbox.get_child(0) is TextureRect:
 				var rect = vbox.get_child(0) as TextureRect
-				rect.modulate = Color(1, 1, 1) if party[i]["hp"] > 0 else Color(0.3, 0.3, 0.3)
+				rect.modulate = Color(1, 1, 1) if p["hp"] > 0 else Color(0.3, 0.3, 0.3)
 	_update_hp_bars()
+
+## Reparents each party member's sprite vbox into the position-zone box matching their CURRENT
+## position, whenever it changed since the last refresh (e.g. after a "move" action) — cheap
+## no-op if nobody moved, called every _update_all_stats() so it stays in sync automatically.
+func _refresh_party_position_zones() -> void:
+	if not _battle_controller or _position_zone_boxes.is_empty():
+		return
+	for p in _battle_controller.get_party():
+		var vbox: Control = _combatant_sprite_map.get(p.get("id", ""))
+		if vbox == null or not is_instance_valid(vbox):
+			continue
+		var zone_idx = clampi(int(p.get("position", 0)), 0, _position_zone_boxes.size() - 1)
+		var target_box = _position_zone_boxes[zone_idx]
+		if vbox.get_parent() != target_box:
+			vbox.get_parent().remove_child(vbox)
+			target_box.add_child(vbox)
 
 func _update_hp_bars() -> void:
 	for entry in _hp_bars:
@@ -690,19 +758,21 @@ func _create_hp_bar(combatant: Dictionary, bar_width: float, is_player: bool) ->
 	return container
 
 func setup_sprites(party: Array, enemies: Array) -> void:
-	_clear_container(_battle_sprites_container)
+	# Only the per-zone CharsBoxes get cleared here — the zone rows/labels themselves are built
+	# once in _build_ui() and persist for the whole battle.
+	for chars_box in _position_zone_boxes:
+		_clear_container(chars_box)
 	_clear_container(_enemy_sprites_container)
 	_hp_bars.clear()
 	_combatant_sprite_map.clear()
 
-	# Party sprites (side-view battle pose) — no HP bar (stats shown in HUD panel)
+	# Party sprites (side-view battle pose) — no HP bar (stats shown in HUD panel), placed in
+	# the CharsBox matching their current position zone (see _position_zone_boxes).
 	for p in party:
 		var vbox = VBoxContainer.new()
 		vbox.alignment = BoxContainer.ALIGNMENT_END
 		var sprite_w := 64.0
-		# Row offset: middle/retaguardia sprites sit lower/further back visually
 		vbox.add_theme_constant_override("separation", 0)
-		vbox.custom_minimum_size.y = p.get("position", 0) * 20.0
 		# Sprite
 		var rect = TextureRect.new()
 		rect.custom_minimum_size = Vector2(sprite_w, 80)
@@ -716,10 +786,11 @@ func setup_sprites(party: Array, enemies: Array) -> void:
 		name_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		name_label.add_theme_font_size_override("font_size", 33)
 		vbox.add_child(name_label)
-		_battle_sprites_container.add_child(vbox)
+		var zone_idx = clampi(int(p.get("position", 0)), 0, _position_zone_boxes.size() - 1)
+		_position_zone_boxes[zone_idx].add_child(vbox)
 		_combatant_sprite_map[p.get("id", "")] = vbox
 
-	# Enemy sprites (red rectangles) with HP bar above
+	# Enemy sprites (battle art if available, else a red placeholder rectangle) with HP bar above
 	for e in enemies:
 		var vbox = VBoxContainer.new()
 		vbox.alignment = BoxContainer.ALIGNMENT_END
@@ -732,10 +803,20 @@ func setup_sprites(party: Array, enemies: Array) -> void:
 		var hp_bar = _create_hp_bar(e, sprite_w, false)
 		vbox.add_child(hp_bar)
 		# Sprite
-		var rect = ColorRect.new()
-		rect.custom_minimum_size = Vector2(sprite_w, sprite_h)
-		rect.color = Color(0.8, 0.2, 0.15) if e["hp"] > 0 else Color(0.3, 0.3, 0.3)
-		vbox.add_child(rect)
+		var alive_tint = Color(1, 1, 1) if e["hp"] > 0 else Color(0.3, 0.3, 0.3)
+		var texture = EnemySprites.get_texture(e)
+		if texture:
+			var rect = TextureRect.new()
+			rect.custom_minimum_size = Vector2(sprite_w, sprite_h)
+			rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+			rect.texture = texture
+			rect.modulate = alive_tint
+			vbox.add_child(rect)
+		else:
+			var rect = ColorRect.new()
+			rect.custom_minimum_size = Vector2(sprite_w, sprite_h)
+			rect.color = Color(0.8, 0.2, 0.15) if e["hp"] > 0 else Color(0.3, 0.3, 0.3)
+			vbox.add_child(rect)
 		# Name
 		var name_label = Label.new()
 		name_label.text = e["name"]
@@ -747,6 +828,7 @@ func setup_sprites(party: Array, enemies: Array) -> void:
 
 func _on_damage_dealt(target: Dictionary, amount: int, is_heal: bool) -> void:
 	_spawn_floating_number(target, amount, is_heal)
+	AudioManager.play_sfx("heal" if is_heal else "attack_hit")
 
 func _spawn_floating_number(target: Dictionary, amount: int, is_heal: bool) -> void:
 	if not _float_overlay or amount <= 0:

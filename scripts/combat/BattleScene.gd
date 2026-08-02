@@ -48,6 +48,7 @@ func _setup_battle() -> void:
 func _on_battle_ended(result: String) -> void:
 	match result:
 		"victory":
+			AudioManager.play_sfx("victory")
 			var flag_id = "combat_" + GameState.current_encounter_id + "_done"
 			GameState.set_flag(flag_id)
 			await get_tree().create_timer(1.0).timeout
@@ -57,6 +58,7 @@ func _on_battle_ended(result: String) -> void:
 			await get_tree().create_timer(1.0).timeout
 			SceneFlow.end_battle()
 		"defeat":
+			AudioManager.play_sfx("defeat")
 			await get_tree().create_timer(1.5).timeout
 			GameState.reset()
 			SceneFlow.change_scene("res://scenes/boot/CharacterSelection.tscn")
