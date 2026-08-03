@@ -3,6 +3,9 @@ class_name ContinueScreen
 ## ContinueScreen — First screen after Boot. Continue an existing save, start a new game,
 ## browse the cross-playthrough profile, or wipe the save (profile persists).
 
+## Preloaded by path, not via its class_name — see the note in DungeonBuilder.gd.
+const HelpPanelScene = preload("res://scripts/ui/HelpPanel.gd")
+
 enum State { MAIN, RESET_CONFIRM }
 
 var _state: State = State.MAIN
@@ -14,6 +17,7 @@ var _title: Label
 var _list_container: VBoxContainer
 var _option_labels: Array[Label] = []
 var _options_panel: OptionsPanel
+var _help_panel: HelpPanelScene
 
 func _ready() -> void:
 	_build_ui()
@@ -66,6 +70,10 @@ func _build_ui() -> void:
 	add_child(_options_panel)
 	_options_panel.closed.connect(_show_main)
 
+	_help_panel = HelpPanelScene.new()
+	add_child(_help_panel)
+	_help_panel.closed.connect(_show_main)
+
 func _show_main() -> void:
 	_state = State.MAIN
 	_title.text = "La Montana del Penacho Blanco"
@@ -74,6 +82,7 @@ func _show_main() -> void:
 		_options.append("Continuar partida")
 	_options.append("Nueva partida")
 	_options.append("Ver perfil")
+	_options.append("Ayuda")
 	_options.append("Opciones")
 	_options.append("Resetear progreso")
 	_rebuild_list()
@@ -108,7 +117,7 @@ func _update_highlight() -> void:
 			_option_labels[i].add_theme_color_override("font_color", Color(0.6, 0.6, 0.6))
 
 func _unhandled_input(event: InputEvent) -> void:
-	if _options_panel.is_open():
+	if _options_panel.is_open() or _help_panel.is_open():
 		return
 	if _option_labels.is_empty():
 		return
@@ -142,6 +151,8 @@ func _select_main(option: String) -> void:
 			SceneFlow.change_scene("res://scenes/boot/MapSelection.tscn")
 		"Ver perfil":
 			SceneFlow.change_scene("res://scenes/boot/ProfileScreen.tscn")
+		"Ayuda":
+			_help_panel.open()
 		"Opciones":
 			_options_panel.open()
 		"Resetear progreso":

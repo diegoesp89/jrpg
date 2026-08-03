@@ -2,6 +2,12 @@ extends Node3D
 class_name DungeonBuilder
 ## DungeonBuilder — Generates the dungeon layout
 
+## Preloaded by path rather than referenced through its `class_name`: a script whose global class
+## was registered after the editor session started is not yet in that session's class cache, and
+## the parse fails until the project is reloaded. preload() resolves at compile time from the
+## path, so it works on the very first run after the file is created.
+const EasterEggsData = preload("res://scripts/data/EasterEggs.gd")
+
 const TILE_SIZE: float = 2.0
 
 # Tile types
@@ -704,6 +710,22 @@ func _show_victory_screen() -> void:
 	var spacer2 = Control.new()
 	spacer2.custom_minimum_size = Vector2(0, 30)
 	vbox.add_child(spacer2)
+
+	# Easter egg: a phrase unique to this exact party combination, so finishing the game with a
+	# different four earns a different one to report back to your DM.
+	var blessing: String = EasterEggsData.party_blessing(GameState.party)
+	if blessing != "":
+		var egg = Label.new()
+		egg.text = "Dile a tu DM que %s" % blessing
+		egg.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		egg.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		egg.add_theme_font_size_override("font_size", 40)
+		egg.add_theme_color_override("font_color", Color(0.65, 0.55, 0.85))
+		vbox.add_child(egg)
+
+		var spacer3 = Control.new()
+		spacer3.custom_minimum_size = Vector2(0, 30)
+		vbox.add_child(spacer3)
 
 	# Prompt
 	var prompt = Label.new()

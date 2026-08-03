@@ -53,11 +53,49 @@ func _get_modifier(attribute_value: int) -> int:
 	else:
 		return -2
 
+## Hit die by class, following the D&D 5e SRD (open content) table: d12 for the Barbarian,
+## d10 for martial classes (the Gunslinger being a Fighter archetype), d8 for the standard
+## d8 classes, d6 for full arcane casters. This is the source of truth — characters.json's
+## own "hit_die" is only the fallback for a class not listed here.
+const CLASS_HIT_DICE := {
+	"Barbaro": 12,
+	"Gunslinger": 10,
+	"Monje": 8,
+	"Clerigo": 8,
+	"Warlock": 8,
+	"Hechicera": 6,
+}
+
+func hit_die_for_class(clase: String, fallback: int = 8) -> int:
+	return int(CLASS_HIT_DICE.get(clase, fallback))
+
+## Max HP at a given level, by the SRD's fixed-progression rule: the full hit die at level 1,
+## then the die's average roll (half of it, rounded down, plus 1) for every level after, plus
+## the Constitution modifier once per level. Always recomputed from these three inputs rather
+## than accumulated, so a level-up can't drift out of sync with what a fresh character of the
+## same level would have.
+func max_hp_for(hit_die: int, con_mod: int, level: int) -> int:
+	var per_level_gain = int(hit_die / 2.0) + 1
+	var hp = hit_die + (level - 1) * per_level_gain + con_mod * level
+	return maxi(1, hp)
+
+## Same, for a live party member — including any percentage HP feats they've picked up, which
+## scale with the level-appropriate total instead of being frozen at whatever it was when the
+## feat was taken.
+func max_hp_with_feats(member: Dictionary) -> int:
+	var base = max_hp_for(
+		hit_die_for_class(str(member.get("class", "")), int(member.get("hit_die", 8))),
+		int(member.get("con_mod", 0)),
+		int(member.get("level", LEVEL)),
+	)
+	var pct: float = float(Combatant.sum_feat_value(member, "hp_bonus_pct"))
+	return maxi(1, int(base * (1.0 + pct / 100.0)))
+
 func _calculate_stats(char_data: Dictionary) -> Dictionary:
 	var attrs = char_data.get("attributes", {})
-	var hit_die = char_data.get("hit_die", 8)
 	var clase = char_data.get("class", "")
-	
+	var hit_die = hit_die_for_class(clase, int(char_data.get("hit_die", 8)))
+
 	var str_mod = _get_modifier(attrs.get("fuerza", 10))
 	var dex_mod = _get_modifier(attrs.get("agilidad", 10))
 	var con_mod = _get_modifier(attrs.get("constitucion", 10))
@@ -65,10 +103,7 @@ func _calculate_stats(char_data: Dictionary) -> Dictionary:
 	var int_mod = _get_modifier(attrs.get("inteligencia", 10))
 	var cha_mod = _get_modifier(attrs.get("carisma", 10))
 	
-	var con_bonus = con_mod * LEVEL
-	var max_hp = hit_die + con_bonus
-	if max_hp < 1:
-		max_hp = 1
+	var max_hp = max_hp_for(hit_die, con_mod, LEVEL)
 
 	var max_mp = 10 + maxi(maxi(int_mod, wis_mod), cha_mod) * 2
 	if max_mp < 10:
@@ -134,6 +169,9 @@ func create_party_member(char_data: Dictionary) -> Dictionary:
 		"spd": stats["spd"],
 		"skills": char_data.get("skills", []).duplicate(),
 		"feats": [],
+		# Zone this character deploys into at the start of every battle, set by the player from
+		# the pause menu ("Formación"). Persisted with the rest of the member dict by SaveManager.
+		"start_position": 0,
 		"sprite_path": char_data.get("sprite_path", CharacterSprites.DEFAULT_SHEET_PATH),
 	}
 
@@ -243,6 +281,13 @@ func check_level_ups() -> void:
 				"member_name": member["name"],
 				"level": lvl,
 			})
+
+	# Levelling up raises the HP ceiling and restores everyone completely, HP and MP alike —
+	# done once after the loop, so a multi-level jump still ends at the final level's maximums.
+	for member in party:
+		member["max_hp"] = max_hp_with_feats(member)
+		member["hp"] = member["max_hp"]
+		member["mp"] = member.get("max_mp", 0)
 
 ## Computes, at display time, which feats a pending_level_ups step should offer — always against
 ## the member's CURRENT feats, so a step queued behind an already-resolved one in the same batch

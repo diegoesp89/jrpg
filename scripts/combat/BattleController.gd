@@ -60,7 +60,9 @@ func _setup_party() -> void:
 		var battle_member = member.duplicate(true)
 		battle_member["is_player"] = true
 		battle_member["defending"] = false
-		battle_member["position"] = 0  # adelante, por defecto al empezar cada combate
+		# Deploys into whatever zone the player set in the pause menu, Adelante by default.
+		battle_member["position"] = clampi(int(member.get("start_position", 0)), 0, 2)
+		battle_member["engaged_with"] = ""
 		battle_member["focus"] = 0
 		battle_member["blind_turns"] = 0
 		battle_member["stunned_turns"] = 0
@@ -71,7 +73,9 @@ func _setup_party() -> void:
 		battle_member["grants_advantage"] = false
 		battle_member["marked"] = false
 		if battle_member.get("class", "") == "Hechicera":
-			battle_member["premonition_roll"] = randi_range(1, 20)
+			# "Ojo del Destino" turns the stored premonition into a guaranteed natural 20.
+			battle_member["premonition_roll"] = 20 if Combatant.has_feat_effect(battle_member, "premonition_always_max") \
+				else randi_range(1, 20)
 		if Combatant.has_feat_effect(battle_member, "reroll_miss_charges"):
 			battle_member["lucky_charges"] = Combatant.max_feat_value(battle_member, "reroll_miss_charges", 3)
 		if Combatant.has_feat_effect(battle_member, "stun_on_attack_charges"):
@@ -79,6 +83,14 @@ func _setup_party() -> void:
 		if Combatant.has_feat_effect(battle_member, "immobilize_charges"):
 			battle_member["grappler_charges"] = Combatant.sum_feat_value(battle_member, "immobilize_charges")
 		_party.append(battle_member)
+
+	# "Bendición de Lathander" protects the WHOLE party, not just its owner, so the charge is
+	# handed out here once the full party exists — Combatant.apply_damage spends it per member.
+	for m in _party:
+		if Combatant.has_feat_effect(m, "death_ward_charges"):
+			for other in _party:
+				other["death_ward_charges"] = Combatant.sum_feat_value(m, "death_ward_charges")
+			break
 
 func _setup_enemies() -> void:
 	_enemies.clear()
@@ -102,7 +114,11 @@ func _setup_enemies() -> void:
 			"sprite_path": enemy_data.get("sprite_path", ""),
 			"is_player": false,
 			"defending": false,
-			"position": 0,
+			# Where an enemy stands is dictated by its temperament: brawlers up front, wary ones
+			# hanging back, artillery in the rear. See EnemyAI.starting_position.
+			"ai_profile": enemy_data.get("ai_profile", EnemyAI.DEFAULT_PROFILE),
+			"position": EnemyAI.starting_position(enemy_data.get("ai_profile", EnemyAI.DEFAULT_PROFILE)),
+			"engaged_with": "",
 			"stunned_turns": 0,
 			"poison_turns": 0,
 			"poison_damage": 0,
@@ -155,6 +171,90 @@ func _apply_dot_from_skill(skill: Dictionary, target: Dictionary) -> String:
 			return " (quemada)"
 	return ""
 
+const POSITION_NAMES_LOWER := ["adelante", "medio", "retaguardia"]
+
+## Magic still lands on a Protegido, it just lands for half — say so in the log, otherwise the
+## number looks like a bug to the player.
+func _guard_suffix(attacker: Dictionary, target: Dictionary, defenders: Array) -> String:
+	if Combatant.guard_damage_multiplier(attacker, target, defenders) < 1.0:
+		return " (mitad: atraviesa la guardia)"
+	return ""
+
+## One free melee swing from a combatant whose lock was just broken. It is a real attack roll, so
+## it can miss — walking out of an engagement is risky, not suicide.
+func _opportunity_attack(attacker: Dictionary, target: Dictionary) -> void:
+	if attacker.get("hp", 0) <= 0 or target.get("hp", 0) <= 0:
+		return
+	var result = Combatant.attack_roll(attacker, target) if attacker.get("is_player", false) \
+		else Combatant.enemy_attack(attacker, target)
+	if result.hit:
+		var dmg = Combatant.apply_position_modifiers(result.damage, attacker, target)
+		Combatant.apply_damage(target, dmg)
+		damage_dealt.emit(target, dmg, false)
+		action_performed.emit("Ataque de oportunidad de %s: %d(1d20)+%d = %d vs %d CA -> Golpe! %d de daño a %s!" % [
+			attacker["name"], result.roll, result.bonus, result.total, target.get("ca", 10), dmg, target["name"]])
+	else:
+		action_performed.emit("Ataque de oportunidad de %s: %d(1d20)+%d = %d vs %d CA -> Falla!" % [
+			attacker["name"], result.roll, result.bonus, result.total, target.get("ca", 10)])
+	hp_updated.emit()
+	await get_tree().create_timer(0.6).timeout
+
+## Locks a front-rank combatant onto an opponent. Standing in Adelante unengaged isn't a state
+## the game allows: whoever ends up there is put straight into someone's face.
+func _force_engagement(c: Dictionary) -> void:
+	if c.get("hp", 0) <= 0 or Combatant.engaged_target_id(c) != "":
+		return
+	if int(c.get("position", 0)) != Combatant.POS_FRONT:
+		return
+	var is_player: bool = c.get("is_player", false)
+	var opponents: Array = _enemies if is_player else _party
+	var allies: Array = _party if is_player else _enemies
+	var target = Combatant.auto_engage_candidate(c, opponents, allies)
+	if target.is_empty():
+		return
+	c["engaged_with"] = str(target.get("id", ""))
+	action_performed.emit("%s se pone a melee con %s!" % [c["name"], target["name"]])
+
+## Moves a combatant between zones. Leaving a lock is the expensive part: every opponent engaged
+## with the mover gets one free swing before they go. Arriving at the front rank locks them onto
+## someone straight away.
+func _move_combatant(c: Dictionary, target_position: int, opponents: Array) -> void:
+	if target_position == int(c.get("position", 0)):
+		return
+	var partners := Combatant.engagement_partners(c, opponents)
+	c["position"] = target_position
+	action_performed.emit("%s se mueve a %s!" % [c["name"], POSITION_NAMES_LOWER[target_position]])
+
+	if not partners.is_empty():
+		Combatant.clear_engagements(c, _party + _enemies)
+		# "Paso de Gato": slips out of every lock without giving anyone a free swing.
+		if Combatant.has_feat_effect(c, "no_opportunity_attacks"):
+			action_performed.emit("%s se escurre sin provocar ataques de oportunidad!" % c["name"])
+			partners = []
+		for attacker in partners:
+			if c.get("hp", 0) <= 0:
+				break
+			await _opportunity_attack(attacker, c)
+
+	if c.get("hp", 0) > 0 and target_position == Combatant.POS_FRONT:
+		_force_engagement(c)
+
+## Drops locks onto anyone who has fallen, so nobody stays "engaged" with a corpse — which would
+## otherwise keep giving them disadvantage against every other target.
+func _prune_engagements() -> void:
+	var all: Array = _party + _enemies
+	for c in all:
+		var locked := Combatant.engaged_target_id(c)
+		if locked == "":
+			continue
+		var still_standing := false
+		for other in all:
+			if str(other.get("id", "")) == locked and other.get("hp", 0) > 0:
+				still_standing = true
+				break
+		if not still_standing:
+			c["engaged_with"] = ""
+
 func _process_current_turn() -> void:
 	if not _battle_active:
 		return
@@ -172,6 +272,9 @@ func _process_current_turn() -> void:
 		_start_round()
 		return
 
+	_prune_engagements()
+	_force_engagement(current)
+
 	if current.get("is_player", false):
 		# Player turn - wait for input
 		_waiting_for_player = true
@@ -187,13 +290,18 @@ func _execute_enemy_turn(enemy: Dictionary) -> void:
 	var action = EnemyAI.choose_action(enemy, _party, _enemies)
 
 	match action.get("type", "attack"):
+		"move":
+			await _move_combatant(enemy, int(action.get("target_position", 0)), _party)
+		"pass":
+			# Nothing it can legally reach from where it stands — it holds its ground.
+			action_performed.emit("%s no alcanza a nadie desde su posición." % enemy["name"])
 		"attack":
 			var target = action.get("target", {})
 			if target.is_empty():
 				_next_turn()
 				return
 			
-			var result = Combatant.enemy_attack(enemy, target)
+			var result = Combatant.enemy_attack(enemy, target, _party)
 			
 			if result.hit:
 				var final_dmg = Combatant.apply_position_modifiers(result.damage, enemy, target)
@@ -226,12 +334,15 @@ func _execute_enemy_turn(enemy: Dictionary) -> void:
 
 			var skill_power = skill.get("power", 0)
 			if skill.get("target_type", "") == "all_enemies":
-				# AoE against party
+				# AoE reaches the WHOLE party, back rank included — that is what area damage is
+				# for. The screened ones simply take half.
 				var stat_mod = Combatant.get_caster_stat_mod(enemy)
-				var targets = action.get("targets", [])
 				var hit_log: Array = []
-				for t in targets:
+				for t in _party:
+					if t.get("hp", 0) <= 0:
+						continue
 					var dmg = Combatant.calculate_magical_damage(enemy, t, skill_power)
+					dmg = int(dmg * Combatant.guard_damage_multiplier(enemy, t, _party))
 					dmg = Combatant.apply_position_modifiers(dmg, enemy, t)
 					Combatant.apply_damage(t, dmg)
 					damage_dealt.emit(t, dmg, false)
@@ -249,7 +360,7 @@ func _execute_enemy_turn(enemy: Dictionary) -> void:
 					damage_dealt.emit(target, heal, true)
 					action_performed.emit("%s usa %s en %s: %d(poder)+%d(mod) = %d HP curados!" % [enemy["name"], skill_name, target["name"], skill_power, stat_mod, heal])
 				elif skill.get("effect_type", "") == "physical":
-					var result = Combatant.attack_roll(enemy, target)
+					var result = Combatant.attack_roll(enemy, target, false, 0, _party)
 					if result.hit:
 						var dmg = Combatant.apply_position_modifiers(result.damage + skill_power, enemy, target)
 						Combatant.apply_damage(target, dmg)
@@ -261,10 +372,11 @@ func _execute_enemy_turn(enemy: Dictionary) -> void:
 				else:
 					var stat_mod = Combatant.get_caster_stat_mod(enemy)
 					var dmg = Combatant.calculate_magical_damage(enemy, target, skill_power)
+					dmg = int(dmg * Combatant.guard_damage_multiplier(enemy, target, _party))
 					dmg = Combatant.apply_position_modifiers(dmg, enemy, target)
 					Combatant.apply_damage(target, dmg)
 					damage_dealt.emit(target, dmg, false)
-					var dot_suffix = _apply_dot_from_skill(skill, target)
+					var dot_suffix = _apply_dot_from_skill(skill, target) + _guard_suffix(enemy, target, _party)
 					action_performed.emit("%s usa %s en %s: %d(poder)+%d(mod) = %d de daño!%s" % [enemy["name"], skill_name, target["name"], skill_power, stat_mod, dmg, dot_suffix])
 
 	hp_updated.emit()
@@ -293,14 +405,15 @@ func player_action(action: Dictionary) -> void:
 
 			var use_premonition = action.get("use_premonition", false)
 			var forced_roll = current.get("premonition_roll", 0) if use_premonition else 0
-			var result = Combatant.attack_roll(current, target, false, forced_roll)
+			var result = Combatant.attack_roll(current, target, false, forced_roll, _enemies)
 			if use_premonition and current.get("class", "") == "Hechicera":
-				current["premonition_roll"] = randi_range(1, 20)
+				current["premonition_roll"] = 20 if Combatant.has_feat_effect(current, "premonition_always_max") \
+					else randi_range(1, 20)
 
 			if not result.hit and current.get("lucky_charges", 0) > 0:
 				current["lucky_charges"] -= 1
 				action_performed.emit("%s usa Afortunada para re-tirar el fallo!" % current["name"])
-				result = Combatant.attack_roll(current, target)
+				result = Combatant.attack_roll(current, target, false, 0, _enemies)
 
 			if result.hit:
 				var final_dmg = Combatant.apply_position_modifiers(result.damage, current, target)
@@ -359,6 +472,7 @@ func player_action(action: Dictionary) -> void:
 				for e in _enemies:
 					if e.get("hp", 0) > 0:
 						var dmg = Combatant.calculate_magical_damage(current, e, power)
+						dmg = int(dmg * Combatant.guard_damage_multiplier(current, e, _enemies))
 						dmg = Combatant.apply_position_modifiers(dmg, current, e)
 						Combatant.apply_damage(e, dmg)
 						damage_dealt.emit(e, dmg, false)
@@ -367,7 +481,7 @@ func player_action(action: Dictionary) -> void:
 			else:
 				var target = action.get("target", {})
 				if effect_type == "physical":
-					var result = Combatant.attack_roll(current, target)
+					var result = Combatant.attack_roll(current, target, false, 0, _enemies)
 					if result.hit:
 						var dmg = Combatant.apply_position_modifiers(result.damage + power, current, target)
 						Combatant.apply_damage(target, dmg)
@@ -379,21 +493,25 @@ func player_action(action: Dictionary) -> void:
 				else:
 					var stat_mod = Combatant.get_caster_stat_mod(current)
 					var dmg = Combatant.calculate_magical_damage(current, target, power)
+					dmg = int(dmg * Combatant.guard_damage_multiplier(current, target, _enemies))
 					dmg = Combatant.apply_position_modifiers(dmg, current, target)
 					Combatant.apply_damage(target, dmg)
 					damage_dealt.emit(target, dmg, false)
-					var dot_suffix = _apply_dot_from_skill(skill, target)
+					var dot_suffix = _apply_dot_from_skill(skill, target) + _guard_suffix(current, target, _enemies)
 					action_performed.emit("%s usa %s en %s: %d(poder)+%d(mod) = %d de daño!%s" % [current["name"], skill_name, target["name"], power, stat_mod, dmg, dot_suffix])
 
 		"defend":
 			current["defending"] = true
-			action_performed.emit("%s se defiende!" % current["name"])
+			action_performed.emit("%s se defiende! Los ataques en su contra tiran con desventaja hasta la próxima ronda." % current["name"])
 
 		"move":
 			var target_position: int = action.get("target_position", 0)
-			var position_names = ["adelante", "medio", "retaguardia"]
-			current["position"] = target_position
-			action_performed.emit("%s se mueve a la posición %s!" % [current["name"], position_names[target_position]])
+			await _move_combatant(current, target_position, _enemies)
+			if current.get("hp", 0) <= 0:
+				hp_updated.emit()
+				await get_tree().create_timer(0.5).timeout
+				_next_turn()
+				return
 			if Combatant.has_feat_effect(current, "free_move"):
 				action_performed.emit("%s usa Móvil: cambiar de posición no gasta el turno!" % current["name"])
 				_waiting_for_player = true
@@ -440,7 +558,7 @@ func _apply_alert_feat() -> void:
 		if alive_enemies.is_empty():
 			return
 		var target = alive_enemies[randi_range(0, alive_enemies.size() - 1)]
-		var result = Combatant.attack_roll(p, target)
+		var result = Combatant.attack_roll(p, target, false, 0, _enemies)
 		if result.hit:
 			var final_dmg = Combatant.apply_position_modifiers(result.damage, p, target)
 			Combatant.apply_damage(target, final_dmg)
@@ -454,7 +572,7 @@ func _apply_alert_feat() -> void:
 func _do_reckless(attacker: Dictionary, target: Dictionary) -> void:
 	if target.is_empty():
 		return
-	var result = Combatant.attack_roll(attacker, target, true)
+	var result = Combatant.attack_roll(attacker, target, true, 0, _enemies)
 	if result.hit:
 		var final_dmg = Combatant.apply_position_modifiers(result.damage, attacker, target)
 		Combatant.apply_damage(target, final_dmg)
@@ -474,7 +592,7 @@ func _do_flurry(attacker: Dictionary, target: Dictionary) -> void:
 	for i in range(hits):
 		if target.get("hp", 0) <= 0:
 			break
-		var result = Combatant.attack_roll(attacker, target)
+		var result = Combatant.attack_roll(attacker, target, false, 0, _enemies)
 		if result.hit:
 			var final_dmg = Combatant.apply_position_modifiers(result.damage, attacker, target)
 			Combatant.apply_damage(target, final_dmg)
@@ -488,7 +606,7 @@ func _do_flurry(attacker: Dictionary, target: Dictionary) -> void:
 func _do_recoil(attacker: Dictionary, target: Dictionary) -> void:
 	if target.is_empty():
 		return
-	var result = Combatant.attack_roll(attacker, target)
+	var result = Combatant.attack_roll(attacker, target, false, 0, _enemies)
 	if not result.hit:
 		action_performed.emit("%s (Retroceso): %d(1d20)+%d = %d vs %d CA -> %s" % [attacker["name"], result.roll, result.bonus, result.total, target.get("ca", 10), result.message])
 		return
@@ -521,7 +639,7 @@ func _do_recoil(attacker: Dictionary, target: Dictionary) -> void:
 func _do_shadow(attacker: Dictionary, target: Dictionary) -> void:
 	if target.is_empty():
 		return
-	var result = Combatant.attack_roll(attacker, target, true)
+	var result = Combatant.attack_roll(attacker, target, true, 0, _enemies)
 	if result.hit:
 		var final_dmg = Combatant.apply_position_modifiers(result.damage, attacker, target)
 		Combatant.apply_damage(target, final_dmg)
@@ -586,7 +704,6 @@ func _victory() -> void:
 	var gold = rewards.get("gold", 0)
 	GameState.add_xp(xp)
 	GameState.add_gold(gold)
-	GameState.check_level_ups()
 
 	action_performed.emit("--- Victoria! +%d XP, +%d Oro ---" % [xp, gold])
 	if GameState.current_death_message != "":
@@ -594,8 +711,11 @@ func _victory() -> void:
 
 	_grant_enemy_drops()
 
-	# Sync party HP/MP back to GameState
+	# Sync party HP/MP back to GameState, and only THEN resolve level-ups: levelling fully
+	# restores HP/MP, so it has to run after the battle's end-state is written back, not before,
+	# or the sync would immediately overwrite the restore with the post-fight values.
 	_sync_party_to_gamestate()
+	GameState.check_level_ups()
 
 	# Auto-save at this safe checkpoint. return_position is exactly where exploration will
 	# resume (set by GameState.prepare_combat before the battle started), so no scene-tree

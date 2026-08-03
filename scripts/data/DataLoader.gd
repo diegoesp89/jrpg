@@ -125,6 +125,9 @@ func get_dialogue(dialogue_id: String) -> Dictionary:
 func get_feat(feat_id: String) -> Dictionary:
 	return _feats.get(feat_id, {})
 
+func get_all_feats() -> Array:
+	return _feats.values()
+
 func get_random_riddle() -> Dictionary:
 	if _riddles.is_empty():
 		return {}

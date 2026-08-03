@@ -1,185 +1,199 @@
 {
-	"barbara": {
-		"id": "barbara",
-		"name": "Barbara",
-		"race": "Goliat",
-		"class": "Barbaro",
-		"hit_die": 12,
-		"attributes": {
-			"fuerza": 14,
-			"agilidad": 8,
-			"constitucion": 14,
-			"sabiduria": 10,
-			"inteligencia": 12,
-			"carisma": 8
-		},
-		"skills": [
-			"reckless"
-		],
-		"feat_pool": [
-			"tough",
-			"great_weapon_master",
-			"savage_attacker",
-			"heavily_armored"
-		],
-		"final_feat": "barbara_ultimate",
-		"sprite_path": "res://assets/sprites/characters/barbara.png"
-	},
-	"huguito": {
-		"id": "huguito",
-		"name": "Huguito",
-		"race": "Owlin",
-		"class": "Monje",
-		"hit_die": 8,
-		"attributes": {
-			"fuerza": 12,
-			"agilidad": 14,
-			"constitucion": 10,
-			"sabiduria": 14,
-			"inteligencia": 8,
-			"carisma": 12
-		},
-		"skills": [
-			"flurry"
-		],
-		"feat_pool": [
-			"mobile",
-			"atleta",
-			"dungeon_delver",
-			"martial_adept"
-		],
-		"final_feat": "huguito_ultimate",
-		"sprite_path": "res://assets/sprites/characters/huguito.png"
-	},
-	"rosa": {
-		"id": "rosa",
-		"name": "Rosa",
-		"race": "Tiefling",
-		"class": "Gunslinger",
-		"hit_die": 8,
-		"attributes": {
-			"fuerza": 10,
-			"agilidad": 14,
-			"constitucion": 8,
-			"sabiduria": 12,
-			"inteligencia": 14,
-			"carisma": 12
-		},
-		"skills": [
-			"recoil"
-		],
-		"feat_pool": [
-			"lucky",
-			"actor",
-			"inspiring_leader",
-			"alert"
-		],
-		"final_feat": "rosa_ultimate",
-		"sprite_path": "res://assets/sprites/characters/rosa.png"
-	},
-	"azafran": {
-		"id": "azafran",
-		"name": "Azafran",
-		"race": "Humano",
-		"class": "Warlock",
-		"hit_die": 8,
-		"attributes": {
-			"fuerza": 12,
-			"agilidad": 10,
-			"constitucion": 8,
-			"sabiduria": 14,
-			"inteligencia": 14,
-			"carisma": 12
-		},
-		"skills": [
-			"shadow"
-		],
-		"feat_pool": [
-			"keen_mind",
-			"elemental_adept",
-			"magic_initiate",
-			"mage_slayer"
-		],
-		"final_feat": "azafran_ultimate",
-		"sprite_path": "res://assets/sprites/characters/azafran.png"
-	},
-	"lulu": {
-		"id": "lulu",
-		"name": "Lulu",
-		"race": "Catfolk",
-		"class": "Monje",
-		"hit_die": 8,
-		"attributes": {
-			"fuerza": 10,
-			"agilidad": 14,
-			"constitucion": 8,
-			"sabiduria": 12,
-			"inteligencia": 12,
-			"carisma": 14
-		},
-		"skills": [
-			"flurry"
-		],
-		"feat_pool": [
-			"skulker",
-			"mobile",
-			"dual_wielder",
-			"grappler"
-		],
-		"final_feat": "lulu_ultimate",
-		"sprite_path": "res://assets/sprites/characters/lulu.png"
-	},
-	"daragat": {
-		"id": "daragat",
-		"name": "Daragat",
-		"race": "Grung",
-		"class": "Clerigo",
-		"hit_die": 8,
-		"attributes": {
-			"fuerza": 12,
-			"agilidad": 8,
-			"constitucion": 14,
-			"sabiduria": 14,
-			"inteligencia": 10,
-			"carisma": 12
-		},
-		"skills": [
-			"heal",
-			"call_lathander"
-		],
-		"feat_pool": [
-			"healer",
-			"inspiring_leader",
-			"durable",
-			"magic_initiate"
-		],
-		"final_feat": "daragat_ultimate",
-		"sprite_path": "res://assets/sprites/characters/daragat.png"
-	},
-	"solana": {
-		"id": "solana",
-		"name": "Solana",
-		"race": "Vistani",
-		"class": "Hechicera",
-		"hit_die": 6,
-		"attributes": {
-			"fuerza": 8,
-			"agilidad": 12,
-			"constitucion": 10,
-			"sabiduria": 12,
-			"inteligencia": 10,
-			"carisma": 14
-		},
-		"skills": [
-			"fireball"
-		],
-		"feat_pool": [
-			"alert",
-			"lucky",
-			"durable",
-			"inspiring_leader"
-		],
-		"final_feat": "solana_ultimate",
-		"sprite_path": "res://assets/sprites/characters/solana.png"
-	}
+  "barbara": {
+    "id": "barbara",
+    "name": "Barbara",
+    "race": "Goliat",
+    "class": "Barbaro",
+    "hit_die": 12,
+    "attributes": {
+      "fuerza": 14,
+      "agilidad": 8,
+      "constitucion": 14,
+      "sabiduria": 10,
+      "inteligencia": 12,
+      "carisma": 8
+    },
+    "skills": [
+      "reckless"
+    ],
+    "feat_pool": [
+      "tough",
+      "great_weapon_master",
+      "savage_attacker",
+      "heavily_armored",
+      "durable",
+      "grappler"
+    ],
+    "final_feat": "barbara_ultimate",
+    "sprite_path": "res://assets/sprites/characters/barbara.png"
+  },
+  "huguito": {
+    "id": "huguito",
+    "name": "Huguito",
+    "race": "Owlin",
+    "class": "Monje",
+    "hit_die": 8,
+    "attributes": {
+      "fuerza": 12,
+      "agilidad": 14,
+      "constitucion": 10,
+      "sabiduria": 14,
+      "inteligencia": 8,
+      "carisma": 12
+    },
+    "skills": [
+      "flurry"
+    ],
+    "feat_pool": [
+      "mobile",
+      "atleta",
+      "dungeon_delver",
+      "martial_adept",
+      "alert",
+      "skulker"
+    ],
+    "final_feat": "huguito_ultimate",
+    "sprite_path": "res://assets/sprites/characters/huguito.png"
+  },
+  "rosa": {
+    "id": "rosa",
+    "name": "Rosa",
+    "race": "Tiefling",
+    "class": "Gunslinger",
+    "hit_die": 10,
+    "attributes": {
+      "fuerza": 10,
+      "agilidad": 14,
+      "constitucion": 8,
+      "sabiduria": 12,
+      "inteligencia": 14,
+      "carisma": 12
+    },
+    "skills": [
+      "recoil"
+    ],
+    "feat_pool": [
+      "lucky",
+      "actor",
+      "inspiring_leader",
+      "alert",
+      "mage_slayer",
+      "dos_pistolas"
+    ],
+    "final_feat": "rosa_ultimate",
+    "sprite_path": "res://assets/sprites/characters/rosa.png"
+  },
+  "azafran": {
+    "id": "azafran",
+    "name": "Azafran",
+    "race": "Humano",
+    "class": "Warlock",
+    "hit_die": 8,
+    "attributes": {
+      "fuerza": 12,
+      "agilidad": 10,
+      "constitucion": 8,
+      "sabiduria": 14,
+      "inteligencia": 14,
+      "carisma": 12
+    },
+    "skills": [
+      "shadow"
+    ],
+    "feat_pool": [
+      "keen_mind",
+      "elemental_adept",
+      "magic_initiate",
+      "mage_slayer",
+      "pacto_de_sangre",
+      "durable"
+    ],
+    "final_feat": "azafran_ultimate",
+    "sprite_path": "res://assets/sprites/characters/azafran.png"
+  },
+  "lulu": {
+    "id": "lulu",
+    "name": "Lulu",
+    "race": "Catfolk",
+    "class": "Monje",
+    "hit_die": 8,
+    "attributes": {
+      "fuerza": 10,
+      "agilidad": 14,
+      "constitucion": 8,
+      "sabiduria": 12,
+      "inteligencia": 12,
+      "carisma": 14
+    },
+    "skills": [
+      "flurry"
+    ],
+    "feat_pool": [
+      "skulker",
+      "mobile",
+      "dual_wielder",
+      "grappler",
+      "atleta",
+      "savage_attacker"
+    ],
+    "final_feat": "lulu_ultimate",
+    "sprite_path": "res://assets/sprites/characters/lulu.png"
+  },
+  "daragat": {
+    "id": "daragat",
+    "name": "Daragat",
+    "race": "Grung",
+    "class": "Clerigo",
+    "hit_die": 8,
+    "attributes": {
+      "fuerza": 12,
+      "agilidad": 8,
+      "constitucion": 14,
+      "sabiduria": 14,
+      "inteligencia": 10,
+      "carisma": 12
+    },
+    "skills": [
+      "heal",
+      "call_lathander"
+    ],
+    "feat_pool": [
+      "healer",
+      "inspiring_leader",
+      "durable",
+      "magic_initiate",
+      "heavily_armored",
+      "tough"
+    ],
+    "final_feat": "daragat_ultimate",
+    "sprite_path": "res://assets/sprites/characters/daragat.png"
+  },
+  "solana": {
+    "id": "solana",
+    "name": "Solana",
+    "race": "Vistani",
+    "class": "Hechicera",
+    "hit_die": 6,
+    "attributes": {
+      "fuerza": 8,
+      "agilidad": 12,
+      "constitucion": 10,
+      "sabiduria": 12,
+      "inteligencia": 10,
+      "carisma": 14
+    },
+    "skills": [
+      "fireball"
+    ],
+    "feat_pool": [
+      "alert",
+      "lucky",
+      "durable",
+      "inspiring_leader",
+      "elemental_adept",
+      "magic_initiate"
+    ],
+    "final_feat": "solana_ultimate",
+    "sprite_path": "res://assets/sprites/characters/solana.png"
+  }
 }

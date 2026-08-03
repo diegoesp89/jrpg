@@ -3,9 +3,12 @@ class_name StatusMenu
 ## StatusMenu — Exploration pause menu. Opens with Escape or Enter: party status,
 ## abilities usable out of combat (e.g. Heal), items, and quit game.
 
-enum MenuState { MAIN, STATUS, MESSAGE, ABILITIES, ABILITY_TARGET, ITEMS, ITEM_TARGET, QUIT_CONFIRM }
+## Preloaded by path, not via its class_name — see the note in DungeonBuilder.gd.
+const HelpPanelScene = preload("res://scripts/ui/HelpPanel.gd")
 
-const MAIN_OPTIONS := ["Estado", "Habilidades", "Objetos", "Guardar partida", "Opciones", "Salir del juego"]
+enum MenuState { MAIN, STATUS, MESSAGE, ABILITIES, ABILITY_TARGET, ITEMS, ITEM_TARGET, FORMATION, QUIT_CONFIRM }
+
+const MAIN_OPTIONS := ["Estado", "Habilidades", "Objetos", "Formación", "Guardar partida", "Ayuda", "Opciones", "Salir del juego"]
 
 var _is_open: bool = false
 var _menu_state: MenuState = MenuState.MAIN
@@ -22,6 +25,7 @@ var _target_options: Array = []
 var _pending_ability: Dictionary = {}
 var _pending_item: Dictionary = {}
 var _options_panel: OptionsPanel
+var _help_panel: HelpPanelScene
 
 func _ready() -> void:
 	layer = 60
@@ -71,8 +75,12 @@ func _build_ui() -> void:
 	add_child(_options_panel)
 	_options_panel.closed.connect(_show_main)
 
+	_help_panel = HelpPanelScene.new()
+	add_child(_help_panel)
+	_help_panel.closed.connect(_show_main)
+
 func _unhandled_input(event: InputEvent) -> void:
-	if _options_panel.is_open():
+	if _options_panel.is_open() or _help_panel.is_open():
 		return
 	if not _is_open:
 		if (event.is_action_pressed("ui_cancel") or event.is_action_pressed("ui_accept")) and _can_open():
@@ -93,6 +101,8 @@ func _unhandled_input(event: InputEvent) -> void:
 			_handle_selectable_input(event, _item_options.size(), "_select_item")
 		MenuState.ITEM_TARGET:
 			_handle_selectable_input(event, _target_options.size(), "_select_item_target")
+		MenuState.FORMATION:
+			_handle_selectable_input(event, GameState.party.size(), "_cycle_formation")
 		MenuState.QUIT_CONFIRM:
 			_handle_selectable_input(event, 2, "_select_quit_option")
 	get_viewport().set_input_as_handled()
@@ -178,9 +188,42 @@ func _select_main_option(idx: int) -> void:
 		0: _show_status()
 		1: _show_abilities()
 		2: _show_items()
-		3: _save_game()
-		4: _options_panel.open()
-		5: _show_quit_confirm()
+		3: _show_formation()
+		4: _save_game()
+		5: _help_panel.open()
+		6: _options_panel.open()
+		7: _show_quit_confirm()
+
+# --- Formación (zona en la que cada personaje entra a combate) ---
+
+## The zone each character deploys into when a battle starts. Chosen out of combat because it's
+## a plan, not a turn action: once the fight is on, changing zones costs an action and provokes.
+func _show_formation() -> void:
+	_menu_state = MenuState.FORMATION
+	_title.text = "Formación de combate"
+	_clear_content()
+	for m in GameState.party:
+		var zone := clampi(int(m.get("start_position", 0)), 0, BattleUI.POSITION_NAMES.size() - 1)
+		var warning := ""
+		# A melee class parked in the back rank can't reach anything at all — worth flagging here
+		# rather than letting the player discover it mid-fight.
+		if zone == Combatant.POS_BACK and Combatant.is_melee_class(str(m.get("class", ""))):
+			warning = "  (no alcanza a nadie desde atrás)"
+		_add_row("%s — %s%s" % [m["name"], BattleUI.POSITION_NAMES[zone], warning], 24)
+	_add_row("Z cambia la zona del personaje marcado.", 16)
+	_selected_index = 0
+	_update_highlight()
+	_root.visible = true
+
+func _cycle_formation(idx: int) -> void:
+	if idx >= GameState.party.size():
+		return
+	var m = GameState.party[idx]
+	m["start_position"] = (int(m.get("start_position", 0)) + 1) % BattleUI.POSITION_NAMES.size()
+	var keep := idx
+	_show_formation()
+	_selected_index = keep
+	_update_highlight()
 
 # --- Guardar partida ---
 
@@ -294,7 +337,7 @@ func _select_item_target(idx: int) -> void:
 		var heal_amount = item_data.get("power", 30)
 		GameState.heal_party_member(target["id"], heal_amount)
 		GameState.remove_item(_pending_item["id"])
-		_show_message("Usás %s en %s: cura %d HP!" % [_pending_item["name"], target["name"], heal_amount])
+		_show_message("Usas %s en %s: cura %d HP!" % [_pending_item["name"], target["name"], heal_amount])
 	else:
 		_show_message("%s no tiene efecto fuera de combate." % _pending_item["name"])
 

@@ -1,698 +1,730 @@
 {
-	"air_elemental": {
-		"attack_bonus": 6.0,
-		"attributes": {
-			"agilidad": 20.0,
-			"carisma": 10.0,
-			"constitucion": 14.0,
-			"fuerza": 14.0,
-			"inteligencia": 6.0,
-			"sabiduria": 10.0
-		},
-		"ca": 15.0,
-		"damage": "2d6+2",
-		"gold_reward": 0.0,
-		"hit_die": 10.0,
-		"hp": 32.0,
-		"id": "air_elemental",
-		"name": "Elemental de Aire",
-		"skills": [
-			"whirlwind_gust"
-		],
-		"xp_reward": 26.0,
-		"sprite_path": "res://assets/sprites/enemies/air_elemental.png"
+  "air_elemental": {
+	"attack_bonus": 6.0,
+	"attributes": {
+	  "agilidad": 20.0,
+	  "carisma": 10.0,
+	  "constitucion": 14.0,
+	  "fuerza": 14.0,
+	  "inteligencia": 6.0,
+	  "sabiduria": 10.0
 	},
-	"black_pudding": {
-		"attack_bonus": 5.0,
-		"attributes": {
-			"agilidad": 6.0,
-			"carisma": 1.0,
-			"constitucion": 16.0,
-			"fuerza": 16.0,
-			"inteligencia": 1.0,
-			"sabiduria": 6.0
-		},
-		"ca": 12.0,
-		"damage": "2d6",
-		"gold_reward": 12.0,
-		"hit_die": 10.0,
-		"hp": 34.0,
-		"id": "black_pudding",
-		"name": "Pudin Negro",
-		"skills": [
-			"corrosive_touch"
-		],
-		"xp_reward": 24.0,
-		"sprite_path": "res://assets/sprites/enemies/black_pudding.png"
+	"ca": 15.0,
+	"damage": "2d6+2",
+	"gold_reward": 0.0,
+	"hit_die": 10.0,
+	"hp": 32.0,
+	"id": "air_elemental",
+	"name": "Elemental de Aire",
+	"skills": [
+      "whirlwind_gust"
+	],
+	"sprite_path": "res://assets/sprites/enemies/air_elemental.png",
+	"xp_reward": 26.0,
+	"ai_profile": "cautious"
+  },
+  "black_pudding": {
+	"attack_bonus": 5.0,
+	"attributes": {
+	  "agilidad": 6.0,
+	  "carisma": 1.0,
+	  "constitucion": 16.0,
+	  "fuerza": 16.0,
+	  "inteligencia": 1.0,
+	  "sabiduria": 6.0
 	},
-	"bugbear": {
-		"attack_bonus": 4.0,
-		"attributes": {
-			"agilidad": 12.0,
-			"carisma": 9.0,
-			"constitucion": 13.0,
-			"fuerza": 15.0,
-			"inteligencia": 7.0,
-			"sabiduria": 9.0
-		},
-		"ca": 14.0,
-		"damage": "1d8",
-		"gold_reward": 6.0,
-		"hit_die": 8.0,
-		"hp": 16.0,
-		"id": "bugbear",
-		"name": "Bugbear",
-		"skills": [],
-		"xp_reward": 10.0,
-		"sprite_path": "res://assets/sprites/enemies/bugbear.png"
+	"ca": 12.0,
+	"damage": "2d6",
+	"gold_reward": 12.0,
+	"hit_die": 10.0,
+	"hp": 34.0,
+	"id": "black_pudding",
+	"name": "Pudin Negro",
+	"skills": [
+      "corrosive_touch"
+	],
+	"sprite_path": "res://assets/sprites/enemies/black_pudding.png",
+	"xp_reward": 24.0,
+	"ai_profile": "aggressive"
+  },
+  "bugbear": {
+	"attack_bonus": 4.0,
+	"attributes": {
+	  "agilidad": 12.0,
+	  "carisma": 9.0,
+	  "constitucion": 13.0,
+	  "fuerza": 15.0,
+	  "inteligencia": 7.0,
+	  "sabiduria": 9.0
 	},
-	"burket_veteran": {
-		"attack_bonus": 6.0,
-		"attributes": {
-			"agilidad": 13.0,
-			"carisma": 10.0,
-			"constitucion": 14.0,
-			"fuerza": 16.0,
-			"inteligencia": 10.0,
-			"sabiduria": 11.0
-		},
-		"ca": 17.0,
-		"damage": "1d10+3",
-		"gold_reward": 20.0,
-		"hit_die": 10.0,
-		"hp": 38.0,
-		"id": "burket_veteran",
-		"name": "Burket, Veterano",
-		"skills": [],
-		"xp_reward": 32.0,
-		"sprite_path": "res://assets/sprites/enemies/burket_veteran.png"
+	"ca": 14.0,
+	"damage": "1d8",
+	"gold_reward": 6.0,
+	"hit_die": 8.0,
+	"hp": 16.0,
+	"id": "bugbear",
+	"name": "Bugbear",
+	"skills": [],
+	"sprite_path": "res://assets/sprites/enemies/bugbear.png",
+	"xp_reward": 10.0,
+	"ai_profile": "aggressive"
+  },
+  "burket_veteran": {
+	"attack_bonus": 6.0,
+	"attributes": {
+	  "agilidad": 13.0,
+	  "carisma": 10.0,
+	  "constitucion": 14.0,
+	  "fuerza": 16.0,
+	  "inteligencia": 10.0,
+	  "sabiduria": 11.0
 	},
-	"ctenmiir_vampire": {
-		"attack_bonus": 9.0,
-		"attributes": {
-			"agilidad": 18.0,
-			"carisma": 18.0,
-			"constitucion": 17.0,
-			"fuerza": 18.0,
-			"inteligencia": 16.0,
-			"sabiduria": 15.0
-		},
-		"ca": 18.0,
-		"damage": "2d8+6",
-		"gold_reward": 60.0,
-		"hit_die": 12.0,
-		"hp": 95.0,
-		"id": "ctenmiir_vampire",
-		"name": "Ctenmiir, el Vampiro",
-		"skills": [
-			"life_drain",
-			"hypnotic_gaze"
-		],
-		"xp_reward": 90.0,
-		"sprite_path": "res://assets/sprites/enemies/ctenmiir_vampire.png"
+	"ca": 17.0,
+	"damage": "1d10+3",
+	"gold_reward": 20.0,
+	"hit_die": 10.0,
+	"hp": 38.0,
+	"id": "burket_veteran",
+	"name": "Burket, Veterano",
+	"skills": [],
+	"sprite_path": "res://assets/sprites/enemies/burket_veteran.png",
+	"xp_reward": 32.0,
+	"ai_profile": "aggressive"
+  },
+  "ctenmiir_vampire": {
+	"attack_bonus": 9.0,
+	"attributes": {
+	  "agilidad": 18.0,
+	  "carisma": 18.0,
+	  "constitucion": 17.0,
+	  "fuerza": 18.0,
+	  "inteligencia": 16.0,
+	  "sabiduria": 15.0
 	},
-	"efreet_nix": {
-		"attack_bonus": 9.0,
-		"attributes": {
-			"agilidad": 12.0,
-			"carisma": 16.0,
-			"constitucion": 19.0,
-			"fuerza": 22.0,
-			"inteligencia": 14.0,
-			"sabiduria": 14.0
-		},
-		"ca": 18.0,
-		"damage": "2d10+5",
-		"gold_reward": 80.0,
-		"hit_die": 12.0,
-		"hp": 110.0,
-		"id": "efreet_nix",
-		"name": "Nix, el Efreet",
-		"skills": [
-			"fireball",
-			"fire_breath"
-		],
-		"xp_reward": 100.0,
-		"sprite_path": "res://assets/sprites/enemies/efreet_nix.png"
+	"ca": 18.0,
+	"damage": "2d8+6",
+	"gold_reward": 60.0,
+	"hit_die": 12.0,
+	"hp": 95.0,
+	"id": "ctenmiir_vampire",
+	"name": "Ctenmiir, el Vampiro",
+	"skills": [
+	  "life_drain",
+      "hypnotic_gaze"
+	],
+	"sprite_path": "res://assets/sprites/enemies/ctenmiir_vampire.png",
+	"xp_reward": 90.0,
+	"ai_profile": "aggressive"
+  },
+  "efreet_nix": {
+	"attack_bonus": 9.0,
+	"attributes": {
+	  "agilidad": 12.0,
+	  "carisma": 16.0,
+	  "constitucion": 19.0,
+	  "fuerza": 22.0,
+	  "inteligencia": 14.0,
+	  "sabiduria": 14.0
 	},
-	"efreet_nox": {
-		"attack_bonus": 9.0,
-		"attributes": {
-			"agilidad": 12.0,
-			"carisma": 16.0,
-			"constitucion": 19.0,
-			"fuerza": 22.0,
-			"inteligencia": 14.0,
-			"sabiduria": 14.0
-		},
-		"ca": 18.0,
-		"damage": "2d10+5",
-		"gold_reward": 80.0,
-		"hit_die": 12.0,
-		"hp": 110.0,
-		"id": "efreet_nox",
-		"name": "Nox, el Efreet",
-		"skills": [
-			"fire_breath",
-			"fireball"
-		],
-		"xp_reward": 100.0,
-		"sprite_path": "res://assets/sprites/enemies/efreet_nox.png"
+	"ca": 18.0,
+	"damage": "2d10+5",
+	"gold_reward": 80.0,
+	"hit_die": 12.0,
+	"hp": 110.0,
+	"id": "efreet_nix",
+	"name": "Nix, el Efreet",
+	"skills": [
+	  "fireball",
+      "fire_breath"
+	],
+	"sprite_path": "res://assets/sprites/enemies/efreet_nix.png",
+	"xp_reward": 100.0,
+	"ai_profile": "ranged"
+  },
+  "efreet_nox": {
+	"attack_bonus": 9.0,
+	"attributes": {
+	  "agilidad": 12.0,
+	  "carisma": 16.0,
+	  "constitucion": 19.0,
+	  "fuerza": 22.0,
+	  "inteligencia": 14.0,
+	  "sabiduria": 14.0
 	},
-	"flame_guardian": {
-		"attack_bonus": 6.0,
-		"attributes": {
-			"agilidad": 12.0,
-			"carisma": 10.0,
-			"constitucion": 16.0,
-			"fuerza": 16.0,
-			"inteligencia": 10.0,
-			"sabiduria": 10.0
-		},
-		"ca": 15.0,
-		"damage": "2d6+3",
-		"gold_reward": 50.0,
-		"hit_die": 10.0,
-		"hp": 60.0,
-		"id": "flame_guardian",
-		"name": "Guardian de Llamas",
-		"skills": [
-			"fire_breath",
-			"smash"
-		],
-		"xp_reward": 80.0,
-		"sprite_path": "res://assets/sprites/enemies/flame_guardian.png"
+	"ca": 18.0,
+	"damage": "2d10+5",
+	"gold_reward": 80.0,
+	"hit_die": 12.0,
+	"hp": 110.0,
+	"id": "efreet_nox",
+	"name": "Nox, el Efreet",
+	"skills": [
+	  "fire_breath",
+      "fireball"
+	],
+	"sprite_path": "res://assets/sprites/enemies/efreet_nox.png",
+	"xp_reward": 100.0,
+	"ai_profile": "ranged"
+  },
+  "flame_guardian": {
+	"attack_bonus": 6.0,
+	"attributes": {
+	  "agilidad": 12.0,
+	  "carisma": 10.0,
+	  "constitucion": 16.0,
+	  "fuerza": 16.0,
+	  "inteligencia": 10.0,
+	  "sabiduria": 10.0
 	},
-	"flesh_golem": {
-		"attack_bonus": 6.0,
-		"attributes": {
-			"agilidad": 9.0,
-			"carisma": 4.0,
-			"constitucion": 16.0,
-			"fuerza": 17.0,
-			"inteligencia": 3.0,
-			"sabiduria": 8.0
-		},
-		"ca": 15.0,
-		"damage": "2d8+3",
-		"gold_reward": 10.0,
-		"hit_die": 10.0,
-		"hp": 36.0,
-		"id": "flesh_golem",
-		"name": "Golem de Carne",
-		"skills": [
-			"smash"
-		],
-		"xp_reward": 28.0,
-		"sprite_path": "res://assets/sprites/enemies/flesh_golem.png"
+	"ca": 15.0,
+	"damage": "2d6+3",
+	"gold_reward": 50.0,
+	"hit_die": 10.0,
+	"hp": 60.0,
+	"id": "flame_guardian",
+	"name": "Guardian de Llamas",
+	"skills": [
+	  "fire_breath",
+      "smash"
+	],
+	"sprite_path": "res://assets/sprites/enemies/flame_guardian.png",
+	"xp_reward": 80.0,
+	"ai_profile": "aggressive"
+  },
+  "flesh_golem": {
+	"attack_bonus": 6.0,
+	"attributes": {
+	  "agilidad": 9.0,
+	  "carisma": 4.0,
+	  "constitucion": 16.0,
+	  "fuerza": 17.0,
+	  "inteligencia": 3.0,
+	  "sabiduria": 8.0
 	},
-	"gargoyle": {
-		"attack_bonus": 5.0,
-		"attributes": {
-			"agilidad": 11.0,
-			"carisma": 7.0,
-			"constitucion": 16.0,
-			"fuerza": 15.0,
-			"inteligencia": 6.0,
-			"sabiduria": 11.0
-		},
-		"ca": 16.0,
-		"damage": "1d8+2",
-		"gold_reward": 8.0,
-		"hit_die": 8.0,
-		"hp": 25.0,
-		"id": "gargoyle",
-		"name": "Gargola",
-		"skills": [],
-		"xp_reward": 20.0,
-		"sprite_path": "res://assets/sprites/enemies/gargoyle.png"
+	"ca": 15.0,
+	"damage": "2d8+3",
+	"gold_reward": 10.0,
+	"hit_die": 10.0,
+	"hp": 36.0,
+	"id": "flesh_golem",
+	"name": "Golem de Carne",
+	"skills": [
+      "smash"
+	],
+	"sprite_path": "res://assets/sprites/enemies/flesh_golem.png",
+	"xp_reward": 28.0,
+	"ai_profile": "aggressive"
+  },
+  "gargoyle": {
+	"attack_bonus": 5.0,
+	"attributes": {
+	  "agilidad": 11.0,
+	  "carisma": 7.0,
+	  "constitucion": 16.0,
+	  "fuerza": 15.0,
+	  "inteligencia": 6.0,
+	  "sabiduria": 11.0
 	},
-	"ghoul": {
-		"attack_bonus": 4.0,
-		"attributes": {
-			"agilidad": 15.0,
-			"carisma": 6.0,
-			"constitucion": 12.0,
-			"fuerza": 13.0,
-			"inteligencia": 7.0,
-			"sabiduria": 10.0
-		},
-		"ca": 14.0,
-		"damage": "1d8",
-		"gold_reward": 6.0,
-		"hit_die": 8.0,
-		"hp": 22.0,
-		"id": "ghoul",
-		"name": "Necrofago",
-		"skills": [
-			"paralyzing_claw"
-		],
-		"xp_reward": 16.0,
-		"sprite_path": "res://assets/sprites/enemies/ghoul.png"
+	"ca": 16.0,
+	"damage": "1d8+2",
+	"gold_reward": 8.0,
+	"hit_die": 8.0,
+	"hp": 25.0,
+	"id": "gargoyle",
+	"name": "Gargola",
+	"skills": [],
+	"sprite_path": "res://assets/sprites/enemies/gargoyle.png",
+	"xp_reward": 20.0,
+	"ai_profile": "aggressive"
+  },
+  "ghoul": {
+	"attack_bonus": 2,
+	"attributes": {
+	  "agilidad": 10,
+	  "carisma": 10,
+	  "constitucion": 10,
+	  "fuerza": 10,
+	  "inteligencia": 10,
+	  "sabiduria": 10
 	},
-	"giant_crab_improved": {
-		"attack_bonus": 7.0,
-		"attributes": {
-			"agilidad": 10.0,
-			"carisma": 4.0,
-			"constitucion": 17.0,
-			"fuerza": 18.0,
-			"inteligencia": 1.0,
-			"sabiduria": 9.0
-		},
-		"ca": 17.0,
-		"damage": "2d8+3",
-		"gold_reward": 15.0,
-		"hit_die": 10.0,
-		"hp": 48.0,
-		"id": "giant_crab_improved",
-		"name": "Cangrejo Gigante Mejorado",
-		"skills": [],
-		"xp_reward": 40.0,
-		"sprite_path": "res://assets/sprites/enemies/giant_crab_improved.png"
+	"ca": 12,
+	"damage": "1d8",
+	"gold_reward": 0,
+	"hit_die": 0,
+	"hp": 22,
+	"id": "ghoul",
+	"item_drops": [],
+	"name": "Necrofago",
+	"skills": [
+      "paralyzing_claw"
+	],
+	"sprite_path": "res://assets/sprites/enemies/ghoul.png",
+	"xp_reward": 0,
+	"ai_profile": "aggressive"
+  },
+  "giant_crab_improved": {
+	"attack_bonus": 7.0,
+	"attributes": {
+	  "agilidad": 10.0,
+	  "carisma": 4.0,
+	  "constitucion": 17.0,
+	  "fuerza": 18.0,
+	  "inteligencia": 1.0,
+	  "sabiduria": 9.0
 	},
-	"giant_crayfish": {
-		"attack_bonus": 3.0,
-		"attributes": {
-			"agilidad": 10.0,
-			"carisma": 3.0,
-			"constitucion": 14.0,
-			"fuerza": 14.0,
-			"inteligencia": 1.0,
-			"sabiduria": 10.0
-		},
-		"ca": 15.0,
-		"damage": "1d8",
-		"gold_reward": 4.0,
-		"hit_die": 8.0,
-		"hp": 15.0,
-		"id": "giant_crayfish",
-		"name": "Langostino Gigante",
-		"skills": [],
-		"xp_reward": 10.0,
-		"sprite_path": "res://assets/sprites/enemies/giant_crayfish.png"
+	"ca": 17.0,
+	"damage": "2d8+3",
+	"gold_reward": 15.0,
+	"hit_die": 10.0,
+	"hp": 48.0,
+	"id": "giant_crab_improved",
+	"name": "Cangrejo Gigante Mejorado",
+	"skills": [],
+	"sprite_path": "res://assets/sprites/enemies/giant_crab_improved.png",
+	"xp_reward": 40.0,
+	"ai_profile": "aggressive"
+  },
+  "giant_crayfish": {
+	"attack_bonus": 3.0,
+	"attributes": {
+	  "agilidad": 10.0,
+	  "carisma": 3.0,
+	  "constitucion": 14.0,
+	  "fuerza": 14.0,
+	  "inteligencia": 1.0,
+	  "sabiduria": 10.0
 	},
-	"giant_scorpion": {
-		"attack_bonus": 4.0,
-		"attributes": {
-			"agilidad": 13.0,
-			"carisma": 3.0,
-			"constitucion": 15.0,
-			"fuerza": 15.0,
-			"inteligencia": 1.0,
-			"sabiduria": 9.0
-		},
-		"ca": 15.0,
-		"damage": "1d8+2",
-		"gold_reward": 5.0,
-		"hit_die": 8.0,
-		"hp": 18.0,
-		"id": "giant_scorpion",
-		"name": "Escorpion Gigante",
-		"skills": [
-			"paralyzing_claw"
-		],
-		"xp_reward": 14.0,
-		"sprite_path": "res://assets/sprites/enemies/giant_scorpion.png"
+	"ca": 15.0,
+	"damage": "1d8",
+	"gold_reward": 4.0,
+	"hit_die": 8.0,
+	"hp": 15.0,
+	"id": "giant_crayfish",
+	"name": "Langostino Gigante",
+	"skills": [],
+	"sprite_path": "res://assets/sprites/enemies/giant_crayfish.png",
+	"xp_reward": 10.0,
+	"ai_profile": "cautious"
+  },
+  "giant_scorpion": {
+	"attack_bonus": 4.0,
+	"attributes": {
+	  "agilidad": 13.0,
+	  "carisma": 3.0,
+	  "constitucion": 15.0,
+	  "fuerza": 15.0,
+	  "inteligencia": 1.0,
+	  "sabiduria": 9.0
 	},
-	"goblin": {
-		"attack_bonus": 4.0,
-		"attributes": {
-			"agilidad": 14.0,
-			"carisma": 8.0,
-			"constitucion": 10.0,
-			"fuerza": 8.0,
-			"inteligencia": 10.0,
-			"sabiduria": 8.0
-		},
-		"ca": 15.0,
-		"damage": "1d6",
-		"gold_reward": 5.0,
-		"hit_die": 6.0,
-		"hp": 7.0,
-		"id": "goblin",
-		"name": "Goblin",
-		"skills": [],
-		"xp_reward": 10.0,
-		"sprite_path": "res://assets/sprites/enemies/goblin.png"
+	"ca": 15.0,
+	"damage": "1d8+2",
+	"gold_reward": 5.0,
+	"hit_die": 8.0,
+	"hp": 18.0,
+	"id": "giant_scorpion",
+	"name": "Escorpion Gigante",
+	"skills": [
+      "paralyzing_claw"
+	],
+	"sprite_path": "res://assets/sprites/enemies/giant_scorpion.png",
+	"xp_reward": 14.0,
+	"ai_profile": "aggressive"
+  },
+  "goblin": {
+	"attack_bonus": 4.0,
+	"attributes": {
+	  "agilidad": 14.0,
+	  "carisma": 8.0,
+	  "constitucion": 10.0,
+	  "fuerza": 8.0,
+	  "inteligencia": 10.0,
+	  "sabiduria": 8.0
 	},
-	"golem": {
-		"attack_bonus": 7.0,
-		"attributes": {
-			"agilidad": 6.0,
-			"carisma": 4.0,
-			"constitucion": 18.0,
-			"fuerza": 18.0,
-			"inteligencia": 6.0,
-			"sabiduria": 6.0
-		},
-		"ca": 17.0,
-		"damage": "2d8+4",
-		"gold_reward": 20.0,
-		"hit_die": 10.0,
-		"hp": 33.0,
-		"id": "golem",
-		"name": "Golem de Piedra",
-		"skills": [
-			"smash"
-		],
-		"xp_reward": 30.0,
-		"sprite_path": "res://assets/sprites/enemies/golem.png"
+	"ca": 15.0,
+	"damage": "1d6",
+	"gold_reward": 5.0,
+	"hit_die": 6.0,
+	"hp": 7.0,
+	"id": "goblin",
+	"name": "Goblin",
+	"skills": [],
+	"sprite_path": "res://assets/sprites/enemies/goblin.png",
+	"xp_reward": 10.0,
+	"ai_profile": "cautious"
+  },
+  "golem": {
+	"attack_bonus": 7.0,
+	"attributes": {
+	  "agilidad": 6.0,
+	  "carisma": 4.0,
+	  "constitucion": 18.0,
+	  "fuerza": 18.0,
+	  "inteligencia": 6.0,
+	  "sabiduria": 6.0
 	},
-	"gray_ooze": {
-		"attack_bonus": 3.0,
-		"attributes": {
-			"agilidad": 6.0,
-			"carisma": 1.0,
-			"constitucion": 14.0,
-			"fuerza": 12.0,
-			"inteligencia": 1.0,
-			"sabiduria": 6.0
-		},
-		"ca": 11.0,
-		"damage": "1d6",
-		"gold_reward": 3.0,
-		"hit_die": 6.0,
-		"hp": 14.0,
-		"id": "gray_ooze",
-		"name": "Cieno Gris",
-		"skills": [
-			"corrosive_touch"
-		],
-		"xp_reward": 10.0,
-		"sprite_path": "res://assets/sprites/enemies/gray_ooze.png"
+	"ca": 17.0,
+	"damage": "2d8+4",
+	"gold_reward": 20.0,
+	"hit_die": 10.0,
+	"hp": 33.0,
+	"id": "golem",
+	"name": "Golem de Piedra",
+	"skills": [
+      "smash"
+	],
+	"sprite_path": "res://assets/sprites/enemies/golem.png",
+	"xp_reward": 30.0,
+	"ai_profile": "aggressive"
+  },
+  "gray_ooze": {
+	"attack_bonus": 3.0,
+	"attributes": {
+	  "agilidad": 6.0,
+	  "carisma": 1.0,
+	  "constitucion": 14.0,
+	  "fuerza": 12.0,
+	  "inteligencia": 1.0,
+	  "sabiduria": 6.0
 	},
-	"green_slime": {
-		"attack_bonus": 2.0,
-		"attributes": {
-			"agilidad": 6.0,
-			"carisma": 1.0,
-			"constitucion": 12.0,
-			"fuerza": 8.0,
-			"inteligencia": 1.0,
-			"sabiduria": 4.0
-		},
-		"ca": 10.0,
-		"damage": "1d4",
-		"gold_reward": 2.0,
-		"hit_die": 4.0,
-		"hp": 8.0,
-		"id": "green_slime",
-		"name": "Limo Verde",
-		"skills": [
-			"corrosive_touch"
-		],
-		"xp_reward": 8.0,
-		"sprite_path": "res://assets/sprites/enemies/green_slime.png"
+	"ca": 11.0,
+	"damage": "1d6",
+	"gold_reward": 3.0,
+	"hit_die": 6.0,
+	"hp": 14.0,
+	"id": "gray_ooze",
+	"name": "Cieno Gris",
+	"skills": [
+      "corrosive_touch"
+	],
+	"sprite_path": "res://assets/sprites/enemies/gray_ooze.png",
+	"xp_reward": 10.0,
+	"ai_profile": "cautious"
+  },
+  "green_slime": {
+	"attack_bonus": 2.0,
+	"attributes": {
+	  "agilidad": 6.0,
+	  "carisma": 1.0,
+	  "constitucion": 12.0,
+	  "fuerza": 8.0,
+	  "inteligencia": 1.0,
+	  "sabiduria": 4.0
 	},
-	"guardiana_enigma": {
-		"attack_bonus": 5.0,
-		"attributes": {
-			"agilidad": 12.0,
-			"carisma": 14.0,
-			"constitucion": 14.0,
-			"fuerza": 14.0,
-			"inteligencia": 16.0,
-			"sabiduria": 16.0
-		},
-		"ca": 16.0,
-		"damage": "2d6+2",
-		"gold_reward": 25.0,
-		"hit_die": 10.0,
-		"hp": 40.0,
-		"id": "guardiana_enigma",
-		"name": "Guardiana Enigma",
-		"skills": [
-			"fireball"
-		],
-		"xp_reward": 40.0,
-		"sprite_path": "res://assets/sprites/enemies/guardiana_enigma.png"
+	"ca": 10.0,
+	"damage": "1d4",
+	"gold_reward": 2.0,
+	"hit_die": 4.0,
+	"hp": 8.0,
+	"id": "green_slime",
+	"name": "Limo Verde",
+	"skills": [
+      "corrosive_touch"
+	],
+	"sprite_path": "res://assets/sprites/enemies/green_slime.png",
+	"xp_reward": 8.0,
+	"ai_profile": "cautious"
+  },
+  "guardiana_enigma": {
+	"attack_bonus": 5.0,
+	"attributes": {
+	  "agilidad": 12.0,
+	  "carisma": 14.0,
+	  "constitucion": 14.0,
+	  "fuerza": 14.0,
+	  "inteligencia": 16.0,
+	  "sabiduria": 16.0
 	},
-	"human_knight": {
-		"attack_bonus": 5.0,
-		"attributes": {
-			"agilidad": 11.0,
-			"carisma": 11.0,
-			"constitucion": 13.0,
-			"fuerza": 15.0,
-			"inteligencia": 9.0,
-			"sabiduria": 11.0
-		},
-		"ca": 16.0,
-		"damage": "1d8+2",
-		"gold_reward": 10.0,
-		"hit_die": 8.0,
-		"hp": 27.0,
-		"id": "human_knight",
-		"name": "Caballero Humano",
-		"skills": [],
-		"xp_reward": 18.0,
-		"sprite_path": "res://assets/sprites/enemies/human_knight.png"
+	"ca": 16.0,
+	"damage": "2d6+2",
+	"gold_reward": 25.0,
+	"hit_die": 10.0,
+	"hp": 40.0,
+	"id": "guardiana_enigma",
+	"name": "Guardiana Enigma",
+	"skills": [
+      "fireball"
+	],
+	"sprite_path": "res://assets/sprites/enemies/guardiana_enigma.png",
+	"xp_reward": 40.0,
+	"ai_profile": "ranged"
+  },
+  "human_knight": {
+	"attack_bonus": 5.0,
+	"attributes": {
+	  "agilidad": 11.0,
+	  "carisma": 11.0,
+	  "constitucion": 13.0,
+	  "fuerza": 15.0,
+	  "inteligencia": 9.0,
+	  "sabiduria": 11.0
 	},
-	"invisible_stalker": {
-		"attack_bonus": 6.0,
-		"attributes": {
-			"agilidad": 19.0,
-			"carisma": 11.0,
-			"constitucion": 14.0,
-			"fuerza": 16.0,
-			"inteligencia": 10.0,
-			"sabiduria": 16.0
-		},
-		"ca": 16.0,
-		"damage": "1d10+2",
-		"gold_reward": 10.0,
-		"hit_die": 8.0,
-		"hp": 24.0,
-		"id": "invisible_stalker",
-		"name": "Acechador Invisible",
-		"skills": [],
-		"xp_reward": 24.0,
-		"sprite_path": "res://assets/sprites/enemies/invisible_stalker.png"
+	"ca": 16.0,
+	"damage": "1d8+2",
+	"gold_reward": 10.0,
+	"hit_die": 8.0,
+	"hp": 27.0,
+	"id": "human_knight",
+	"name": "Caballero Humano",
+	"skills": [],
+	"sprite_path": "res://assets/sprites/enemies/human_knight.png",
+	"xp_reward": 18.0,
+	"ai_profile": "aggressive"
+  },
+  "invisible_stalker": {
+	"attack_bonus": 6.0,
+	"attributes": {
+	  "agilidad": 19.0,
+	  "carisma": 11.0,
+	  "constitucion": 14.0,
+	  "fuerza": 16.0,
+	  "inteligencia": 10.0,
+	  "sabiduria": 16.0
 	},
-	"kelpie": {
-		"attack_bonus": 4.0,
-		"attributes": {
-			"agilidad": 13.0,
-			"carisma": 18.0,
-			"constitucion": 15.0,
-			"fuerza": 16.0,
-			"inteligencia": 7.0,
-			"sabiduria": 15.0
-		},
-		"ca": 14.0,
-		"damage": "1d8",
-		"gold_reward": 10.0,
-		"hit_die": 10.0,
-		"hp": 28.0,
-		"id": "kelpie",
-		"name": "Kelpie",
-		"skills": [
-			"hypnotic_gaze"
-		],
-		"xp_reward": 22.0,
-		"sprite_path": "res://assets/sprites/enemies/kelpie.png"
+	"ca": 16.0,
+	"damage": "1d10+2",
+	"gold_reward": 10.0,
+	"hit_die": 8.0,
+	"hp": 24.0,
+	"id": "invisible_stalker",
+	"name": "Acechador Invisible",
+	"skills": [],
+	"sprite_path": "res://assets/sprites/enemies/invisible_stalker.png",
+	"xp_reward": 24.0,
+	"ai_profile": "cautious"
+  },
+  "kelpie": {
+	"attack_bonus": 4.0,
+	"attributes": {
+	  "agilidad": 13.0,
+	  "carisma": 18.0,
+	  "constitucion": 15.0,
+	  "fuerza": 16.0,
+	  "inteligencia": 7.0,
+	  "sabiduria": 15.0
 	},
-	"manticore_flightless": {
-		"attack_bonus": 5.0,
-		"attributes": {
-			"agilidad": 12.0,
-			"carisma": 10.0,
-			"constitucion": 15.0,
-			"fuerza": 16.0,
-			"inteligencia": 5.0,
-			"sabiduria": 10.0
-		},
-		"ca": 15.0,
-		"damage": "1d8+3",
-		"gold_reward": 12.0,
-		"hit_die": 10.0,
-		"hp": 30.0,
-		"id": "manticore_flightless",
-		"name": "Manticora sin Alas",
-		"skills": [
-			"spike_volley"
-		],
-		"xp_reward": 24.0,
-		"sprite_path": "res://assets/sprites/enemies/manticore_flightless.png"
+	"ca": 14.0,
+	"damage": "1d8",
+	"gold_reward": 10.0,
+	"hit_die": 10.0,
+	"hp": 28.0,
+	"id": "kelpie",
+	"name": "Kelpie",
+	"skills": [
+      "hypnotic_gaze"
+	],
+	"sprite_path": "res://assets/sprites/enemies/kelpie.png",
+	"xp_reward": 22.0,
+	"ai_profile": "cautious"
+  },
+  "manticore_flightless": {
+	"attack_bonus": 5.0,
+	"attributes": {
+	  "agilidad": 12.0,
+	  "carisma": 10.0,
+	  "constitucion": 15.0,
+	  "fuerza": 16.0,
+	  "inteligencia": 5.0,
+	  "sabiduria": 10.0
 	},
-	"ogre": {
-		"attack_bonus": 5.0,
-		"attributes": {
-			"agilidad": 8.0,
-			"carisma": 7.0,
-			"constitucion": 16.0,
-			"fuerza": 19.0,
-			"inteligencia": 5.0,
-			"sabiduria": 7.0
-		},
-		"ca": 12.0,
-		"damage": "2d6+3",
-		"gold_reward": 12.0,
-		"hit_die": 10.0,
-		"hp": 26.0,
-		"id": "ogre",
-		"name": "Ogro",
-		"skills": [],
-		"xp_reward": 20.0,
-		"sprite_path": "res://assets/sprites/enemies/ogre.png"
+	"ca": 15.0,
+	"damage": "1d8+3",
+	"gold_reward": 12.0,
+	"hit_die": 10.0,
+	"hp": 30.0,
+	"id": "manticore_flightless",
+	"name": "Manticora sin Alas",
+	"skills": [
+      "spike_volley"
+	],
+	"sprite_path": "res://assets/sprites/enemies/manticore_flightless.png",
+	"xp_reward": 24.0,
+	"ai_profile": "ranged"
+  },
+  "ogre": {
+	"attack_bonus": 5.0,
+	"attributes": {
+	  "agilidad": 8.0,
+	  "carisma": 7.0,
+	  "constitucion": 16.0,
+	  "fuerza": 19.0,
+	  "inteligencia": 5.0,
+	  "sabiduria": 7.0
 	},
-	"qesnef_oni": {
-		"attack_bonus": 7.0,
-		"attributes": {
-			"agilidad": 11.0,
-			"carisma": 15.0,
-			"constitucion": 16.0,
-			"fuerza": 19.0,
-			"inteligencia": 14.0,
-			"sabiduria": 12.0
-		},
-		"ca": 17.0,
-		"damage": "2d8+4",
-		"gold_reward": 35.0,
-		"hit_die": 10.0,
-		"hp": 70.0,
-		"id": "qesnef_oni",
-		"name": "Qesnef, el Oni",
-		"skills": [
-			"shifting_strike",
-			"fireball"
-		],
-		"xp_reward": 65.0,
-		"sprite_path": "res://assets/sprites/enemies/qesnef_oni.png"
+	"ca": 12.0,
+	"damage": "2d6+3",
+	"gold_reward": 12.0,
+	"hit_die": 10.0,
+	"hp": 26.0,
+	"id": "ogre",
+	"name": "Ogro",
+	"skills": [],
+	"sprite_path": "res://assets/sprites/enemies/ogre.png",
+	"xp_reward": 20.0,
+	"ai_profile": "aggressive"
+  },
+  "qesnef_oni": {
+	"attack_bonus": 7.0,
+	"attributes": {
+	  "agilidad": 11.0,
+	  "carisma": 15.0,
+	  "constitucion": 16.0,
+	  "fuerza": 19.0,
+	  "inteligencia": 14.0,
+	  "sabiduria": 12.0
 	},
-	"sea_lion": {
-		"attack_bonus": 3.0,
-		"attributes": {
-			"agilidad": 12.0,
-			"carisma": 6.0,
-			"constitucion": 12.0,
-			"fuerza": 12.0,
-			"inteligencia": 3.0,
-			"sabiduria": 10.0
-		},
-		"ca": 12.0,
-		"damage": "1d6",
-		"gold_reward": 2.0,
-		"hit_die": 6.0,
-		"hp": 11.0,
-		"id": "sea_lion",
-		"name": "Leon Marino",
-		"skills": [],
-		"xp_reward": 8.0,
-		"sprite_path": "res://assets/sprites/enemies/sea_lion.png"
+	"ca": 17.0,
+	"damage": "2d8+4",
+	"gold_reward": 35.0,
+	"hit_die": 10.0,
+	"hp": 70.0,
+	"id": "qesnef_oni",
+	"name": "Qesnef, el Oni",
+	"skills": [
+	  "shifting_strike",
+      "fireball"
+	],
+	"sprite_path": "res://assets/sprites/enemies/qesnef_oni.png",
+	"xp_reward": 65.0,
+	"ai_profile": "aggressive"
+  },
+  "sea_lion": {
+	"attack_bonus": 3.0,
+	"attributes": {
+	  "agilidad": 12.0,
+	  "carisma": 6.0,
+	  "constitucion": 12.0,
+	  "fuerza": 12.0,
+	  "inteligencia": 3.0,
+	  "sabiduria": 10.0
 	},
-	"shadow": {
-		"attack_bonus": 3.0,
-		"attributes": {
-			"agilidad": 14.0,
-			"carisma": 8.0,
-			"constitucion": 12.0,
-			"fuerza": 6.0,
-			"inteligencia": 6.0,
-			"sabiduria": 10.0
-		},
-		"ca": 14.0,
-		"damage": "1d6",
-		"gold_reward": 0.0,
-		"hit_die": 6.0,
-		"hp": 10.0,
-		"id": "shadow",
-		"name": "Sombra Errante",
-		"skills": [
-			"life_drain"
-		],
-		"xp_reward": 12.0,
-		"sprite_path": "res://assets/sprites/enemies/shadow.png"
+	"ca": 12.0,
+	"damage": "1d6",
+	"gold_reward": 2.0,
+	"hit_die": 6.0,
+	"hp": 11.0,
+	"id": "sea_lion",
+	"name": "Leon Marino",
+	"skills": [],
+	"sprite_path": "res://assets/sprites/enemies/sea_lion.png",
+	"xp_reward": 8.0,
+	"ai_profile": "cautious"
+  },
+  "shadow": {
+	"attack_bonus": 3.0,
+	"attributes": {
+	  "agilidad": 14.0,
+	  "carisma": 8.0,
+	  "constitucion": 12.0,
+	  "fuerza": 6.0,
+	  "inteligencia": 6.0,
+	  "sabiduria": 10.0
 	},
-	"sir_bluto": {
-		"attack_bonus": 8.0,
-		"attributes": {
-			"agilidad": 12.0,
-			"carisma": 15.0,
-			"constitucion": 16.0,
-			"fuerza": 18.0,
-			"inteligencia": 11.0,
-			"sabiduria": 11.0
-		},
-		"ca": 18.0,
-		"damage": "2d8+5",
-		"gold_reward": 40.0,
-		"hit_die": 12.0,
-		"hp": 65.0,
-		"id": "sir_bluto",
-		"name": "Sir Bluto Sans Pite",
-		"skills": [
-			"champion_strike"
-		],
-		"xp_reward": 60.0,
-		"sprite_path": "res://assets/sprites/enemies/sir_bluto.png"
+	"ca": 14.0,
+	"damage": "1d6",
+	"gold_reward": 0.0,
+	"hit_die": 6.0,
+	"hp": 10.0,
+	"id": "shadow",
+	"name": "Sombra Errante",
+	"skills": [
+      "life_drain"
+	],
+	"sprite_path": "res://assets/sprites/enemies/shadow.png",
+	"xp_reward": 12.0,
+	"ai_profile": "cautious"
+  },
+  "sir_bluto": {
+	"attack_bonus": 8.0,
+	"attributes": {
+	  "agilidad": 12.0,
+	  "carisma": 15.0,
+	  "constitucion": 16.0,
+	  "fuerza": 18.0,
+	  "inteligencia": 11.0,
+	  "sabiduria": 11.0
 	},
-	"skeleton": {
-		"attack_bonus": 2.0,
-		"attributes": {
-			"agilidad": 10.0,
-			"carisma": 8.0,
-			"constitucion": 10.0,
-			"fuerza": 10.0,
-			"inteligencia": 8.0,
-			"sabiduria": 8.0
-		},
-		"ca": 13.0,
-		"damage": "1d6",
-		"gold_reward": 10.0,
-		"hit_die": 8.0,
-		"hp": 13.0,
-		"id": "skeleton",
-		"name": "Esqueleto",
-		"skills": [],
-		"xp_reward": 15.0,
-		"sprite_path": "res://assets/sprites/enemies/skeleton.png"
+	"ca": 18.0,
+	"damage": "2d8+5",
+	"gold_reward": 40.0,
+	"hit_die": 12.0,
+	"hp": 65.0,
+	"id": "sir_bluto",
+	"name": "Sir Bluto Sans Pite",
+	"skills": [
+      "champion_strike"
+	],
+	"sprite_path": "res://assets/sprites/enemies/sir_bluto.png",
+	"xp_reward": 60.0,
+	"ai_profile": "aggressive"
+  },
+  "skeleton": {
+	"attack_bonus": 2.0,
+	"attributes": {
+	  "agilidad": 10.0,
+	  "carisma": 8.0,
+	  "constitucion": 10.0,
+	  "fuerza": 10.0,
+	  "inteligencia": 8.0,
+	  "sabiduria": 8.0
 	},
-	"snarla_werewolf": {
-		"attack_bonus": 6.0,
-		"attributes": {
-			"agilidad": 15.0,
-			"carisma": 13.0,
-			"constitucion": 15.0,
-			"fuerza": 15.0,
-			"inteligencia": 17.0,
-			"sabiduria": 10.0
-		},
-		"ca": 15.0,
-		"damage": "2d4+3",
-		"gold_reward": 25.0,
-		"hit_die": 10.0,
-		"hp": 42.0,
-		"id": "snarla_werewolf",
-		"name": "Snarla, Loba Hechicera",
-		"skills": [
-			"moonlight_curse"
-		],
-		"xp_reward": 36.0,
-		"sprite_path": "res://assets/sprites/enemies/snarla_werewolf.png"
+	"ca": 13.0,
+	"damage": "1d6",
+	"gold_reward": 10.0,
+	"hit_die": 8.0,
+	"hp": 13.0,
+	"id": "skeleton",
+	"name": "Esqueleto",
+	"skills": [],
+	"sprite_path": "res://assets/sprites/enemies/skeleton.png",
+	"xp_reward": 15.0,
+	"ai_profile": "aggressive"
+  },
+  "snarla_werewolf": {
+	"attack_bonus": 6.0,
+	"attributes": {
+	  "agilidad": 15.0,
+	  "carisma": 13.0,
+	  "constitucion": 15.0,
+	  "fuerza": 15.0,
+	  "inteligencia": 17.0,
+	  "sabiduria": 10.0
 	},
-	"wight": {
-		"attack_bonus": 4.0,
-		"attributes": {
-			"agilidad": 12.0,
-			"carisma": 12.0,
-			"constitucion": 14.0,
-			"fuerza": 14.0,
-			"inteligencia": 10.0,
-			"sabiduria": 12.0
-		},
-		"ca": 14.0,
-		"damage": "1d8",
-		"gold_reward": 8.0,
-		"hit_die": 8.0,
-		"hp": 20.0,
-		"id": "wight",
-		"name": "Wight",
-		"skills": [
-			"life_drain"
-		],
-		"xp_reward": 18.0,
-		"sprite_path": "res://assets/sprites/enemies/wight.png"
-	}
+	"ca": 15.0,
+	"damage": "2d4+3",
+	"gold_reward": 25.0,
+	"hit_die": 10.0,
+	"hp": 42.0,
+	"id": "snarla_werewolf",
+	"name": "Snarla, Loba Hechicera",
+	"skills": [
+      "moonlight_curse"
+	],
+	"sprite_path": "res://assets/sprites/enemies/snarla_werewolf.png",
+	"xp_reward": 36.0,
+	"ai_profile": "ranged"
+  },
+  "wight": {
+	"attack_bonus": 4.0,
+	"attributes": {
+	  "agilidad": 12.0,
+	  "carisma": 12.0,
+	  "constitucion": 14.0,
+	  "fuerza": 14.0,
+	  "inteligencia": 10.0,
+	  "sabiduria": 12.0
+	},
+	"ca": 14.0,
+	"damage": "1d8",
+	"gold_reward": 8.0,
+	"hit_die": 8.0,
+	"hp": 20.0,
+	"id": "wight",
+	"name": "Wight",
+	"skills": [
+      "life_drain"
+	],
+	"sprite_path": "res://assets/sprites/enemies/wight.png",
+	"xp_reward": 18.0,
+	"ai_profile": "aggressive"
+  }
 }

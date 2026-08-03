@@ -514,7 +514,7 @@ func _show_no_selection() -> void:
 	for child in _props_container.get_children():
 		child.queue_free()
 	var lbl = Label.new()
-	lbl.text = "Elegí una herramienta y hacé click en la grilla."
+	lbl.text = "Elige una herramienta y haz click en la grilla."
 	lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	lbl.add_theme_color_override("font_color", Color(0.6, 0.6, 0.6))
 	_props_container.add_child(lbl)
@@ -883,6 +883,9 @@ func _open_enemy_editor(enemy_id: String) -> void:
 	_add_enemy_field("hit_die", "Dado de golpe", str(enemy.get("hit_die", 8)))
 	_add_enemy_field("attack_bonus", "Bono de ataque", str(enemy.get("attack_bonus", 0)))
 	_add_enemy_field("damage", "Daño (dado, ej: 1d6+2)", str(enemy.get("damage", "1d6")))
+	_add_enemy_option_field("ai_profile", "Temperamento (dónde pelea)",
+		["aggressive", "cautious", "ranged"],
+		str(enemy.get("ai_profile", EnemyAI.DEFAULT_PROFILE)))
 	var attrs: Dictionary = enemy.get("attributes", {})
 	for attr_key in ["fuerza", "agilidad", "constitucion", "sabiduria", "inteligencia", "carisma"]:
 		_add_enemy_field("attr_%s" % attr_key, attr_key.capitalize(), str(attrs.get(attr_key, 10)))
@@ -904,6 +907,24 @@ func _add_enemy_field(key: String, label_text: String, default_value: String) ->
 	edit.text = default_value
 	_enemy_editor_fields_container.add_child(edit)
 	_enemy_editor_fields[key] = edit
+
+## Same contract as _add_enemy_field, but a fixed set of choices instead of free text. Read back
+## through OptionButton.text (the selected item's label), so _on_enemy_editor_save needs no
+## special case for it.
+func _add_enemy_option_field(key: String, label_text: String, options: Array, current_value: String) -> void:
+	var lbl = Label.new()
+	lbl.text = label_text
+	lbl.add_theme_font_size_override("font_size", 13)
+	_enemy_editor_fields_container.add_child(lbl)
+	var opt = OptionButton.new()
+	for i in range(options.size()):
+		opt.add_item(str(options[i]))
+		if str(options[i]) == current_value:
+			opt.select(i)
+	if opt.selected < 0:
+		opt.select(0)
+	_enemy_editor_fields_container.add_child(opt)
+	_enemy_editor_fields[key] = opt
 
 func _on_enemy_editor_save() -> void:
 	if _enemy_editor_current_id == "":
@@ -1235,7 +1256,7 @@ func _on_resize_pressed() -> void:
 func _do_resize(text: String) -> void:
 	var parts = text.strip_edges().to_lower().replace(" ", "").split("x")
 	if parts.size() != 2 or not parts[0].is_valid_int() or not parts[1].is_valid_int():
-		_set_status("Formato inválido, usá ColumnasxFilas (ej: 30x25)")
+		_set_status("Formato inválido, usa ColumnasxFilas (ej: 30x25)")
 		return
 	_resize_map(int(parts[0]), int(parts[1]))
 

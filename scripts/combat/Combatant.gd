@@ -2,8 +2,6 @@ class_name Combatant
 extends Node
 ## Combatant — Utility class for combat calculations with D&D-style system.
 
-const LEVEL: int = 1
-
 # --- Feat helpers ---
 ## A combatant can now own several feats at once (chargen pick + one gained per level-up, see
 ## GameState.check_level_ups). These read member["feats"]: Array[String] live, every time —
@@ -141,18 +139,32 @@ static func _max_roll_dice(dice_str: String) -> int:
 			total += part.to_int()
 	return total
 
+## Average of a dice string like "2d6+3", for the AI to reason about kill potential without
+## actually rolling. 1d6 -> 3.5, 2d8+2 -> 11.0.
+static func average_damage(dice_str: String) -> float:
+	var total := 0.0
+	for part in dice_str.split("+"):
+		part = part.strip_edges()
+		if part.find("d") != -1:
+			var dice_parts = part.split("d")
+			var num_dice := 1
+			if dice_parts[0].is_valid_int():
+				num_dice = dice_parts[0].to_int()
+			total += num_dice * (dice_parts[1].to_int() + 1) / 2.0
+		elif part.is_valid_int():
+			total += float(part.to_int())
+	return total
+
 static func get_attack_modifier(attacker: Dictionary) -> int:
 	var clase = attacker.get("class", "")
 	var attrs = attacker.get("attributes", {})
 	var str_val = attrs.get("fuerza", 10)
 	var dex_val = attrs.get("agilidad", 10)
 	
-	var base = LEVEL
-	
 	if clase == "Monje" or clase == "Gunslinger":
-		return base + _get_modifier(dex_val)
+		return _get_modifier(dex_val)
 	else:
-		return base + _get_modifier(str_val)
+		return _get_modifier(str_val)
 
 static func get_damage_dice(attacker: Dictionary) -> String:
 	var clase = attacker.get("class", "")
@@ -176,21 +188,34 @@ static func get_damage_dice(attacker: Dictionary) -> String:
 ## Rolls 1d20 applying advantage/disadvantage from status effects (blind, Reckless' granted
 ## advantage) plus an optional explicit force_advantage (e.g. Barbara's own Reckless attack,
 ## Azafran's Shadow). forced_roll (if > 0) bypasses rolling entirely (Solana's Premonition).
-static func _roll_attack_d20(attacker: Dictionary, defender: Dictionary, force_advantage: bool, forced_roll: int) -> int:
+static func _roll_attack_d20(attacker: Dictionary, defender: Dictionary, force_advantage: bool, forced_roll: int, defenders: Array = []) -> int:
 	if forced_roll > 0:
 		return forced_roll
 	var advantage = force_advantage or defender.get("blind_turns", 0) > 0 or defender.get("grants_advantage", false)
+	# Defend action: everything aimed at a defending combatant rolls at disadvantage, until the
+	# flag is cleared at the start of the next round (BattleController._start_round).
+	# Engagement: swinging at anyone but the opponent you're locked onto exposes you.
 	# Skulker feat: natural evasion forces attackers targeting you to roll with disadvantage.
-	var disadvantage = attacker.get("blind_turns", 0) > 0 or has_feat_effect(defender, "attacker_disadvantage")
+	# Guard toll: shooting past a standing screen. `defenders` is empty for rolls that never
+	# picked a target through the menu (opportunity attacks), which are melee by definition and
+	# so can never be tolled anyway.
+	var disadvantage = attacker.get("blind_turns", 0) > 0 \
+		or defender.get("defending", false) \
+		or breaks_engagement_focus(attacker, defender) \
+		or (not defenders.is_empty() and is_protected(defender, defenders) and not ignores_guard(attacker)) \
+		or has_feat_effect(defender, "attacker_disadvantage")
+	# "Puntería Legendaria": a pulse that never wavers — disadvantage simply doesn't apply.
+	if disadvantage and has_feat_effect(attacker, "ignore_disadvantage"):
+		disadvantage = false
 	if advantage and not disadvantage:
 		return maxi(randi_range(1, 20), randi_range(1, 20))
 	elif disadvantage and not advantage:
 		return mini(randi_range(1, 20), randi_range(1, 20))
 	return randi_range(1, 20)
 
-static func attack_roll(attacker: Dictionary, defender: Dictionary, force_advantage: bool = false, forced_roll: int = 0) -> Dictionary:
+static func attack_roll(attacker: Dictionary, defender: Dictionary, force_advantage: bool = false, forced_roll: int = 0, defenders: Array = []) -> Dictionary:
 	var attack_bonus = get_attack_modifier(attacker)
-	var roll = _roll_attack_d20(attacker, defender, force_advantage, forced_roll)
+	var roll = _roll_attack_d20(attacker, defender, force_advantage, forced_roll, defenders)
 	var total_attack = roll + attack_bonus
 	
 	var defender_ca = defender.get("ca", 10)
@@ -257,9 +282,9 @@ static func attack_roll(attacker: Dictionary, defender: Dictionary, force_advant
 
 	return result
 
-static func enemy_attack(enemy: Dictionary, defender: Dictionary) -> Dictionary:
+static func enemy_attack(enemy: Dictionary, defender: Dictionary, defenders: Array = []) -> Dictionary:
 	var enemy_attack_bonus = enemy.get("attack_bonus", 0)
-	var roll = _roll_attack_d20(enemy, defender, false, 0)
+	var roll = _roll_attack_d20(enemy, defender, false, 0, defenders)
 	var total_attack = roll + enemy_attack_bonus
 	
 	var defender_ca = defender.get("ca", 10)
@@ -312,12 +337,21 @@ static func apply_damage(target: Dictionary, damage: int) -> void:
 	var reduction = sum_feat_value(target, "damage_reduction_flat")
 	if reduction > 0:
 		reduced = maxi(1, damage - reduction)
-	target["hp"] = maxi(0, target.get("hp", 0) - reduced)
+	var new_hp = maxi(0, target.get("hp", 0) - reduced)
+	# "Bendición de Lathander": granted to the whole party in _setup_party when Daragat has the
+	# feat, spent here the first time a blow would put someone down.
+	if new_hp <= 0 and int(target.get("death_ward_charges", 0)) > 0:
+		target["death_ward_charges"] = int(target["death_ward_charges"]) - 1
+		new_hp = 1
+	target["hp"] = new_hp
 
 static func apply_heal(target: Dictionary, heal: int) -> void:
 	target["hp"] = mini(target.get("max_hp", target.get("hp", 0)), target.get("hp", 0) + heal)
 
 static func use_mp(caster: Dictionary, amount: int) -> bool:
+	# "Pacto Definitivo": the patron picks up the tab, every skill is free.
+	if has_feat_effect(caster, "free_skills"):
+		return true
 	if caster.get("mp", 0) >= amount:
 		caster["mp"] = caster["mp"] - amount
 		return true
@@ -333,16 +367,12 @@ const MELEE_CLASSES: Array[String] = ["Barbaro", "Monje"]
 static func is_melee_class(class_name_str: String) -> bool:
 	return class_name_str in MELEE_CLASSES
 
-## Adelante: sin cambios. Medio: da y recibe la mitad de daño. Retaguardia: sin cambio de daño
-## (solo restringe qué acciones puede hacer el propio combatiente, ver is_melee_class).
-## También aplica pasivas siempre-activas que afectan daño: Rage de Barbara (doble daño dado
-## Y doble daño recibido) y la marca de "Mystra Wanted" de Rosa (+25% daño recibido).
+## Position itself no longer scales damage — what a zone controls is who you can reach and who
+## can reach you (see can_target / engagement below). This only applies the always-on passives
+## that do scale damage: Barbara's Rage (double dealt AND double taken) and Rosa's "Mystra
+## Wanted" mark (+25% taken).
 static func apply_position_modifiers(damage: int, attacker: Dictionary, defender: Dictionary) -> int:
 	var result: float = float(damage)
-	if attacker.get("position", 0) == 1:
-		result *= 0.5
-	if defender.get("position", 0) == 1:
-		result *= 0.5
 	if attacker.get("class", "") == "Barbaro":
 		result *= 2.0
 	if defender.get("class", "") == "Barbaro":
@@ -351,6 +381,135 @@ static func apply_position_modifiers(damage: int, attacker: Dictionary, defender
 		result *= 1.25
 	result += attacker.get("damage_bonus_flat", 0)  # Great Weapon Master / Dual Wielder feats
 	return maxi(1, int(round(result)))
+
+# --- Engagement ("estar a melee", in the player-facing text) ---
+## A combatant locks onto exactly ONE opponent — member["engaged_with"] holds that opponent's id,
+## "" when free — but any number of opponents can be locked onto the same target, so four heroes
+## can all pile onto one ogre. That asymmetry is the whole point: the front rank is where you
+## tie enemies up, and breaking a lock costs you an opportunity attack (see BattleController).
+
+const POS_FRONT := 0
+const POS_MID := 1
+const POS_BACK := 2
+
+static func engaged_target_id(c: Dictionary) -> String:
+	return str(c.get("engaged_with", ""))
+
+static func is_engaged_with(a: Dictionary, b: Dictionary) -> bool:
+	return engaged_target_id(a) == str(b.get("id", "")) or engaged_target_id(b) == str(a.get("id", ""))
+
+## Is anyone in `pool` locked onto `c`, or `c` onto someone? Used for "is this one tied up".
+static func is_engaged(c: Dictionary, pool: Array) -> bool:
+	return not engagement_partners(c, pool).is_empty()
+
+## Everyone still standing in `pool` involved in a lock with `c` — both the opponent `c` holds
+## and every opponent holding onto `c`. Exactly the set that gets an opportunity attack when `c`
+## walks away.
+static func engagement_partners(c: Dictionary, pool: Array) -> Array:
+	var out: Array = []
+	var my_target := engaged_target_id(c)
+	var my_id := str(c.get("id", ""))
+	for other in pool:
+		if other.get("hp", 0) <= 0:
+			continue
+		if (my_target != "" and str(other.get("id", "")) == my_target) or engaged_target_id(other) == my_id:
+			out.append(other)
+	return out
+
+## Breaks every lock involving `c`, in both directions. Called when it changes zone or dies, so
+## nothing is ever left engaged with someone who is no longer there to fight.
+static func clear_engagements(c: Dictionary, all_combatants: Array) -> void:
+	c["engaged_with"] = ""
+	var my_id := str(c.get("id", ""))
+	for other in all_combatants:
+		if engaged_target_id(other) == my_id:
+			other["engaged_with"] = ""
+
+## Who a front-rank combatant with no lock should be forced onto: the opposing front-ranker with
+## the fewest attackers on them already, so a pile-up spreads out instead of dogpiling one enemy.
+## Empty when the opposing front rank has nobody left standing.
+static func auto_engage_candidate(c: Dictionary, opponents: Array, allies: Array = []) -> Dictionary:
+	var best: Dictionary = {}
+	var best_load := 999
+	for o in opponents:
+		if o.get("hp", 0) <= 0 or int(o.get("position", 0)) != POS_FRONT:
+			continue
+		var load := 0
+		for a in allies:
+			if a.get("hp", 0) > 0 and engaged_target_id(a) == str(o.get("id", "")):
+				load += 1
+		if load < best_load:
+			best_load = load
+			best = o
+	return best
+
+# --- Targeting legality ---
+
+## True once nobody on this side is left standing ahead of the back rank.
+static func back_rank_exposed(defenders: Array) -> bool:
+	for d in defenders:
+		if d.get("hp", 0) > 0 and int(d.get("position", 0)) < POS_BACK:
+			return false
+	return true
+
+# --- Guard toll ---
+## "Protegido": standing in Retaguardia while at least one ally still holds Adelante or Medio.
+## Reaching past that screen is possible but it costs — a roll made at disadvantage, or half
+## damage for magic, which lands automatically and would otherwise pay nothing at all. Only ONE
+## threshold exists in the whole system: Adelante and Medio are never tolled.
+static func is_protected(defender: Dictionary, defenders: Array) -> bool:
+	return int(defender.get("position", 0)) == POS_BACK and not back_rank_exposed(defenders)
+
+## "Vuelo del Búho" flies over the screen: full reach, and no toll of either kind.
+static func ignores_guard(attacker: Dictionary) -> bool:
+	return has_feat_effect(attacker, "ignore_back_rank")
+
+## Half damage against a Protegido, for the magic that never has to roll. Physical attacks pay
+## in accuracy instead (see _roll_attack_d20), so they must NOT go through here.
+static func guard_damage_multiplier(attacker: Dictionary, defender: Dictionary, defenders: Array) -> float:
+	if is_protected(defender, defenders) and not ignores_guard(attacker):
+		return 0.5
+	return 1.0
+
+## Whether this combatant fights hand to hand, for both sides of the field. Heroes go by class;
+## enemies have no class at all, so they go by temperament — an `aggressive` brawler is melee,
+## while `cautious` skirmishers and `ranged` artillery are not. Without this, every one of the 31
+## enemies would count as ranged and could reach past your screen, which would make the whole
+## starting-formation decision pointless.
+static func is_melee_combatant(c: Dictionary) -> bool:
+	var clase := str(c.get("class", ""))
+	if clase != "":
+		return is_melee_class(clase)
+	return str(c.get("ai_profile", "aggressive")) == "aggressive"
+
+## Can `attacker` legally aim at `defender`? Reach is now almost unrestricted — the toll replaced
+## the old hard gate — so all that remains is the melee limitation: a hand-to-hand fighter has no
+## way to reach past a standing screen, and none at all from the back rank themselves. That
+## exception is what keeps clearing the enemy front line worth doing, on both sides.
+static func can_target(attacker: Dictionary, defender: Dictionary, defenders: Array) -> bool:
+	if defender.get("hp", 0) <= 0:
+		return false
+	if not is_melee_combatant(attacker):
+		return true
+	if ignores_guard(attacker):
+		return true
+	if int(attacker.get("position", 0)) == POS_BACK:
+		return false
+	return not is_protected(defender, defenders)
+
+## Every legal target for `attacker` out of `defenders`.
+static func legal_targets(attacker: Dictionary, defenders: Array) -> Array:
+	var out: Array = []
+	for d in defenders:
+		if can_target(attacker, d, defenders):
+			out.append(d)
+	return out
+
+## Swinging at anyone other than the opponent you're locked onto means turning your back on them
+## — that's the disadvantage applied in _roll_attack_d20.
+static func breaks_engagement_focus(attacker: Dictionary, defender: Dictionary) -> bool:
+	var locked := engaged_target_id(attacker)
+	return locked != "" and locked != str(defender.get("id", ""))
 
 static func calculate_physical_damage(attacker: Dictionary, defender: Dictionary, power: int = 0) -> int:
 	var result = attack_roll(attacker, defender)
@@ -378,12 +537,21 @@ static func calculate_heal(caster: Dictionary, power: int) -> int:
 
 ## Returns a percentage (0-100) chance to flee combat. Callers must compare against a 0-1 roll
 ## as `chance / 100.0`, not the raw int.
+##
+## Counts LIVING members, not the party array's size: fleeing is meant to be a real gamble you
+## take while you still can, so it gets worse as people go down, and the number BattleUI shows
+## above the "Huir" option actually moves during the fight instead of being a constant.
+const FLEE_BASE_CHANCE := 30
+const FLEE_CHANCE_PER_MEMBER := 5
+
 static func calculate_flee_chance(party: Array, enemies: Array) -> int:
-	var base = 50
-	var party_size = party.size()
-	var chance = base + (party_size * 10)
+	var alive = 0
+	for p in party:
+		if p.get("hp", 0) > 0:
+			alive += 1
+	var chance = FLEE_BASE_CHANCE + (alive * FLEE_CHANCE_PER_MEMBER)
 	for p in party:
 		if has_feat_effect(p, "flee_bonus_flat"):
 			chance += sum_feat_value(p, "flee_bonus_flat")
 			break
-	return mini(100, chance)
+	return clampi(chance, 0, 100)
