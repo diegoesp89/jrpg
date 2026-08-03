@@ -44,8 +44,18 @@ var _initiative_list: VBoxContainer = null
 # HP bar references: array of { "bar": ColorRect, "combatant": Dictionary, "is_player": bool, "max_width": float }
 var _hp_bars: Array[Dictionary] = []
 
-# Maps combatant id (String) → sprite VBox node (for floating damage numbers)
+# Maps combatant id (String) → sprite VBox node (used for the engagement lines, which want the
+# whole cell). The two maps below point INTO that vbox, because its children are not laid out the
+# same way on both sides: a party cell is [sprite, name] while an enemy cell is [hp bar, sprite,
+# name]. Anything that wants the artwork or the name specifically has to be told which is which
+# instead of guessing by index.
 var _combatant_sprite_map: Dictionary = {}
+## id → the sprite itself (TextureRect, or the ColorRect stand-in for enemies with no art). Every
+## bit of combat juice hangs off this: the damage number anchors to it, the hit flash tints it,
+## the attack lunge moves it, the idle bob drifts it.
+var _combatant_visual_map: Dictionary = {}
+## id → the name Label under the sprite, so the combatant whose turn it is can be lit up.
+var _combatant_name_map: Dictionary = {}
 
 # State
 enum MenuState { MAIN, SKILL, ITEM, TARGET_ENEMY, TARGET_ALLY, POSITION, PREMONITION }
@@ -110,8 +120,10 @@ func _build_ui() -> void:
 	# (Retaguardia leftmost, Adelante rightmost) so the front line ends up closest to the enemy
 	# sprites on the right, matching where each zone actually is on the battlefield.
 	_battle_sprites_container = HBoxContainer.new()
-	# Starts higher up than the enemy row: a zone column holding the whole party needs the room.
-	_battle_sprites_container.position = Vector2(120, 90)
+	# Sits low enough that a damage number rising off a front-row sprite still lands inside the
+	# battlefield instead of in the "Turno: X" title. A party is always three (the 35 combos are
+	# C(7,3)), so the tallest column is three cells and there is room to spare below.
+	_battle_sprites_container.position = Vector2(120, 140)
 	_battle_sprites_container.add_theme_constant_override("separation", 30)
 	field.add_child(_battle_sprites_container)
 
@@ -136,7 +148,7 @@ func _build_ui() -> void:
 	# Enemy sprites (right side), in the same three bands as the party but mirrored, so the two
 	# Adelante columns end up adjacent in the centre of the screen.
 	_enemy_sprites_container = HBoxContainer.new()
-	_enemy_sprites_container.position = Vector2(1010, 90)
+	_enemy_sprites_container.position = Vector2(1010, 140)
 	_enemy_sprites_container.add_theme_constant_override("separation", 30)
 	field.add_child(_enemy_sprites_container)
 
@@ -747,6 +759,7 @@ func _on_battle_ended(result: String) -> void:
 
 func _update_all_stats() -> void:
 	_refresh_party_position_zones()
+	_update_turn_name_highlight()
 	if _engagement_overlay:
 		_engagement_overlay.queue_redraw()
 	if _zone_backdrop:
@@ -826,17 +839,41 @@ func _update_initiative_list() -> void:
 			label.add_theme_color_override("font_color", Color(0.9, 0.5, 0.5))
 		_initiative_list.add_child(label)
 
+## Greys out whoever is down, on BOTH sides — enemies used to keep their living tint forever,
+## because only the party was walked here and the enemy tint was set once at setup time.
 func _update_battle_sprites() -> void:
-	# Update party sprite tint based on alive/dead state. Looked up by id (via
-	# _combatant_sprite_map) rather than by container child index — the party sprites now live
-	# nested inside position-zone boxes, not as _battle_sprites_container's direct children.
 	if _battle_controller:
-		for p in _battle_controller.get_party():
-			var vbox = _combatant_sprite_map.get(p.get("id", ""))
-			if vbox and is_instance_valid(vbox) and vbox.get_child_count() > 0 and vbox.get_child(0) is TextureRect:
-				var rect = vbox.get_child(0) as TextureRect
-				rect.modulate = Color(1, 1, 1) if p["hp"] > 0 else Color(0.3, 0.3, 0.3)
+		for c in _battle_controller.get_party() + _battle_controller.get_enemies():
+			var visual := _sprite_visual_of(c)
+			if visual == null:
+				continue
+			# A hit flash owns modulate for a moment and tweens back to the resting tint itself;
+			# overwriting it here would cut the flash short.
+			if visual.get_meta("flashing", false):
+				continue
+			visual.modulate = Color(1, 1, 1) if c.get("hp", 0) > 0 else Color(0.3, 0.3, 0.3)
 	_update_hp_bars()
+
+## Lights up the name under whoever is acting, in the same yellow the menu cursor and the
+## initiative list already use for "this one" — so the turn is readable on the battlefield itself
+## and not only in the panels at the edges of the screen. The dead go grey alongside their sprite.
+const TURN_NAME_COLOR := Color(1, 0.9, 0.2)
+
+func _update_turn_name_highlight() -> void:
+	if not _battle_controller:
+		return
+	var current_id := str(_current_turn_combatant.get("id", ""))
+	for c in _battle_controller.get_party() + _battle_controller.get_enemies():
+		var cid := str(c.get("id", ""))
+		var label = _combatant_name_map.get(cid)
+		if label == null or not is_instance_valid(label):
+			continue
+		if int(c.get("hp", 0)) <= 0:
+			label.add_theme_color_override("font_color", Color(0.4, 0.4, 0.4))
+		elif cid == current_id:
+			label.add_theme_color_override("font_color", TURN_NAME_COLOR)
+		else:
+			label.add_theme_color_override("font_color", Color(1, 1, 1))
 
 ## A translucent slab behind each zone column, so the bands read as ground rather than as three
 ## floating labels. The two facing front ranks share a warmer tint: that pair of columns is the
@@ -869,11 +906,8 @@ func _draw_zone_backdrop() -> void:
 ## separate property paths, so the two never fight over the same value.
 const IDLE_BOB := 4.0
 
-func _start_idle_bob(vbox: Control) -> void:
-	if vbox == null or vbox.get_child_count() == 0:
-		return
-	var visual = vbox.get_child(0)
-	if not (visual is Control):
+func _start_idle_bob(visual: Control) -> void:
+	if visual == null:
 		return
 	var tween := visual.create_tween().set_loops()
 	# A random phase keeps the whole party from bobbing in lockstep.
@@ -999,6 +1033,8 @@ func setup_sprites(party: Array, enemies: Array) -> void:
 		_clear_container(chars_box)
 	_hp_bars.clear()
 	_combatant_sprite_map.clear()
+	_combatant_visual_map.clear()
+	_combatant_name_map.clear()
 
 	# Party sprites (side-view battle pose) — no HP bar (stats shown in HUD panel), placed in
 	# the CharsBox matching their current position zone (see _position_zone_boxes). Font is
@@ -1024,7 +1060,9 @@ func setup_sprites(party: Array, enemies: Array) -> void:
 		var zone_idx = clampi(int(p.get("position", 0)), 0, _position_zone_boxes.size() - 1)
 		_position_zone_boxes[zone_idx].add_child(vbox)
 		_combatant_sprite_map[p.get("id", "")] = vbox
-		_start_idle_bob(vbox)
+		_combatant_visual_map[p.get("id", "")] = rect
+		_combatant_name_map[p.get("id", "")] = name_label
+		_start_idle_bob(rect)
 
 	# Enemy sprites (battle art if available, else a red placeholder rectangle) with HP bar above
 	for e in enemies:
@@ -1039,18 +1077,19 @@ func setup_sprites(party: Array, enemies: Array) -> void:
 		# Sprite
 		var alive_tint = Color(1, 1, 1) if e["hp"] > 0 else Color(0.3, 0.3, 0.3)
 		var texture = EnemySprites.get_texture(e)
+		var visual: Control
 		if texture:
 			var rect = TextureRect.new()
-			rect.custom_minimum_size = Vector2(sprite_w, sprite_h)
 			rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 			rect.texture = texture
-			rect.modulate = alive_tint
-			vbox.add_child(rect)
+			visual = rect
 		else:
 			var rect = ColorRect.new()
-			rect.custom_minimum_size = Vector2(sprite_w, sprite_h)
-			rect.color = Color(0.8, 0.2, 0.15) if e["hp"] > 0 else Color(0.3, 0.3, 0.3)
-			vbox.add_child(rect)
+			rect.color = Color(0.8, 0.2, 0.15)
+			visual = rect
+		visual.custom_minimum_size = Vector2(sprite_w, sprite_h)
+		visual.modulate = alive_tint
+		vbox.add_child(visual)
 		# Name
 		var name_label = Label.new()
 		name_label.text = e["name"]
@@ -1060,22 +1099,24 @@ func setup_sprites(party: Array, enemies: Array) -> void:
 		var zone_idx = clampi(int(e.get("position", 0)), 0, _enemy_zone_boxes.size() - 1)
 		_enemy_zone_boxes[zone_idx].add_child(vbox)
 		_combatant_sprite_map[e.get("id", "")] = vbox
-		_start_idle_bob(vbox)
+		_combatant_visual_map[e.get("id", "")] = visual
+		_combatant_name_map[e.get("id", "")] = name_label
+		_start_idle_bob(visual)
 
 func _on_damage_dealt(target: Dictionary, amount: int, is_heal: bool) -> void:
 	_spawn_floating_number(target, amount, is_heal)
 	_flash_sprite(target, is_heal)
 	AudioManager.play_sfx("heal" if is_heal else "attack_hit")
 
-## Sprite lookup shared by every bit of combat juice below. Returns the TextureRect (or the
-## ColorRect fallback used for enemies with no art) rather than the whole vbox, so tinting the
-## sprite doesn't wash out the name label under it.
+## Sprite lookup shared by every bit of combat juice below. Reads the map filled in by
+## setup_sprites rather than taking the vbox's first child: an enemy cell leads with its HP bar,
+## so "first child" meant every flash, lunge and damage number on the enemy side was landing on an
+## 8px bar floating above the monster instead of on the monster.
 func _sprite_visual_of(combatant: Dictionary) -> Control:
-	var vbox = _combatant_sprite_map.get(combatant.get("id", ""))
-	if vbox == null or not is_instance_valid(vbox) or vbox.get_child_count() == 0:
+	var visual = _combatant_visual_map.get(combatant.get("id", ""))
+	if visual == null or not is_instance_valid(visual):
 		return null
-	var visual = vbox.get_child(0)
-	return visual if visual is Control else null
+	return visual
 
 ## A short colour punch on whoever just got hit — red for damage, green for healing. Tweens back
 ## to the sprite's resting tint rather than to white, so a downed combatant stays greyed out.
@@ -1086,8 +1127,12 @@ func _flash_sprite(target: Dictionary, is_heal: bool) -> void:
 	var resting := Color(1, 1, 1) if target.get("hp", 0) > 0 else Color(0.3, 0.3, 0.3)
 	var flash := Color(0.35, 1.0, 0.45) if is_heal else Color(1.0, 0.25, 0.2)
 	visual.modulate = flash
+	# Claimed for the duration so the alive/dead tint pass, which runs on the same hp_updated that
+	# triggered this flash, doesn't immediately paint over it.
+	visual.set_meta("flashing", true)
 	var tween := visual.create_tween()
 	tween.tween_property(visual, "modulate", resting, 0.28).set_ease(Tween.EASE_OUT)
+	tween.tween_callback(func(): visual.set_meta("flashing", false))
 
 ## The little lunge an attacker makes toward its target. Party sprites sit on the left and enemies
 ## on the right, so "forward" is simply a sign flip — no need to read anyone's real position.
@@ -1100,58 +1145,86 @@ func play_attack_lunge(attacker: Dictionary) -> void:
 	if visual == null:
 		return
 	var forward := LUNGE_DISTANCE if attacker.get("is_player", false) else -LUNGE_DISTANCE
-	var home := Vector2.ZERO
+	# `position:x` only: the idle bob owns `position:y` on this same node, and writing the whole
+	# Vector2 here would snap the bob back to zero mid-drift and fight it for the rest of the fight.
 	var tween := visual.create_tween()
-	tween.tween_property(visual, "position", home + Vector2(forward, 0.0), 0.09).set_ease(Tween.EASE_OUT)
-	tween.tween_property(visual, "position", home, 0.16).set_ease(Tween.EASE_IN).set_trans(Tween.TRANS_BACK)
+	tween.tween_property(visual, "position:x", forward, 0.09).set_ease(Tween.EASE_OUT)
+	tween.tween_property(visual, "position:x", 0.0, 0.16).set_ease(Tween.EASE_IN).set_trans(Tween.TRANS_BACK)
 
-## Floating combat numbers. Three things were wrong with the previous version and each one on its
-## own was enough to make them hard to notice:
+## Floating combat numbers.
 ##
-##   1. The label spawned at (0,0) and only jumped onto the target a frame later, because the
-##      position was computed after an `await`. Now it is hidden until placed.
-##   2. It was anchored above the sprite BOX, which for party members is a tall zone-column cell —
-##      so the number drifted into empty space instead of over the character. Now it uses the
-##      sprite visual itself and starts on top of it.
-##   3. Plain white text on a dark battlefield with no outline, 48px, gone in 0.8s. Now it is
-##      bigger, outlined, colour-coded, pops on arrival, and holds before fading.
-const FLOAT_RISE := 90.0
-const FLOAT_LIFETIME := 1.1
+## The sprite rows sit near the top of the battlefield, with only ~110px of screen above them, so
+## a number that starts at the sprite's head and climbs 90px lands in the "Turno: X" title and the
+## zone headers — reading as UI chrome rather than as a hit, which is why they kept going
+## unnoticed even though they were being drawn. It now starts low on the sprite and rises just far
+## enough to clear its head, so the whole arc happens inside the character's own cell.
+##
+## Several numbers can land on ONE target in the same instant — the Monk's flurry, a weapon's
+## recoil, a crit plus its on-hit rider. Printed at the same spot they smear into each other, so
+## each one after the first starts a full label-height lower and a beat later: a legible cascade
+## running down the target. Downward rather than fanned sideways on purpose — a horizontal fan
+## wide enough to clear a three-digit number would throw it into the neighbouring zone column and
+## make it look like someone else's damage. The count is per target (taken by walking the labels
+## already in flight), so numbers on DIFFERENT combatants are unaffected and stay centred.
+const FLOAT_RISE := 50.0
+const FLOAT_LIFETIME := 1.25
+const FLOAT_JITTER := 16.0
+const FLOAT_STACK := 112.0  ## must exceed a label's height (~105 at this font size)
+const FLOAT_STACK_SLOTS := 4  ## beyond this the cascade would run off the battlefield
+const FLOAT_STAGGER := 0.11
 
 func _spawn_floating_number(target: Dictionary, amount: int, is_heal: bool) -> void:
 	if not _float_overlay or amount <= 0:
 		return
+	var tid := str(target.get("id", ""))
 	var anchor: Control = _sprite_visual_of(target)
 	if anchor == null:
-		anchor = _combatant_sprite_map.get(target.get("id", ""))
+		anchor = _combatant_sprite_map.get(tid)
 	if anchor == null or not is_instance_valid(anchor):
 		return
 
+	var stack := 0
+	for other in _float_overlay.get_children():
+		if str(other.get_meta("target_id", "")) == tid:
+			stack += 1
+
 	var label = Label.new()
+	label.set_meta("target_id", tid)
 	label.text = ("+" + str(amount)) if is_heal else str(amount)
-	label.add_theme_font_size_override("font_size", 64)
+	label.add_theme_font_size_override("font_size", 76)
 	# Damage the player takes reads red, damage they deal reads gold, healing reads green — the
 	# colour says whose problem it is before the number is even read.
 	var tint := Color(0.35, 1.0, 0.4)
 	if not is_heal:
-		tint = Color(1.0, 0.35, 0.3) if target.get("is_player", false) else Color(1.0, 0.85, 0.25)
+		tint = Color(1.0, 0.3, 0.25) if target.get("is_player", false) else Color(1.0, 0.86, 0.2)
 	label.add_theme_color_override("font_color", tint)
-	# A hard outline is what makes it readable over sprites of any colour.
-	label.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.9))
-	label.add_theme_constant_override("outline_size", 10)
+	# A hard outline is what keeps it readable over sprites and over the name labels it crosses.
+	label.add_theme_color_override("font_outline_color", Color(0, 0, 0, 1))
+	label.add_theme_constant_override("outline_size", 14)
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	label.visible = false  # stays hidden until it has a real position
 	_float_overlay.add_child(label)
 
-	# One frame so the label reports a real size and the sprite's layout has settled.
+	# One frame so the label reports a real size and the sprite's layout has settled — plus the
+	# stagger, if this target is already showing a number. It waits with the label in the tree but
+	# hidden, so a number queued behind it still counts it and lands one slot further down.
 	await label.get_tree().process_frame
+	if stack > 0:
+		await get_tree().create_timer(FLOAT_STAGGER * stack).timeout
 	if not is_instance_valid(label) or not is_instance_valid(anchor):
 		return
 
 	var rect := anchor.get_global_rect()
 	var to_local := _float_overlay.get_global_transform().affine_inverse()
-	var start := to_local * Vector2(rect.get_center().x, rect.position.y + rect.size.y * 0.35)
+	# Start at the sprite's feet: the rise then carries it up across the body, ending about level
+	# with its head instead of sailing off past it into the title bar.
+	var slot := mini(stack, FLOAT_STACK_SLOTS - 1)
+	var offset_x := 0.0 if stack == 0 else (FLOAT_JITTER if stack % 2 == 1 else -FLOAT_JITTER)
+	var start := to_local * Vector2(
+		rect.get_center().x + offset_x,
+		rect.position.y + rect.size.y + float(slot) * FLOAT_STACK,
+	)
 	label.position = start - label.size * 0.5
 	label.pivot_offset = label.size * 0.5
 	label.scale = Vector2(0.4, 0.4)
@@ -1162,8 +1235,8 @@ func _spawn_floating_number(target: Dictionary, amount: int, is_heal: bool) -> v
 	tween.tween_property(label, "scale", Vector2.ONE, 0.16).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_BACK)
 	tween.parallel().tween_property(label, "position:y", label.position.y - FLOAT_RISE, FLOAT_LIFETIME) \
 		.set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_QUAD)
-	tween.parallel().tween_property(label, "modulate:a", 0.0, FLOAT_LIFETIME * 0.4) \
-		.set_delay(FLOAT_LIFETIME * 0.6).set_ease(Tween.EASE_IN)
+	tween.parallel().tween_property(label, "modulate:a", 0.0, FLOAT_LIFETIME * 0.3) \
+		.set_delay(FLOAT_LIFETIME * 0.7).set_ease(Tween.EASE_IN)
 	tween.chain().tween_callback(label.queue_free)
 
 func _clear_container(container) -> void:
