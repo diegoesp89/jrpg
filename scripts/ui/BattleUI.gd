@@ -12,6 +12,8 @@ var _battle_controller = null
 
 # UI Nodes
 var _party_stats_container: VBoxContainer = null
+## Wraps every menu, so no list can grow past the bottom of the action panel.
+var _menu_scroll: ScrollContainer = null
 var _action_menu: VBoxContainer = null
 var _skill_menu_wrapper: VBoxContainer = null  # holds _skill_menu + _skill_tooltip_label together
 var _skill_menu: VBoxContainer = null
@@ -221,9 +223,21 @@ func _build_ui() -> void:
 	menu_panel.add_theme_stylebox_override("panel", Theme_.panel_active(12))
 	bottom_hbox.add_child(menu_panel)
 
+	# Every menu lives inside one scroller. The lists here are variable-length — a target menu can
+	# hold eight enemies, an item menu the whole inventory — and a PanelContainer does not clip a
+	# child that exceeds it, it just lets it run off the bottom of the screen. Scrolling means the
+	# list can no longer outgrow the panel no matter what is in it.
+	_menu_scroll = ScrollContainer.new()
+	_menu_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	menu_panel.add_child(_menu_scroll)
+
+	var menu_stack = VBoxContainer.new()
+	menu_stack.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_menu_scroll.add_child(menu_stack)
+
 	_action_menu = VBoxContainer.new()
 	_action_menu.add_theme_constant_override("separation", 4)
-	menu_panel.add_child(_action_menu)
+	menu_stack.add_child(_action_menu)
 
 	# Also create hidden skill/item/target menus (reuse _action_menu by swapping content)
 	# The skill list and its tooltip are wrapped together so they stack instead of overlapping
@@ -231,7 +245,7 @@ func _build_ui() -> void:
 	# next to _skill_menu would render on top of it, not below).
 	_skill_menu_wrapper = VBoxContainer.new()
 	_skill_menu_wrapper.visible = false
-	menu_panel.add_child(_skill_menu_wrapper)
+	menu_stack.add_child(_skill_menu_wrapper)
 
 	_skill_menu = VBoxContainer.new()
 	_skill_menu_wrapper.add_child(_skill_menu)
@@ -246,19 +260,19 @@ func _build_ui() -> void:
 
 	_item_menu = VBoxContainer.new()
 	_item_menu.visible = false
-	menu_panel.add_child(_item_menu)
+	menu_stack.add_child(_item_menu)
 
 	_target_menu = VBoxContainer.new()
 	_target_menu.visible = false
-	menu_panel.add_child(_target_menu)
+	menu_stack.add_child(_target_menu)
 
 	_position_menu = VBoxContainer.new()
 	_position_menu.visible = false
-	menu_panel.add_child(_position_menu)
+	menu_stack.add_child(_position_menu)
 
 	_premonition_menu = VBoxContainer.new()
 	_premonition_menu.visible = false
-	menu_panel.add_child(_premonition_menu)
+	menu_stack.add_child(_premonition_menu)
 
 	# Right: the log, on parchment. It is the one panel that is read as prose rather than glanced
 	# at, and dark ink on a light page is easier for that than the reverse.
@@ -430,30 +444,28 @@ func _show_position_menu() -> void:
 		# the player commits, not after.
 		if not Combatant.engagement_partners(current, _battle_controller.get_enemies()).is_empty():
 			label.text += "  (provoca ataque de oportunidad)"
-		label.add_theme_font_size_override("font_size", 42)
+		label.add_theme_font_size_override("font_size", 34)
 		_position_menu.add_child(label)
 
 	_menu_state = MenuState.POSITION
 	_selected_index = 0
-	_action_menu.visible = false
-	_position_menu.visible = true
+	_show_only_menu(_position_menu)
 	_update_menu_highlight(_position_menu)
 
 func _show_premonition_menu(roll: int) -> void:
 	_clear_container(_premonition_menu)
 	var opt1 = Label.new()
 	opt1.text = "Tirar dados"
-	opt1.add_theme_font_size_override("font_size", 42)
+	opt1.add_theme_font_size_override("font_size", 34)
 	_premonition_menu.add_child(opt1)
 	var opt2 = Label.new()
 	opt2.text = "Usar premonición (%d)" % roll
-	opt2.add_theme_font_size_override("font_size", 42)
+	opt2.add_theme_font_size_override("font_size", 34)
 	_premonition_menu.add_child(opt2)
 
 	_menu_state = MenuState.PREMONITION
 	_selected_index = 0
-	_action_menu.visible = false
-	_premonition_menu.visible = true
+	_show_only_menu(_premonition_menu)
 	_update_menu_highlight(_premonition_menu)
 
 func _handle_premonition_input(event: InputEvent) -> void:
@@ -495,19 +507,18 @@ func _show_skill_menu() -> void:
 			_menu_items.append(skill_id)
 			var label = Label.new()
 			label.text = "%s (MP: %d)" % [skill["name"], skill["mp_cost"]]
-			label.add_theme_font_size_override("font_size", 42)
+			label.add_theme_font_size_override("font_size", 34)
 			_skill_menu.add_child(label)
 
 	if _menu_items.is_empty():
 		var label = Label.new()
 		label.text = "Sin habilidades"
-		label.add_theme_font_size_override("font_size", 42)
+		label.add_theme_font_size_override("font_size", 34)
 		_skill_menu.add_child(label)
 
 	_menu_state = MenuState.SKILL
 	_selected_index = 0
-	_action_menu.visible = false
-	_skill_menu_wrapper.visible = true
+	_show_only_menu(_skill_menu_wrapper)
 	_update_menu_highlight(_skill_menu)
 	_update_skill_tooltip()
 
@@ -529,19 +540,18 @@ func _show_item_menu() -> void:
 			_menu_items.append(item["id"])
 			var label = Label.new()
 			label.text = "%s x%d" % [item["name"], item["quantity"]]
-			label.add_theme_font_size_override("font_size", 42)
+			label.add_theme_font_size_override("font_size", 34)
 			_item_menu.add_child(label)
 
 	if _menu_items.is_empty():
 		var label = Label.new()
 		label.text = "Sin objetos"
-		label.add_theme_font_size_override("font_size", 42)
+		label.add_theme_font_size_override("font_size", 34)
 		_item_menu.add_child(label)
 
 	_menu_state = MenuState.ITEM
 	_selected_index = 0
-	_action_menu.visible = false
-	_item_menu.visible = true
+	_show_only_menu(_item_menu)
 	_update_menu_highlight(_item_menu)
 
 ## Whether the action awaiting a target resolves as magic (auto-hit, tolled in damage) rather
@@ -601,7 +611,7 @@ func _show_target_menu(ally: bool) -> void:
 						seen[note] = true
 						unique.append(note)
 				label.text += "  (%s)" % ", ".join(unique)
-		label.add_theme_font_size_override("font_size", 42)
+		label.add_theme_font_size_override("font_size", 34)
 		_target_menu.add_child(label)
 
 	if _target_list.is_empty():
@@ -613,10 +623,7 @@ func _show_target_menu(ally: bool) -> void:
 
 	_menu_state = MenuState.TARGET_ENEMY if not ally else MenuState.TARGET_ALLY
 	_selected_index = 0
-	_action_menu.visible = false
-	_skill_menu_wrapper.visible = false
-	_item_menu.visible = false
-	_target_menu.visible = true
+	_show_only_menu(_target_menu)
 	_update_menu_highlight(_target_menu)
 
 func _select_sub_option(idx: int) -> void:
@@ -653,21 +660,11 @@ func _select_target(idx: int) -> void:
 func _back_to_main() -> void:
 	_menu_state = MenuState.MAIN
 	_selected_index = 0
-	_skill_menu_wrapper.visible = false
-	_item_menu.visible = false
-	_target_menu.visible = false
-	_position_menu.visible = false
-	_premonition_menu.visible = false
-	_action_menu.visible = true
+	_show_only_menu(_action_menu)
 	_update_menu_highlight(_action_menu)
 
 func _hide_all_menus() -> void:
-	_action_menu.visible = false
-	_skill_menu_wrapper.visible = false
-	_item_menu.visible = false
-	_target_menu.visible = false
-	_position_menu.visible = false
-	_premonition_menu.visible = false
+	_show_only_menu(null)
 
 func _on_turn_changed(combatant: Dictionary, is_player: bool) -> void:
 	_turn_indicator.text = "Turno: %s" % combatant.get("name", "???")
@@ -702,7 +699,7 @@ func _show_main_menu() -> void:
 
 		var label = Label.new()
 		label.text = option
-		label.add_theme_font_size_override("font_size", 45)
+		label.add_theme_font_size_override("font_size", 34)
 		# Grey out "Huir" (last option) in boss fights
 		if i == MENU_OPTIONS.size() - 1 and _is_boss:
 			label.add_theme_color_override("font_color", Color(0.35, 0.35, 0.35))
@@ -710,12 +707,7 @@ func _show_main_menu() -> void:
 
 	_menu_state = MenuState.MAIN
 	_selected_index = 0
-	_action_menu.visible = true
-	_skill_menu_wrapper.visible = false
-	_item_menu.visible = false
-	_target_menu.visible = false
-	_position_menu.visible = false
-	_premonition_menu.visible = false
+	_show_only_menu(_action_menu)
 	_update_menu_highlight(_action_menu)
 
 ## Only Labels count as selectable rows, and the option index is counted over those alone — any
@@ -742,7 +734,26 @@ func _update_menu_highlight(container: VBoxContainer) -> void:
 				child.add_theme_color_override("font_color", Color(0.78, 0.78, 0.82))
 				child.add_theme_stylebox_override("normal", Theme_.menu_idle())
 				child.text = MENU_CURSOR_BLANK + _row_text(child)
+			# A list long enough to scroll must still show the cursor. Deferred because the row's
+			# rect is only correct after the layout pass that this text change just invalidated.
+			if option_index == _selected_index and _menu_scroll:
+				_menu_scroll.call_deferred("ensure_control_visible", child)
 			option_index += 1
+
+## Shows exactly one menu and hides the rest (pass null to hide them all).
+##
+## Each _show_* function used to hide its own ad-hoc subset — the skill menu hid only the action
+## menu, the target menu hid three of five, and so on. Nothing looked wrong while the menus were
+## siblings in a PanelContainer, because that overlays every visible child on the same rect and
+## the newest one covered the leftovers. Stacked in a scrollable column they no longer overlap:
+## a menu somebody forgot to hide now pushes the real one down and off the panel.
+func _show_only_menu(which) -> void:
+	for menu in [_action_menu, _skill_menu_wrapper, _item_menu, _target_menu,
+			_position_menu, _premonition_menu]:
+		if menu:
+			menu.visible = menu == which
+	if _menu_scroll:
+		_menu_scroll.scroll_vertical = 0
 
 ## The cursor is written into the row's text rather than drawn as a separate node, so it can never
 ## fall out of sync with which row is selected. The blank is the same width as the glyph.
