@@ -1,4 +1,18 @@
 extends Node
+## NOT part of the game — a balance analysis tool.
+##
+## To run it, temporarily hook it into Boot.gd's _ready():
+##     add_child(load("res://scripts/tools/BalanceSim.gd").new())
+##     return
+## then run, and revert Boot.gd afterwards:
+##     godot --headless --path . --quit-after 100000 --audio-driver Dummy > sim.txt
+## (A `--script` SceneTree entry point can't be used: in that mode any script referencing an
+## autoload fails to compile.)
+##
+## Output is one pipe-separated line per battle, ready to pivot:
+##     A|level|encounter|combo|win|rounds|hp_pct|deaths|attacks|attacks_on_protected
+##     B|combo|attempt|encounters_cleared|encounters_total|rests_left|died_at
+##
 ## Balance simulator. Runs battles headlessly with no animation waits, calling the REAL combat
 ## code (Combatant, EnemyAI, TurnSystem) so the numbers describe the game and not a model of it.
 ## The only thing reimplemented here is BattleController's orchestration, which exists purely for
@@ -22,6 +36,12 @@ var _attacks_total := 0
 var _attacks_on_protected := 0
 var _damage_by_char := {}
 var _rounds := 0
+## Overridden by the sweep so several tier slopes can be measured in one run.
+var _scale_per_tier: float = GameState.ENEMY_SCALE_PER_TIER
+## Extra copies of the roster at max tier: 1.0 = none, 2.0 = the encounter doubles in size.
+var _count_at_max_tier: float = 1.0
+## Whether named/boss enemies scale too, and at what fraction of the ordinary slope.
+var _named_scale_ratio: float = 0.0
 
 func _ready() -> void:
 	await get_tree().process_frame
@@ -33,7 +53,10 @@ func _ready() -> void:
 # --- Party construction -------------------------------------------------------------------
 
 ## Feats follow the real progression: one at chargen, one per level to 4, capstone at 5.
-func _build_party(ids: Array, level: int) -> Array:
+## The three legendary weapons, in the order the party would realistically hand them out.
+const LEGENDARY_ORDER := ["blackrazor", "whelm", "wave"]
+
+func _build_party(ids: Array, level: int, tier: int = 0) -> Array:
 	var out: Array = []
 	for cid in ids:
 		var cd = DataLoader.get_character(str(cid))
@@ -54,7 +77,14 @@ func _build_party(ids: Array, level: int) -> Array:
 		m["mp"] = m["max_mp"]
 		# A sensible default formation: melee up front, everyone else in the middle.
 		m["start_position"] = Combatant.POS_FRONT if Combatant.is_melee_class(str(m["class"])) else Combatant.POS_MID
+		m["weapon"] = ""
 		out.append(m)
+	# Legendary weapons are the whole reason `tier` exists: by the time the party is deep enough
+	# for scaled-up enemies they are also carrying the loot. Measuring without them understates
+	# late-game power badly, which is exactly the mistake the first sweep made.
+	for i in range(mini(tier, LEGENDARY_ORDER.size())):
+		if i < out.size():
+			out[i]["weapon"] = LEGENDARY_ORDER[i]
 	return out
 
 ## Mirrors BattleController._setup_party: a battle copy with per-fight counters and charges.
@@ -66,6 +96,8 @@ func _battle_copy(persistent: Array) -> Array:
 		b["defending"] = false
 		b["position"] = clampi(int(member.get("start_position", 0)), 0, 2)
 		b["engaged_with"] = ""
+		b["temp_hp"] = 0
+		b["shock_wave_ready"] = Combatant.has_weapon_ability(b, "shock_wave")
 		b["focus"] = 0
 		b["blind_turns"] = 0
 		b["stunned_turns"] = 0
@@ -91,32 +123,55 @@ func _battle_copy(persistent: Array) -> Array:
 			break
 	return out
 
-func _build_enemies(encounter_id: String) -> Array:
+## `tier` is the legendary-weapon count the party would be carrying (0-3); mirrors
+## BattleController._setup_enemies, including which enemies opt out of scaling.
+func _build_enemies(encounter_id: String, tier: int = 0) -> Array:
 	var enc = DataLoader.get_encounter(encounter_id)
 	var out: Array = []
-	var ids = enc.get("enemies", [])
+	var ids: Array = enc.get("enemies", []).duplicate()
+	# Action economy is what actually decides these fights: a 4-hero party rolls over any two
+	# enemies no matter how fat they are. Adding bodies at higher tiers is the only lever that
+	# moves the ceiling.
+	var all_scale := not ids.is_empty()
+	for eid in ids:
+		if not bool(DataLoader.get_enemy(str(eid)).get("scales", true)):
+			all_scale = false
+			break
+	if all_scale and bool(enc.get("scales_count", true)):
+		var base_count := ids.size()
+		var count_mult := 1.0 + (_count_at_max_tier - 1.0) * (float(tier) / 3.0)
+		var target := mini(GameState.ENEMY_COUNT_CAP, int(round(float(base_count) * count_mult)))
+		for i in range(target - base_count):
+			ids.append(ids[i % base_count])
 	for i in range(ids.size()):
 		var ed = DataLoader.get_enemy(str(ids[i]))
 		if ed.is_empty():
 			continue
 		var profile := str(ed.get("ai_profile", EnemyAI.DEFAULT_PROFILE))
+		var scale: float = 1.0
+		var dmg_scale: float = 1.0
+		var slope := _scale_per_tier if bool(ed.get("scales", true)) else _scale_per_tier * _named_scale_ratio
+		if slope > 0.0:
+			scale = 1.0 + slope * float(tier)
+			dmg_scale = 1.0 + slope * GameState.ENEMY_DAMAGE_SCALE_RATIO * float(tier)
+		var shp: int = maxi(1, int(round(float(ed.get("hp", 10)) * scale)))
 		out.append({
 			"id": str(ed["id"]) + "_" + str(i), "base_id": ed["id"], "name": ed["name"],
-			"hp": ed.get("hp", 10), "max_hp": ed.get("hp", 10), "ca": ed.get("ca", 10),
+			"hp": shp, "max_hp": shp, "damage_scale": dmg_scale, "ca": ed.get("ca", 10),
 			"attributes": ed.get("attributes", {}), "hit_die": ed.get("hit_die", 8),
 			"attack_bonus": ed.get("attack_bonus", 0), "damage": ed.get("damage", "1d6"),
 			"skills": ed.get("skills", []).duplicate(), "is_player": false, "defending": false,
 			"ai_profile": profile, "position": EnemyAI.starting_position(profile),
-			"engaged_with": "", "stunned_turns": 0, "poison_turns": 0, "poison_damage": 0,
+			"tag": str(ed.get("tag", "")), "engaged_with": "", "stunned_turns": 0, "poison_turns": 0, "poison_damage": 0,
 			"burn_turns": 0, "burn_damage": 0, "mp": 999, "max_mp": 999, "feats": [],
 		})
 	return out
 
 # --- Battle loop --------------------------------------------------------------------------
 
-func simulate(persistent_party: Array, encounter_id: String) -> Dictionary:
+func simulate(persistent_party: Array, encounter_id: String, tier: int = 0) -> Dictionary:
 	_party = _battle_copy(persistent_party)
-	_enemies = _build_enemies(encounter_id)
+	_enemies = _build_enemies(encounter_id, tier)
 	_is_boss = not bool(DataLoader.get_encounter(encounter_id).get("can_flee", true))
 	_attacks_total = 0
 	_attacks_on_protected = 0
@@ -288,6 +343,18 @@ func _player_turn(actor: Dictionary) -> void:
 	if Combatant.is_protected(target, _enemies):
 		_attacks_on_protected += 1
 
+	# Whelm picks its own moment, same rule as the real controller.
+	if bool(actor.get("shock_wave_ready", false)):
+		var alive := 0
+		for e in _enemies:
+			if e.get("hp", 0) > 0:
+				alive += 1
+		if alive >= 2:
+			actor["shock_wave_ready"] = false
+			for e in _enemies:
+				if e.get("hp", 0) > 0:
+					e["stunned_turns"] = int(e.get("stunned_turns", 0)) + 1
+
 	# 3. Class skill when the MP is there and it beats a swing.
 	var skill := _pick_offensive_skill(actor, targets.size())
 	if not skill.is_empty() and Combatant.use_mp(actor, int(skill.get("mp_cost", 0))):
@@ -315,12 +382,29 @@ func _basic_attack(actor: Dictionary, target: Dictionary) -> void:
 		for e in _enemies:
 			e["marked"] = (str(e.get("id", "")) == str(target.get("id", "")))
 	_hit(actor, target, dmg)
+	_apply_weapon_on_hit(actor, target, result.crit)
 	if int(actor.get("martial_adept_charges", 0)) > 0:
 		actor["martial_adept_charges"] = int(actor["martial_adept_charges"]) - 1
 		target["stunned_turns"] = int(target.get("stunned_turns", 0)) + 1
 	elif int(actor.get("grappler_charges", 0)) > 0:
 		actor["grappler_charges"] = int(actor["grappler_charges"]) - 1
 		target["stunned_turns"] = int(target.get("stunned_turns", 0)) + 1
+
+## Mirrors BattleController._apply_weapon_on_hit.
+func _apply_weapon_on_hit(attacker: Dictionary, target: Dictionary, was_crit: bool) -> void:
+	var w := Combatant.weapon_of(attacker)
+	if w.is_empty():
+		return
+	var ability := str(w.get("ability", ""))
+	if ability == "tide_crit" and was_crit and target.get("hp", 0) > 0:
+		Combatant.apply_damage(target, maxi(1, int(target.get("max_hp", 1)) / 2))
+	if ability == "devour_soul":
+		if str(target.get("tag", "")) == "no_muerto":
+			var backlash := randi_range(1, 10)
+			Combatant.apply_heal(target, backlash)
+			Combatant.apply_damage(attacker, backlash)
+		elif target.get("hp", 0) <= 0:
+			attacker["temp_hp"] = int(attacker.get("temp_hp", 0)) + int(target.get("max_hp", 0))
 
 func _resolve_skill(actor: Dictionary, skill: Dictionary, target: Dictionary) -> void:
 	var et := str(skill.get("effect_type", ""))
@@ -530,14 +614,24 @@ func _run_sweep() -> void:
 
 	# --- Mode A: single encounter, rested party ---
 	print("### MODE_A")
-	for level in [1, 3, 5]:
-		for enc in encounters:
-			for combo in combos:
-				var party := _build_party(combo, level)
-				var r := simulate(party, str(enc))
-				print("A|%d|%s|%s|%d|%d|%.3f|%d|%d|%d" % [
-					level, enc, ",".join(combo), 1 if r["win"] else 0, r["rounds"],
-					r["hp_pct"], r["deaths"], r["attacks"], r["attacks_protected"]])
+	# Level and tier move together in a real run: you find the weapons as you level.
+	# Defaults mirror the shipping constants; edit this list to sweep alternatives in one run.
+	for cfg in [[GameState.ENEMY_SCALE_PER_TIER, GameState.ENEMY_COUNT_AT_MAX_TIER, GameState.NAMED_SCALE_RATIO]]:
+		_scale_per_tier = cfg[0]
+		_count_at_max_tier = cfg[1]
+		_named_scale_ratio = cfg[2]
+		var slope: float = cfg[0]
+		for pair in [[1, 0], [3, 1], [5, 3]]:
+			var level: int = pair[0]
+			var tier: int = pair[1]
+			for enc in encounters:
+				for combo in combos:
+					var party := _build_party(combo, level, tier)
+					var r := simulate(party, str(enc), tier)
+					print("A|%.2f_%.1f_%.1f|%d|%s|%s|%d|%d|%.3f|%d" % [
+						slope, _count_at_max_tier, _named_scale_ratio, level, enc, ",".join(combo),
+						1 if r["win"] else 0, r["rounds"], r["hp_pct"], r["deaths"]])
+	_scale_per_tier = GameState.ENEMY_SCALE_PER_TIER
 
 	# --- Mode B: gauntlet with persistent attrition and 3 rests ---
 	print("### MODE_B")
@@ -553,7 +647,7 @@ func _run_sweep() -> void:
 	]
 	for combo in combos:
 		for attempt in range(6):
-			var party := _build_party(combo, 1)
+			var party := _build_party(combo, 1, 0)
 			var rests := GameState.MAX_REST_CHARGES
 			var xp := 0
 			var cleared := 0
@@ -571,7 +665,9 @@ func _run_sweep() -> void:
 					for m in party:
 						m["hp"] = m["max_hp"]
 						m["mp"] = m["max_mp"]
-				var r := simulate(party, str(enc))
+				# Legendary weapons show up as the run progresses; approximate one per third.
+				var tier: int = mini(3, cleared * 3 / run_order.size())
+				var r := simulate(party, str(enc), tier)
 				if not r["win"]:
 					died_at = str(enc)
 					break
