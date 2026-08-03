@@ -89,7 +89,7 @@ func _show_main() -> void:
 
 func _show_reset_confirm() -> void:
 	_state = State.RESET_CONFIRM
-	_title.text = "Resetear progreso? Se borra la partida guardada (el perfil no)."
+	_title.text = "Resetear progreso? Se borra la partida guardada Y el perfil (estrellas y estadisticas)."
 	_options = ["Si", "No"]
 	_rebuild_list()
 	_selected_index = 1  # default a "No" para evitar un borrado accidental

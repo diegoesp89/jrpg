@@ -23,6 +23,13 @@ var _enemy_sprites_container: HBoxContainer = null
 ## 0=Adelante, 1=Medio, 2=Retaguardia), holding whichever party members currently sit there
 ## stacked top to bottom. The zones themselves are laid out left to right (see _build_ui).
 var _position_zone_boxes: Array[VBoxContainer] = []
+## Same three bands for the enemy side, mirrored: their Adelante is the column nearest the party,
+## so the two front ranks face each other across the middle of the screen — which is where melee
+## actually happens. Index-matched to combatant["position"] exactly like the party's.
+var _enemy_zone_boxes: Array[VBoxContainer] = []
+## Painted underneath everything: one translucent slab per zone column, warmer on the two facing
+## front ranks, so the bands read as places instead of just labels.
+var _zone_backdrop: Control = null
 var _float_overlay: Control = null
 
 ## Transparent Control sitting over the battle field, drawing a line from every combatant to the
@@ -91,6 +98,13 @@ func _build_ui() -> void:
 	field.clip_contents = false
 	root.add_child(field)
 
+	# Zone slabs go in first so they sit behind every sprite.
+	_zone_backdrop = Control.new()
+	_zone_backdrop.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_zone_backdrop.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_zone_backdrop.draw.connect(_draw_zone_backdrop)
+	field.add_child(_zone_backdrop)
+
 	# Party sprites (left side) — the three movement zones are laid out left to right, and the
 	# characters standing in each one stack top to bottom inside it. Column order is reversed
 	# (Retaguardia leftmost, Adelante rightmost) so the front line ends up closest to the enemy
@@ -119,11 +133,30 @@ func _build_ui() -> void:
 		_battle_sprites_container.add_child(zone_column)
 		_position_zone_boxes[i] = chars_box
 
-	# Enemy sprites (right side)
+	# Enemy sprites (right side), in the same three bands as the party but mirrored, so the two
+	# Adelante columns end up adjacent in the centre of the screen.
 	_enemy_sprites_container = HBoxContainer.new()
-	_enemy_sprites_container.position = Vector2(1150, 180)
+	_enemy_sprites_container.position = Vector2(1010, 90)
 	_enemy_sprites_container.add_theme_constant_override("separation", 30)
 	field.add_child(_enemy_sprites_container)
+
+	_enemy_zone_boxes.clear()
+	_enemy_zone_boxes.resize(POSITION_NAMES.size())
+	for i in range(POSITION_NAMES.size()):
+		var zone_column = VBoxContainer.new()
+		zone_column.add_theme_constant_override("separation", 10)
+		var zone_label = Label.new()
+		zone_label.text = POSITION_NAMES[i]
+		zone_label.custom_minimum_size = Vector2(150, 0)
+		zone_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		zone_label.add_theme_font_size_override("font_size", 20)
+		zone_label.add_theme_color_override("font_color", Color(0.62, 0.5, 0.5))
+		zone_column.add_child(zone_label)
+		var chars_box = VBoxContainer.new()
+		chars_box.add_theme_constant_override("separation", 14)
+		zone_column.add_child(chars_box)
+		_enemy_sprites_container.add_child(zone_column)
+		_enemy_zone_boxes[i] = chars_box
 
 	# Added last so the engagement lines land on top of both sprite groups.
 	_engagement_overlay = Control.new()
@@ -716,6 +749,8 @@ func _update_all_stats() -> void:
 	_refresh_party_position_zones()
 	if _engagement_overlay:
 		_engagement_overlay.queue_redraw()
+	if _zone_backdrop:
+		_zone_backdrop.queue_redraw()
 
 	# Party stats (text in bottom panel)
 	_clear_container(_party_stats_container)
@@ -803,6 +838,51 @@ func _update_battle_sprites() -> void:
 				rect.modulate = Color(1, 1, 1) if p["hp"] > 0 else Color(0.3, 0.3, 0.3)
 	_update_hp_bars()
 
+## A translucent slab behind each zone column, so the bands read as ground rather than as three
+## floating labels. The two facing front ranks share a warmer tint: that pair of columns is the
+## melee zone, and making it one visual space is the whole point.
+func _draw_zone_backdrop() -> void:
+	if _zone_backdrop == null:
+		return
+	var to_local := _zone_backdrop.get_global_transform().affine_inverse()
+	for side in [_position_zone_boxes, _enemy_zone_boxes]:
+		for i in range(side.size()):
+			var box: Control = side[i]
+			if box == null or not is_instance_valid(box):
+				continue
+			var column: Control = box.get_parent()
+			if column == null:
+				continue
+			var r := column.get_global_rect().grow(10.0)
+			# Columns collapse to nothing before the first layout pass; skip until they have size.
+			if r.size.x < 1.0:
+				continue
+			var rect := Rect2(to_local * r.position, r.size)
+			var front := i == Combatant.POS_FRONT
+			var fill := Color(0.42, 0.24, 0.14, 0.30) if front else Color(0.14, 0.15, 0.22, 0.30)
+			var edge := Color(0.75, 0.45, 0.25, 0.35) if front else Color(0.35, 0.37, 0.48, 0.25)
+			_zone_backdrop.draw_rect(rect, fill, true)
+			_zone_backdrop.draw_rect(rect, edge, false, 2.0)
+
+## A slow vertical drift so the field is never completely still. Runs on the sprite visual's
+## `position:y` only, leaving `position:x` free for the attack lunge — Godot tweens those as
+## separate property paths, so the two never fight over the same value.
+const IDLE_BOB := 4.0
+
+func _start_idle_bob(vbox: Control) -> void:
+	if vbox == null or vbox.get_child_count() == 0:
+		return
+	var visual = vbox.get_child(0)
+	if not (visual is Control):
+		return
+	var tween := visual.create_tween().set_loops()
+	# A random phase keeps the whole party from bobbing in lockstep.
+	var period := randf_range(1.4, 2.0)
+	tween.tween_property(visual, "position:y", -IDLE_BOB, period * 0.5) \
+		.set_ease(Tween.EASE_IN_OUT).set_trans(Tween.TRANS_SINE)
+	tween.tween_property(visual, "position:y", 0.0, period * 0.5) \
+		.set_ease(Tween.EASE_IN_OUT).set_trans(Tween.TRANS_SINE)
+
 ## Draws one line per engagement, hero sprite to enemy sprite, so who is tied up with whom is
 ## readable at a glance. Direction doesn't need marking: a lock is mutual for every rule that
 ## matters, and arrowheads on overlapping lines just turn into noise when four heroes pile onto
@@ -838,17 +918,26 @@ func _draw_engagement_lines() -> void:
 ## position, whenever it changed since the last refresh (e.g. after a "move" action) — cheap
 ## no-op if nobody moved, called every _update_all_stats() so it stays in sync automatically.
 func _refresh_party_position_zones() -> void:
-	if not _battle_controller or _position_zone_boxes.is_empty():
+	if not _battle_controller:
 		return
-	for p in _battle_controller.get_party():
-		var vbox: Control = _combatant_sprite_map.get(p.get("id", ""))
+	_reseat_side(_battle_controller.get_party(), _position_zone_boxes)
+	_reseat_side(_battle_controller.get_enemies(), _enemy_zone_boxes)
+
+## Moves each combatant's sprite into the band matching their CURRENT zone. Enemies need this as
+## much as the party does — their AI repositions them every fight, and until now the enemy row
+## never showed it, which made the melee lines look like they connected to nothing in particular.
+func _reseat_side(combatants: Array, zone_boxes: Array) -> void:
+	if zone_boxes.is_empty():
+		return
+	for c in combatants:
+		var vbox: Control = _combatant_sprite_map.get(c.get("id", ""))
 		if vbox == null or not is_instance_valid(vbox):
 			continue
-		var zone_idx = clampi(int(p.get("position", 0)), 0, _position_zone_boxes.size() - 1)
-		var target_box = _position_zone_boxes[zone_idx]
+		var target_box = zone_boxes[clampi(int(c.get("position", 0)), 0, zone_boxes.size() - 1)]
 		if vbox.get_parent() != target_box:
 			vbox.get_parent().remove_child(vbox)
 			target_box.add_child(vbox)
+			_start_idle_bob(vbox)
 
 func _update_hp_bars() -> void:
 	for entry in _hp_bars:
@@ -906,7 +995,8 @@ func setup_sprites(party: Array, enemies: Array) -> void:
 	# once in _build_ui() and persist for the whole battle.
 	for chars_box in _position_zone_boxes:
 		_clear_container(chars_box)
-	_clear_container(_enemy_sprites_container)
+	for chars_box in _enemy_zone_boxes:
+		_clear_container(chars_box)
 	_hp_bars.clear()
 	_combatant_sprite_map.clear()
 
@@ -934,6 +1024,7 @@ func setup_sprites(party: Array, enemies: Array) -> void:
 		var zone_idx = clampi(int(p.get("position", 0)), 0, _position_zone_boxes.size() - 1)
 		_position_zone_boxes[zone_idx].add_child(vbox)
 		_combatant_sprite_map[p.get("id", "")] = vbox
+		_start_idle_bob(vbox)
 
 	# Enemy sprites (battle art if available, else a red placeholder rectangle) with HP bar above
 	for e in enemies:
@@ -942,8 +1033,6 @@ func setup_sprites(party: Array, enemies: Array) -> void:
 		var is_boss_sprite = "guardian" in e.get("base_id", e.get("id", ""))
 		var sprite_w := 100.0 if is_boss_sprite else 64.0
 		var sprite_h := 120.0 if is_boss_sprite else 80.0
-		# Row offset: middle/retaguardia sprites sit lower/further back visually
-		vbox.custom_minimum_size.y = e.get("position", 0) * 20.0
 		# HP bar
 		var hp_bar = _create_hp_bar(e, sprite_w, false)
 		vbox.add_child(hp_bar)
@@ -968,8 +1057,10 @@ func setup_sprites(party: Array, enemies: Array) -> void:
 		name_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		name_label.add_theme_font_size_override("font_size", 33)
 		vbox.add_child(name_label)
-		_enemy_sprites_container.add_child(vbox)
+		var zone_idx = clampi(int(e.get("position", 0)), 0, _enemy_zone_boxes.size() - 1)
+		_enemy_zone_boxes[zone_idx].add_child(vbox)
 		_combatant_sprite_map[e.get("id", "")] = vbox
+		_start_idle_bob(vbox)
 
 func _on_damage_dealt(target: Dictionary, amount: int, is_heal: bool) -> void:
 	_spawn_floating_number(target, amount, is_heal)

@@ -53,9 +53,15 @@ func load_game() -> Dictionary:
 
 ## "Resetear progreso" — clears the save slot and resets in-memory GameState. Does NOT touch
 ## the profile (completed party combos are an accumulated achievement, not part of the run).
+## Wipes everything: the save AND the cross-run profile. The profile used to survive this, which
+## meant "Resetear progreso" left the won-combination stars lit on the character-selection screen
+## — progress the player had explicitly asked to erase. If the achievement log should ever be
+## preserved again, split this into two options rather than making the reset lie about its name.
 func delete_save() -> void:
 	if FileAccess.file_exists(SAVE_PATH):
 		DirAccess.remove_absolute(SAVE_PATH)
+	if FileAccess.file_exists(PROFILE_PATH):
+		DirAccess.remove_absolute(PROFILE_PATH)
 	GameState.reset()
 
 # --- Profile (persists across saves/resets) ---
