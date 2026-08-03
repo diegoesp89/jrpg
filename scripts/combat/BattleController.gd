@@ -63,6 +63,9 @@ func _setup_party() -> void:
 		# Deploys into whatever zone the player set in the pause menu, Adelante by default.
 		battle_member["position"] = clampi(int(member.get("start_position", 0)), 0, 2)
 		battle_member["engaged_with"] = ""
+		battle_member["temp_hp"] = 0
+		# Whelm's Shock Wave is once per battle.
+		battle_member["shock_wave_ready"] = Combatant.has_weapon_ability(battle_member, "shock_wave")
 		battle_member["focus"] = 0
 		battle_member["blind_turns"] = 0
 		battle_member["stunned_turns"] = 0
@@ -94,22 +97,53 @@ func _setup_party() -> void:
 
 func _setup_enemies() -> void:
 	_enemies.clear()
-	var enemy_ids = _encounter_data.get("enemies", [])
+	var enemy_ids: Array = _encounter_data.get("enemies", []).duplicate()
+
+	# Filler encounters grow in number as the party arms itself; authored boss rosters never do.
+	# An encounter counts as filler only if every enemy in it scales, so a boss with an escort
+	# stays exactly as designed.
+	var all_scale := not enemy_ids.is_empty()
+	for eid in enemy_ids:
+		if not bool(DataLoader.get_enemy(str(eid)).get("scales", true)):
+			all_scale = false
+			break
+	# An encounter can opt out with "scales_count": false — measured, a few multi-enemy fights
+	# (manticores, flesh golems, ghouls) are already at the edge and doubling them made them
+	# unwinnable at every level.
+	if all_scale and bool(_encounter_data.get("scales_count", true)):
+		var base_count := enemy_ids.size()
+		var target := mini(GameState.ENEMY_COUNT_CAP,
+			int(round(float(base_count) * GameState.enemy_count_multiplier())))
+		for i in range(target - base_count):
+			enemy_ids.append(enemy_ids[i % base_count])
+
 	for i in range(enemy_ids.size()):
 		var enemy_data = DataLoader.get_enemy(enemy_ids[i])
 		if enemy_data.is_empty():
 			continue
+		# Ordinary enemies get tougher as the party recovers legendary weapons, so the dungeon's
+		# filler never decays into a formality. Named enemies opt out ("scales": false): they sit
+		# at fixed points in the story and are hand-tuned for the moment you meet them.
+		# Named enemies ride the same curve at half slope (see GameState.NAMED_SCALE_RATIO).
+		var named_ratio: float = 1.0 if bool(enemy_data.get("scales", true)) else GameState.NAMED_SCALE_RATIO
+		var scale: float = 1.0 + (GameState.enemy_scale_factor() - 1.0) * named_ratio
+		var dmg_scale: float = 1.0 + (GameState.enemy_damage_scale_factor() - 1.0) * named_ratio
+		var scaled_hp: int = maxi(1, int(round(float(enemy_data.get("hp", 10)) * scale)))
 		var battle_enemy = {
 			"id": enemy_data["id"] + "_" + str(i),
 			"base_id": enemy_data["id"],
 			"name": enemy_data["name"],
-			"hp": enemy_data.get("hp", 10),
-			"max_hp": enemy_data.get("hp", 10),
+			"hp": scaled_hp,
+			"max_hp": scaled_hp,
+			"damage_scale": dmg_scale,
 			"ca": enemy_data.get("ca", 10),
 			"attributes": enemy_data.get("attributes", {}),
 			"hit_die": enemy_data.get("hit_die", 8),
 			"attack_bonus": enemy_data.get("attack_bonus", 0),
 			"damage": enemy_data.get("damage", "1d6"),
+			# Creature type, for the legendary weapons' thematic bonuses (Whelm vs giants,
+			# Blackrazor recoiling off undead).
+			"tag": str(enemy_data.get("tag", "")),
 			"skills": enemy_data.get("skills", []).duplicate(),
 			"sprite_path": enemy_data.get("sprite_path", ""),
 			"is_player": false,
@@ -179,6 +213,49 @@ func _guard_suffix(attacker: Dictionary, target: Dictionary, defenders: Array) -
 	if Combatant.guard_damage_multiplier(attacker, target, defenders) < 1.0:
 		return " (mitad: atraviesa la guardia)"
 	return ""
+
+## Everything the legendary weapons do when their bearer lands a blow. Returns the extra damage
+## already applied, for the log.
+##
+## Wave: a critical tears out half the target's maximum health on top of the hit.
+## Blackrazor: a killing blow devours the soul, granting temporary hit points equal to the
+##   victim's maximum — but swinging at undead turns the blade against its own wielder.
+func _apply_weapon_on_hit(attacker: Dictionary, target: Dictionary, was_crit: bool) -> void:
+	var w := Combatant.weapon_of(attacker)
+	if w.is_empty():
+		return
+	var ability := str(w.get("ability", ""))
+
+	if ability == "tide_crit" and was_crit and target.get("hp", 0) > 0:
+		var surge := maxi(1, int(target.get("max_hp", 1)) / 2)
+		Combatant.apply_damage(target, surge)
+		damage_dealt.emit(target, surge, false)
+		action_performed.emit("¡La marea de %s arranca %d de vida a %s!" % [attacker["name"], surge, target["name"]])
+
+	if ability == "devour_soul":
+		if str(target.get("tag", "")) == "no_muerto":
+			var backlash := randi_range(1, 10)
+			Combatant.apply_heal(target, backlash)
+			Combatant.apply_damage(attacker, backlash)
+			damage_dealt.emit(attacker, backlash, false)
+			action_performed.emit("¡Blackrazor se revuelve contra %s: %d de daño y el no-muerto se cura otro tanto!" % [attacker["name"], backlash])
+		elif target.get("hp", 0) <= 0:
+			var souls := int(target.get("max_hp", 0))
+			attacker["temp_hp"] = int(attacker.get("temp_hp", 0)) + souls
+			action_performed.emit("¡Blackrazor devora el alma de %s! %s gana %d de vida temporal y ataca con ventaja." % [target["name"], attacker["name"], souls])
+
+## Whelm's Shock Wave: once per battle, the ground buckles and every enemy loses its next turn.
+func _try_shock_wave(attacker: Dictionary) -> bool:
+	if not bool(attacker.get("shock_wave_ready", false)):
+		return false
+	attacker["shock_wave_ready"] = false
+	var hit: Array = []
+	for e in _enemies:
+		if e.get("hp", 0) > 0:
+			e["stunned_turns"] = int(e.get("stunned_turns", 0)) + 1
+			hit.append(str(e["name"]))
+	action_performed.emit("%s descarga la Onda de Choque de Whelm: %s pierden su próximo turno!" % [attacker["name"], ", ".join(hit)])
+	return true
 
 ## One free melee swing from a combatant whose lock was just broken. It is a real attack roll, so
 ## it can miss — walking out of an engagement is risky, not suicide.
@@ -403,6 +480,12 @@ func player_action(action: Dictionary) -> void:
 				_waiting_for_player = true
 				return
 
+			# Whelm decides for itself when to strike the ground: the first swing of a fight with
+			# a crowd in it. Sentient weapon, sentient timing — and it keeps the action menu from
+			# growing a per-weapon option.
+			if bool(current.get("shock_wave_ready", false)) and _alive_enemy_count() >= 2:
+				_try_shock_wave(current)
+
 			var use_premonition = action.get("use_premonition", false)
 			var forced_roll = current.get("premonition_roll", 0) if use_premonition else 0
 			var result = Combatant.attack_roll(current, target, false, forced_roll, _enemies)
@@ -428,6 +511,7 @@ func player_action(action: Dictionary) -> void:
 				damage_dealt.emit(target, final_dmg, false)
 				var dmg_str = "daño!" if not result.crit else "daño CRÍTICO!"
 				action_performed.emit("%s: %d(1d20)+%d(Fue) = %d vs %d CA -> Golpe! Dañó %d a %s" % [current["name"], result.roll, result.bonus, result.total, target.get("ca", 10), final_dmg, target["name"]])
+				_apply_weapon_on_hit(current, target, result.crit)
 				if current.get("martial_adept_charges", 0) > 0:
 					current["martial_adept_charges"] -= 1
 					target["stunned_turns"] = target.get("stunned_turns", 0) + 1
@@ -685,6 +769,13 @@ func _next_turn() -> void:
 	else:
 		_start_round()
 
+func _alive_enemy_count() -> int:
+	var n := 0
+	for e in _enemies:
+		if e.get("hp", 0) > 0:
+			n += 1
+	return n
+
 func _all_enemies_dead() -> bool:
 	for e in _enemies:
 		if e.get("hp", 0) > 0:
@@ -699,9 +790,11 @@ func _all_party_dead() -> bool:
 
 func _victory() -> void:
 	_battle_active = false
+	# Rewards ride the same curve as the enemies, so a scaled-up fight is not worse value.
+	var reward_scale := GameState.enemy_scale_factor()
 	var rewards = _encounter_data.get("rewards", {})
-	var xp = rewards.get("xp", 0)
-	var gold = rewards.get("gold", 0)
+	var xp = int(round(float(rewards.get("xp", 0)) * reward_scale))
+	var gold = int(round(float(rewards.get("gold", 0)) * reward_scale))
 	GameState.add_xp(xp)
 	GameState.add_gold(gold)
 

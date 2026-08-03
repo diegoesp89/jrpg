@@ -31,7 +31,11 @@ func _get_initiative(c: Dictionary) -> int:
 	var attrs = c.get("attributes", {})
 	var dex = attrs.get("agilidad", 10)
 	var dex_mod = _get_modifier(dex)
-	var initiative = dex_mod + randi_range(1, 20)
+	# Wave doubles as a weapon of warning: its bearer rolls initiative with advantage.
+	var roll := randi_range(1, 20)
+	if bool(Combatant.weapon_of(c).get("initiative_advantage", false)):
+		roll = maxi(roll, randi_range(1, 20))
+	var initiative = dex_mod + roll
 	initiative = int(round(initiative * (1.0 + Combatant.sum_feat_value(c, "initiative_bonus_pct") / 100.0)))
 	return initiative
 

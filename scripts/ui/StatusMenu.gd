@@ -6,9 +6,9 @@ class_name StatusMenu
 ## Preloaded by path, not via its class_name — see the note in DungeonBuilder.gd.
 const HelpPanelScene = preload("res://scripts/ui/HelpPanel.gd")
 
-enum MenuState { MAIN, STATUS, MESSAGE, ABILITIES, ABILITY_TARGET, ITEMS, ITEM_TARGET, FORMATION, QUIT_CONFIRM }
+enum MenuState { MAIN, STATUS, MESSAGE, ABILITIES, ABILITY_TARGET, ITEMS, ITEM_TARGET, FORMATION, EQUIPMENT, QUIT_CONFIRM }
 
-const MAIN_OPTIONS := ["Estado", "Habilidades", "Objetos", "Formación", "Guardar partida", "Ayuda", "Opciones", "Salir del juego"]
+const MAIN_OPTIONS := ["Estado", "Habilidades", "Objetos", "Equipo", "Formación", "Guardar partida", "Ayuda", "Opciones", "Salir del juego"]
 
 var _is_open: bool = false
 var _menu_state: MenuState = MenuState.MAIN
@@ -103,6 +103,8 @@ func _unhandled_input(event: InputEvent) -> void:
 			_handle_selectable_input(event, _target_options.size(), "_select_item_target")
 		MenuState.FORMATION:
 			_handle_selectable_input(event, GameState.party.size(), "_cycle_formation")
+		MenuState.EQUIPMENT:
+			_handle_selectable_input(event, GameState.party.size(), "_cycle_weapon")
 		MenuState.QUIT_CONFIRM:
 			_handle_selectable_input(event, 2, "_select_quit_option")
 	get_viewport().set_input_as_handled()
@@ -188,11 +190,63 @@ func _select_main_option(idx: int) -> void:
 		0: _show_status()
 		1: _show_abilities()
 		2: _show_items()
-		3: _show_formation()
-		4: _save_game()
-		5: _help_panel.open()
-		6: _options_panel.open()
-		7: _show_quit_confirm()
+		3: _show_equipment()
+		4: _show_formation()
+		5: _save_game()
+		6: _help_panel.open()
+		7: _options_panel.open()
+		8: _show_quit_confirm()
+
+# --- Equipo (qué arma legendaria lleva cada uno) ---
+
+## The legendary weapons the party has actually recovered, in a fixed order so the cycling below
+## is predictable. Empty until the first one is found in the dungeon.
+func _owned_weapons() -> Array:
+	var out: Array = []
+	for item in DataLoader.get_all_items():
+		if str(item.get("effect", "")) == "quest_item" and GameState.has_item(str(item["id"])):
+			out.append(str(item["id"]))
+	return out
+
+func _show_equipment() -> void:
+	_menu_state = MenuState.EQUIPMENT
+	_title.text = "Equipo"
+	_clear_content()
+	var owned := _owned_weapons()
+	if owned.is_empty():
+		_add_row("Todavía no has encontrado ningún arma legendaria.", 22)
+		_selected_index = 0
+		_update_highlight()
+		_root.visible = true
+		return
+	for m in GameState.party:
+		var wid := str(m.get("weapon", ""))
+		var wname := DataLoader.get_item(wid).get("name", "") if wid != "" else "-"
+		_add_row("%s — %s" % [m["name"], wname], 24)
+	_add_row("Z cambia el arma del personaje marcado. Cada arma la lleva uno solo.", 16)
+	_selected_index = 0
+	_update_highlight()
+	_root.visible = true
+
+## Cycles through the recovered weapons plus "none". A weapon can only be in one pair of hands,
+## so taking one off someone else is automatic rather than an error the player has to undo.
+func _cycle_weapon(idx: int) -> void:
+	var owned := _owned_weapons()
+	if owned.is_empty() or idx >= GameState.party.size():
+		return
+	var m = GameState.party[idx]
+	var options: Array = [""] + owned
+	var next := (options.find(str(m.get("weapon", ""))) + 1) % options.size()
+	var chosen := str(options[next])
+	if chosen != "":
+		for other in GameState.party:
+			if other != m and str(other.get("weapon", "")) == chosen:
+				other["weapon"] = ""
+	m["weapon"] = chosen
+	var keep := idx
+	_show_equipment()
+	_selected_index = keep
+	_update_highlight()
 
 # --- Formación (zona en la que cada personaje entra a combate) ---
 

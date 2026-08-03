@@ -1,30 +1,48 @@
 {
-	"potion": {
-		"id": "potion",
-		"name": "Pocion",
-		"effect": "heal",
-		"power": 30,
-		"description": "Restaura 30 HP a un aliado."
-	},
-	"whelm": {
-		"id": "whelm",
-		"name": "Whelm",
-		"effect": "quest_item",
-		"power": 0,
-		"description": "El martillo legendario del trueno. Una de las tres armas legendarias necesarias para escapar de la Montana del Penacho Blanco."
-	},
-	"wave": {
-		"id": "wave",
-		"name": "Wave",
-		"effect": "quest_item",
-		"power": 0,
-		"description": "El tridente legendario de las mareas. Una de las tres armas legendarias necesarias para escapar de la Montana del Penacho Blanco."
-	},
-	"blackrazor": {
-		"id": "blackrazor",
-		"name": "Blackrazor",
-		"effect": "quest_item",
-		"power": 0,
-		"description": "La espada legendaria consciente que susurra promesas de poder. Una de las tres armas legendarias necesarias para escapar de la Montana del Penacho Blanco."
-	}
+  "potion": {
+    "id": "potion",
+    "name": "Pocion",
+    "effect": "heal",
+    "power": 30,
+    "description": "Restaura 30 HP a un aliado."
+  },
+  "whelm": {
+    "id": "whelm",
+    "name": "Whelm",
+    "effect": "quest_item",
+    "power": 0,
+    "description": "Martillo de guerra forjado por enanos. +3 al ataque y al daño. Golpea a gigantes y goblinoides con una furia extra. Una vez por combate puedes descargar una Onda de Choque que aturde a todos los enemigos.",
+    "weapon": {
+      "attack_bonus": 3,
+      "damage_bonus": 3,
+      "bonus_vs_tag": "gigante",
+      "bonus_vs_damage": 9,
+      "ability": "shock_wave"
+    }
+  },
+  "wave": {
+    "id": "wave",
+    "name": "Wave",
+    "effect": "quest_item",
+    "power": 0,
+    "description": "Tridente de las mareas. +3 al ataque y al daño, y actúas antes que nadie: tiras la iniciativa con ventaja. Sus críticos arrancan de cuajo la mitad de la vida máxima del objetivo.",
+    "weapon": {
+      "attack_bonus": 3,
+      "damage_bonus": 3,
+      "initiative_advantage": true,
+      "ability": "tide_crit"
+    }
+  },
+  "blackrazor": {
+    "id": "blackrazor",
+    "name": "Blackrazor",
+    "effect": "quest_item",
+    "power": 0,
+    "description": "Espada consciente que devora almas. +3 al ataque y al daño. Al derribar a un enemigo absorbe su alma y te da vida temporal igual a la vida máxima de la víctima; mientras te dure, atacas con ventaja. Contra no-muertos se revuelve: te hiere y los cura.",
+    "weapon": {
+      "attack_bonus": 3,
+      "damage_bonus": 3,
+      "ability": "devour_soul"
+    }
+  }
 }

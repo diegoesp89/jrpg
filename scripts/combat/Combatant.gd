@@ -85,6 +85,34 @@ static func apply_feat_effects(member: Dictionary, feat_id: String) -> void:
 			if skill_id != "" and not member["skills"].has(skill_id):
 				member["skills"].append(skill_id)
 
+# --- Legendary weapons ---
+## One weapon per character, held in member["weapon"] as an item id ("" when unarmed). There is
+## no attunement and no class restriction: any of the three fits any hand, which is the whole
+## point of letting the player choose who carries what.
+
+static func weapon_of(member: Dictionary) -> Dictionary:
+	var wid := str(member.get("weapon", ""))
+	if wid == "":
+		return {}
+	return DataLoader.get_item(wid).get("weapon", {})
+
+static func weapon_attack_bonus(member: Dictionary) -> int:
+	return int(weapon_of(member).get("attack_bonus", 0))
+
+static func weapon_damage_bonus(attacker: Dictionary, defender: Dictionary) -> int:
+	var w := weapon_of(attacker)
+	if w.is_empty():
+		return 0
+	var bonus := int(w.get("damage_bonus", 0))
+	# Whelm was forged to break giants and goblinoids, and it hits them noticeably harder.
+	var tag := str(w.get("bonus_vs_tag", ""))
+	if tag != "" and str(defender.get("tag", "")) == tag:
+		bonus += int(w.get("bonus_vs_damage", 0))
+	return bonus
+
+static func has_weapon_ability(member: Dictionary, ability: String) -> bool:
+	return str(weapon_of(member).get("ability", "")) == ability
+
 ## Public wrapper around the D&D attribute-modifier table below, for callers outside this file
 ## (e.g. Trap's saving throw) that need a single attribute's modifier without duplicating it.
 static func attribute_modifier(value: int) -> int:
@@ -162,9 +190,8 @@ static func get_attack_modifier(attacker: Dictionary) -> int:
 	var dex_val = attrs.get("agilidad", 10)
 	
 	if clase == "Monje" or clase == "Gunslinger":
-		return _get_modifier(dex_val)
-	else:
-		return _get_modifier(str_val)
+		return _get_modifier(dex_val) + weapon_attack_bonus(attacker)
+	return _get_modifier(str_val) + weapon_attack_bonus(attacker)
 
 static func get_damage_dice(attacker: Dictionary) -> String:
 	var clase = attacker.get("class", "")
@@ -191,7 +218,9 @@ static func get_damage_dice(attacker: Dictionary) -> String:
 static func _roll_attack_d20(attacker: Dictionary, defender: Dictionary, force_advantage: bool, forced_roll: int, defenders: Array = []) -> int:
 	if forced_roll > 0:
 		return forced_roll
-	var advantage = force_advantage or defender.get("blind_turns", 0) > 0 or defender.get("grants_advantage", false)
+	var advantage = force_advantage or defender.get("blind_turns", 0) > 0 \
+		or defender.get("grants_advantage", false) \
+		or (int(attacker.get("temp_hp", 0)) > 0 and has_weapon_ability(attacker, "devour_soul"))
 	# Defend action: everything aimed at a defending combatant rolls at disadvantage, until the
 	# flag is cleared at the start of the next round (BattleController._start_round).
 	# Engagement: swinging at anyone but the opponent you're locked onto exposes you.
@@ -337,6 +366,12 @@ static func apply_damage(target: Dictionary, damage: int) -> void:
 	var reduction = sum_feat_value(target, "damage_reduction_flat")
 	if reduction > 0:
 		reduced = maxi(1, damage - reduction)
+	# Blackrazor's devoured souls sit in front of real hit points and burn off first.
+	var temp := int(target.get("temp_hp", 0))
+	if temp > 0:
+		var absorbed := mini(temp, reduced)
+		target["temp_hp"] = temp - absorbed
+		reduced -= absorbed
 	var new_hp = maxi(0, target.get("hp", 0) - reduced)
 	# "Bendición de Lathander": granted to the whole party in _setup_party when Daragat has the
 	# feat, spent here the first time a blow would put someone down.
@@ -373,6 +408,10 @@ static func is_melee_class(class_name_str: String) -> bool:
 ## Wanted" mark (+25% taken).
 static func apply_position_modifiers(damage: int, attacker: Dictionary, defender: Dictionary) -> int:
 	var result: float = float(damage)
+	# Tier scaling for enemies deep in the dungeon. Every damage site on both sides already funnels
+	# through here, so this is the one place it needs to exist; party members never carry the key,
+	# so it is a no-op for them.
+	result *= float(attacker.get("damage_scale", 1.0))
 	if attacker.get("class", "") == "Barbaro":
 		result *= 2.0
 	if defender.get("class", "") == "Barbaro":
@@ -380,6 +419,7 @@ static func apply_position_modifiers(damage: int, attacker: Dictionary, defender
 	if defender.get("marked", false):
 		result *= 1.25
 	result += attacker.get("damage_bonus_flat", 0)  # Great Weapon Master / Dual Wielder feats
+	result += weapon_damage_bonus(attacker, defender)
 	return maxi(1, int(round(result)))
 
 # --- Engagement ("estar a melee", in the player-facing text) ---

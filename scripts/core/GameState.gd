@@ -69,6 +69,69 @@ const CLASS_HIT_DICE := {
 func hit_die_for_class(clase: String, fallback: int = 8) -> int:
 	return int(CLASS_HIT_DICE.get(clase, fallback))
 
+## Flat buffer on top of the SRD formula. Without it a level-1 caster sits at 6 HP and dies to a
+## single average hit (1d6+2 averages 5.5), which in a game where defeat restarts the whole run
+## is a coin flip rather than a difficulty curve. Measured, not guessed — see the balance sweep.
+const HEROIC_HP_BONUS := 4
+
+## How far into the dungeon the party is, measured by legendary weapons recovered (0-3). The
+## exit needs all three, so this is the one progress axis that is both meaningful and impossible
+## to grind — it only moves when the player actually advances the quest.
+func progression_tier() -> int:
+	var n := 0
+	for item in DataLoader.get_all_items():
+		if str(item.get("effect", "")) == "quest_item" and has_item(str(item["id"])):
+			n += 1
+	return n
+
+## Multiplier applied to a scaling enemy's HP, damage and XP. Deliberately far below the party's
+## own growth (their HP roughly quadruples from level 1 to 5), so progress still feels earned —
+## this keeps ordinary encounters relevant, it does not chase the player.
+const ENEMY_SCALE_PER_TIER := 0.40
+
+## Damage scales more gently than HP. The party's own growth is mostly hit points and feats, not
+## raw damage, so scaling enemy damage at the full rate outpaces them: measured at the full rate,
+## multi-enemy ranged encounters (manticores, flesh golems) went from winnable to unwinnable at
+## level 5. Tuning HP and damage separately keeps fights long without making them lethal.
+const ENEMY_DAMAGE_SCALE_RATIO := 0.5
+
+## Named enemies are hand-tuned for the moment you meet them, but leaving them completely flat
+## meant several bosses sat at a 100% win rate once the party had the legendary weapons. They now
+## ride the same curve at half slope: still authored, no longer irrelevant.
+const NAMED_SCALE_RATIO := 0.5
+
+## Ordinary encounters also grow in NUMBER, not just in stats — measured across ~15k simulated
+## battles, stat scaling alone could not bring a fully-equipped level 5 party below a 97% win
+## rate, because four heroes roll over two enemies no matter how fat they are. Action economy is
+## the only lever that moves it. Boss rosters are exempt: they are authored fights, and doubling
+## them re-creates exactly the encounters that were tuned down for being unwinnable.
+const ENEMY_COUNT_AT_MAX_TIER := 2.0
+## Only a sanity bound on the roster, not a balance knob: encounters that must not grow opt out
+## individually with "scales_count": false, which is the lever that was actually measured.
+const ENEMY_COUNT_CAP := 8
+
+func enemy_count_multiplier() -> float:
+	return 1.0 + (ENEMY_COUNT_AT_MAX_TIER - 1.0) * (float(progression_tier()) / 3.0)
+
+func enemy_scale_factor() -> float:
+	return 1.0 + ENEMY_SCALE_PER_TIER * float(progression_tier())
+
+## Same curve, flattened for damage only.
+func enemy_damage_scale_factor() -> float:
+	return 1.0 + ENEMY_SCALE_PER_TIER * ENEMY_DAMAGE_SCALE_RATIO * float(progression_tier())
+
+## Total current HP over total max HP across the whole party, fallen members included (their 0
+## drags it down, which is the point). 1.0 when everyone is fresh, 0.0 on a wipe.
+func party_health_fraction() -> float:
+	var cur := 0.0
+	var maximum := 0.0
+	for m in party:
+		cur += float(m.get("hp", 0))
+		maximum += float(m.get("max_hp", 1))
+	if maximum <= 0.0:
+		return 1.0
+	return clampf(cur / maximum, 0.0, 1.0)
+
 ## Max HP at a given level, by the SRD's fixed-progression rule: the full hit die at level 1,
 ## then the die's average roll (half of it, rounded down, plus 1) for every level after, plus
 ## the Constitution modifier once per level. Always recomputed from these three inputs rather
@@ -76,7 +139,7 @@ func hit_die_for_class(clase: String, fallback: int = 8) -> int:
 ## same level would have.
 func max_hp_for(hit_die: int, con_mod: int, level: int) -> int:
 	var per_level_gain = int(hit_die / 2.0) + 1
-	var hp = hit_die + (level - 1) * per_level_gain + con_mod * level
+	var hp = hit_die + (level - 1) * per_level_gain + con_mod * level + HEROIC_HP_BONUS
 	return maxi(1, hp)
 
 ## Same, for a live party member — including any percentage HP feats they've picked up, which
@@ -169,6 +232,9 @@ func create_party_member(char_data: Dictionary) -> Dictionary:
 		"spd": stats["spd"],
 		"skills": char_data.get("skills", []).duplicate(),
 		"feats": [],
+		# Legendary weapon this character carries ("" = none). No attunement, no class gate:
+		# any of the three fits any hand, so who carries what is purely the player's call.
+		"weapon": "",
 		# Zone this character deploys into at the start of every battle, set by the player from
 		# the pause menu ("Formación"). Persisted with the rest of the member dict by SaveManager.
 		"start_position": 0,

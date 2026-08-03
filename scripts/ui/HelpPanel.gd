@@ -329,13 +329,13 @@ func _body_progression() -> String:
 		"· Toda la party se cura por completo, HP y MP, en el momento de subir.\n" + \
 		"· Eliges un feat nuevo.\n\n" + \
 		_heading("HP máximo") + \
-		"A nivel 1 tienes el máximo de tu dado de golpe más tu modificador de Constitución. Por cada nivel que subes sumas el promedio de ese dado, más tu modificador de Constitución otra vez. No se tira: la subida es siempre la misma, así que nadie queda perjudicado por mala suerte.\n" + \
+		"A nivel 1 tienes el máximo de tu dado de golpe, más tu modificador de Constitución, más 4 de base. Por cada nivel que subes sumas el promedio de ese dado, más tu modificador de Constitución otra vez. No se tira: la subida es siempre la misma, así que nadie queda perjudicado por mala suerte.\n" + \
 		"Dado de golpe por clase, y lo que suma cada nivel:\n" + \
 		"· Bárbaro: d12 (+7 por nivel)\n" + \
 		"· Gunslinger: d10 (+6 por nivel)\n" + \
 		"· Monje, Clérigo y Warlock: d8 (+5 por nivel)\n" + \
 		"· Hechicera: d6 (+4 por nivel)\n" + \
-		"Con un d8 y Constitución +2, por ejemplo: 10 de HP a nivel 1, y 38 a nivel 5.\n\n" + \
+		"Con un d8 y Constitución +2, por ejemplo: 14 de HP a nivel 1, y 42 a nivel 5.\n\n" + \
 		_heading("Feats") + \
 		"Cada personaje empieza con 1 feat, elegido al armar la party, y gana 1 más por cada nivel que sube: %d en total al llegar al máximo.\n" % GameState.MAX_LEVEL + \
 		"Los de nivel 2, 3 y 4 salen del pool de 4 feats propio de cada personaje, y nunca te ofrece uno que ya tengas.\n" + \
