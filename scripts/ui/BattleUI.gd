@@ -2,6 +2,12 @@ extends CanvasLayer
 class_name BattleUI
 ## BattleUI — The complete battle UI
 
+## Preloaded by path rather than referenced by class_name: a class_name added in the same change
+## as the code using it is not in the editor's cache yet, and a stale cache shows up as
+## "Identifier not declared" at startup rather than as anything useful.
+const Theme_ = preload("res://scripts/ui/BattleTheme.gd")
+const BackdropScript = preload("res://scripts/ui/BattleBackdrop.gd")
+
 var _battle_controller = null
 
 # UI Nodes
@@ -94,19 +100,22 @@ func _build_ui() -> void:
 	root.set_anchors_preset(Control.PRESET_FULL_RECT)
 	add_child(root)
 
-	# Background
-	var bg = ColorRect.new()
-	bg.color = Color(0.02, 0.02, 0.08)
-	bg.set_anchors_preset(Control.PRESET_FULL_RECT)
-	root.add_child(bg)
-
 	# --- Battle field (top 60%) ---
 	var field = Control.new()
 	field.set_anchors_preset(Control.PRESET_TOP_WIDE)
-	field.custom_minimum_size = Vector2(0, 645)
-	field.size = Vector2(1920, 645)
+	# Height via the anchor offset, NOT `size`. TOP_WIDE already stretches the width to the
+	# parent, so assigning `size.x = 1920` on top of it stored a 1920px offset as well and the
+	# field came out 3840 wide — which is why anything anchored to its centre landed off-screen.
+	field.offset_bottom = 645
 	field.clip_contents = false
 	root.add_child(field)
+
+	# The cave itself, behind everything else in the field. Anchored from out here, before it is
+	# added, exactly like every other full-rect overlay in this function — a Control that sets its
+	# own anchors from _ready() misses the parent's first layout pass and stays 0x0.
+	var backdrop = BackdropScript.new()
+	backdrop.set_anchors_preset(Control.PRESET_FULL_RECT)
+	field.add_child(backdrop)
 
 	# Zone slabs go in first so they sit behind every sprite.
 	_zone_backdrop = Control.new()
@@ -177,40 +186,39 @@ func _build_ui() -> void:
 	_engagement_overlay.draw.connect(_draw_engagement_lines)
 	field.add_child(_engagement_overlay)
 
-	# --- Bottom panel (40%) ---
+	# --- Bottom bar (40%) — three separately framed panels on a dark plinth, rather than one slab
+	# with invisible seams: each one is a different job (who you are / what you do / what
+	# happened) and the frames say so.
 	var bottom = PanelContainer.new()
 	bottom.set_anchors_preset(Control.PRESET_BOTTOM_WIDE)
 	bottom.offset_top = -435
 	var bottom_style = StyleBoxFlat.new()
-	bottom_style.bg_color = Color(0.05, 0.05, 0.12, 0.95)
-	bottom_style.border_color = Color(0.5, 0.45, 0.2)
+	bottom_style.bg_color = Color(0.02, 0.02, 0.05, 0.98)
+	bottom_style.border_color = Theme_.GOLD_DIM
 	bottom_style.border_width_top = 2
+	bottom_style.set_content_margin_all(14)
 	bottom.add_theme_stylebox_override("panel", bottom_style)
 	root.add_child(bottom)
 
 	var bottom_hbox = HBoxContainer.new()
 	bottom_hbox.set_anchors_preset(Control.PRESET_FULL_RECT)
-	bottom_hbox.add_theme_constant_override("separation", 10)
+	bottom_hbox.add_theme_constant_override("separation", 14)
 	bottom.add_child(bottom_hbox)
 
-	# Left: Party stats
+	# Left: the party — portrait, name, and bars per member (see _build_party_row).
+	var stats_panel = PanelContainer.new()
+	stats_panel.custom_minimum_size = Vector2(660, 0)
+	stats_panel.add_theme_stylebox_override("panel", Theme_.panel(12))
+	bottom_hbox.add_child(stats_panel)
+
 	_party_stats_container = VBoxContainer.new()
-	_party_stats_container.custom_minimum_size = Vector2(650, 0)
-	var stats_margin = MarginContainer.new()
-	stats_margin.add_theme_constant_override("margin_left", 15)
-	stats_margin.add_theme_constant_override("margin_top", 10)
-	stats_margin.add_child(_party_stats_container)
-	bottom_hbox.add_child(stats_margin)
+	_party_stats_container.add_theme_constant_override("separation", 10)
+	stats_panel.add_child(_party_stats_container)
 
 	# Center: Action menu
 	var menu_panel = PanelContainer.new()
 	menu_panel.custom_minimum_size = Vector2(450, 0)
-	var menu_style = StyleBoxFlat.new()
-	menu_style.bg_color = Color(0.08, 0.08, 0.15)
-	menu_style.border_color = Color(0.4, 0.35, 0.15)
-	menu_style.set_border_width_all(1)
-	menu_style.set_content_margin_all(10)
-	menu_panel.add_theme_stylebox_override("panel", menu_style)
+	menu_panel.add_theme_stylebox_override("panel", Theme_.panel_active(12))
 	bottom_hbox.add_child(menu_panel)
 
 	_action_menu = VBoxContainer.new()
@@ -252,47 +260,54 @@ func _build_ui() -> void:
 	_premonition_menu.visible = false
 	menu_panel.add_child(_premonition_menu)
 
-	# Right: Log
+	# Right: the log, on parchment. It is the one panel that is read as prose rather than glanced
+	# at, and dark ink on a light page is easier for that than the reverse.
 	var log_panel = PanelContainer.new()
 	log_panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	var log_style = StyleBoxFlat.new()
-	log_style.bg_color = Color(0.03, 0.03, 0.08)
-	log_style.set_content_margin_all(8)
-	log_panel.add_theme_stylebox_override("panel", log_style)
+	log_panel.add_theme_stylebox_override("panel", Theme_.parchment(16))
 	bottom_hbox.add_child(log_panel)
 
 	_log_label = RichTextLabel.new()
 	_log_label.bbcode_enabled = false
 	_log_label.scroll_following = true
-	_log_label.add_theme_font_size_override("normal_font_size", 39)
+	_log_label.add_theme_font_size_override("normal_font_size", 34)
+	_log_label.add_theme_color_override("default_color", Theme_.INK)
 	log_panel.add_child(_log_label)
 
-	# Turn indicator
+	# Turn indicator, centred over the field on its own small plaque.
+	var turn_plaque = PanelContainer.new()
+	turn_plaque.set_anchors_preset(Control.PRESET_CENTER_TOP)
+	turn_plaque.offset_left = -300
+	turn_plaque.offset_right = 300
+	turn_plaque.offset_top = 10
+	var turn_style := Theme_.panel(8)
+	turn_style.bg_color = Color(0.03, 0.03, 0.07, 0.85)
+	turn_plaque.add_theme_stylebox_override("panel", turn_style)
+	field.add_child(turn_plaque)
+
 	_turn_indicator = Label.new()
-	_turn_indicator.position = Vector2(820, 15)
-	_turn_indicator.add_theme_font_size_override("font_size", 54)
-	_turn_indicator.add_theme_color_override("font_color", Color(1, 0.9, 0.4))
-	field.add_child(_turn_indicator)
-	
+	_turn_indicator.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_turn_indicator.add_theme_font_size_override("font_size", 46)
+	_turn_indicator.add_theme_color_override("font_color", Theme_.GOLD_TEXT)
+	_turn_indicator.add_theme_color_override("font_outline_color", Color(0, 0, 0, 1))
+	_turn_indicator.add_theme_constant_override("outline_size", 8)
+	turn_plaque.add_child(_turn_indicator)
+
 	# Initiative list (top-right)
 	var init_panel = PanelContainer.new()
 	init_panel.name = "InitiativePanel"
 	init_panel.set_anchors_preset(Control.PRESET_TOP_RIGHT)
-	init_panel.offset_left = -220
-	init_panel.offset_top = 10
-	init_panel.offset_right = -10
-	init_panel.offset_bottom = 200
-	var init_style = StyleBoxFlat.new()
-	init_style.bg_color = Color(0.05, 0.05, 0.12, 0.8)
-	init_style.border_color = Color(0.3, 0.3, 0.3)
-	init_style.set_border_width_all(1)
-	init_panel.add_theme_stylebox_override("panel", init_style)
+	init_panel.offset_left = -260
+	init_panel.offset_top = 14
+	init_panel.offset_right = -14
+	init_panel.offset_bottom = 250
+	init_panel.add_theme_stylebox_override("panel", Theme_.panel(10))
 	root.add_child(init_panel)
 	_initiative_panel = init_panel
-	
+
 	var init_vbox = VBoxContainer.new()
 	init_vbox.name = "InitiativeList"
-	init_vbox.add_theme_constant_override("separation", 2)
+	init_vbox.add_theme_constant_override("separation", 4)
 	init_panel.add_child(init_vbox)
 	_initiative_list = init_vbox
 
@@ -712,16 +727,30 @@ func _update_menu_highlight(container: VBoxContainer) -> void:
 		if child is Label:
 			# Keep greyed-out "Huir" in boss fights regardless of selection
 			var is_disabled = (container == _action_menu and option_index == MENU_OPTIONS.size() - 1 and _is_boss)
+			# The selected row gets a lit plate behind it as well as the colour change. The
+			# unselected rows get the SAME box with everything transparent, so selecting a row
+			# doesn't shift the whole list sideways as the plate's margins appear.
 			if is_disabled:
 				child.add_theme_color_override("font_color", Color(0.35, 0.35, 0.35))
-				child.text = "  " + child.text.strip_edges().trim_prefix("> ")
+				child.add_theme_stylebox_override("normal", Theme_.menu_idle())
+				child.text = MENU_CURSOR_BLANK + _row_text(child)
 			elif option_index == _selected_index:
-				child.add_theme_color_override("font_color", Color(1, 0.9, 0.3))
-				child.text = "> " + child.text.strip_edges().trim_prefix("> ")
+				child.add_theme_color_override("font_color", Theme_.GOLD_TEXT)
+				child.add_theme_stylebox_override("normal", Theme_.menu_selection())
+				child.text = MENU_CURSOR + _row_text(child)
 			else:
-				child.add_theme_color_override("font_color", Color(0.75, 0.75, 0.75))
-				child.text = "  " + child.text.strip_edges().trim_prefix("> ")
+				child.add_theme_color_override("font_color", Color(0.78, 0.78, 0.82))
+				child.add_theme_stylebox_override("normal", Theme_.menu_idle())
+				child.text = MENU_CURSOR_BLANK + _row_text(child)
 			option_index += 1
+
+## The cursor is written into the row's text rather than drawn as a separate node, so it can never
+## fall out of sync with which row is selected. The blank is the same width as the glyph.
+const MENU_CURSOR := "▸ "
+const MENU_CURSOR_BLANK := "   "
+
+func _row_text(label: Label) -> String:
+	return label.text.strip_edges().trim_prefix(MENU_CURSOR.strip_edges()).strip_edges().trim_prefix("> ")
 
 ## Live odds for the "Huir" action, with the formula spelled out so the number is checkable.
 func _flee_hint_text() -> String:
@@ -765,36 +794,126 @@ func _update_all_stats() -> void:
 	if _zone_backdrop:
 		_zone_backdrop.queue_redraw()
 
-	# Party stats (text in bottom panel)
+	# Party panel
 	_clear_container(_party_stats_container)
 	if _battle_controller:
 		for p in _battle_controller.get_party():
-			var label = Label.new()
-			var status = " [MUERTO]" if p["hp"] <= 0 else ""
-			var def_str = " [DEF]" if p.get("defending", false) else ""
-			var mp = p.get("mp", 0)
-			var max_mp = p.get("max_mp", 0)
-			label.text = "%s  HP:%d/%d  MP:%d/%d%s%s" % [
-				p["name"], p["hp"], p["max_hp"], mp, max_mp, def_str, status
-			]
-			label.add_theme_font_size_override("font_size", 39)
-			# Color logic:
-			# - Dead: dim gray
-			# - Current turn (only if a player char has the turn): yellow
-			# - HP <= 50%: red
-			# - Otherwise: white
-			if p["hp"] <= 0:
-				label.add_theme_color_override("font_color", Color(0.5, 0.3, 0.3))
-			elif _current_turn_is_player and p == _current_turn_combatant:
-				label.add_theme_color_override("font_color", Color(1.0, 0.9, 0.3))
-			elif float(p["hp"]) / maxf(float(p["max_hp"]), 1.0) <= 0.5:
-				label.add_theme_color_override("font_color", Color(0.9, 0.15, 0.1))
-			else:
-				label.add_theme_color_override("font_color", Color(1.0, 1.0, 1.0))
-			_party_stats_container.add_child(label)
+			_party_stats_container.add_child(_build_party_row(p))
 
 	# Update HP bars above sprites (enemies only)
 	_update_hp_bars()
+
+## One party member's card: portrait, name, HP figure, and a bar each for HP and MP.
+##
+## This used to be a single line of text ("Rosa  HP:3/13  MP:14/14"), which meant reading four
+## numbers to answer "who is about to die". The bars answer that at a glance and the colour
+## carries the warning — green, amber under half, red under a quarter — so the digits are there
+## for when the exact number matters rather than for the routine check.
+const PORTRAIT_SIZE := 74.0
+const BAR_WIDTH := 300.0
+const BAR_HEIGHT := 16.0
+
+func _build_party_row(p: Dictionary) -> Control:
+	var alive: bool = int(p.get("hp", 0)) > 0
+	var is_turn: bool = _current_turn_is_player and str(p.get("id", "")) == str(_current_turn_combatant.get("id", ""))
+
+	var row = HBoxContainer.new()
+	row.add_theme_constant_override("separation", 12)
+
+	var portrait = TextureRect.new()
+	portrait.custom_minimum_size = Vector2(PORTRAIT_SIZE, PORTRAIT_SIZE)
+	portrait.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	portrait.texture = CharacterSprites.get_portrait_texture(p)
+	portrait.modulate = Color(1, 1, 1) if alive else Color(0.35, 0.35, 0.35)
+	row.add_child(portrait)
+
+	var col = VBoxContainer.new()
+	col.add_theme_constant_override("separation", 3)
+	col.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	row.add_child(col)
+
+	var header = HBoxContainer.new()
+	header.add_theme_constant_override("separation", 10)
+	col.add_child(header)
+
+	var name_label = Label.new()
+	name_label.text = str(p.get("name", "?"))
+	name_label.add_theme_font_size_override("font_size", 32)
+	if not alive:
+		name_label.add_theme_color_override("font_color", Theme_.TEXT_DEAD)
+	elif is_turn:
+		name_label.add_theme_color_override("font_color", TURN_NAME_COLOR)
+	else:
+		name_label.add_theme_color_override("font_color", Theme_.TEXT)
+	header.add_child(name_label)
+
+	# Whatever is true about this member right now, in the space the old line spent on "MP:14/14".
+	var tags: Array[String] = []
+	if not alive:
+		tags.append("CAIDO")
+	if p.get("defending", false):
+		tags.append("DEF")
+	if int(p.get("poison_damage", 0)) > 0:
+		tags.append("VENENO")
+	if int(p.get("burn_damage", 0)) > 0:
+		tags.append("QUEMADURA")
+	if int(p.get("stunned_turns", 0)) > 0:
+		tags.append("ATURDIDO")
+	if not tags.is_empty():
+		var tag_label = Label.new()
+		tag_label.text = "  ".join(tags)
+		tag_label.add_theme_font_size_override("font_size", 22)
+		tag_label.add_theme_color_override("font_color", Theme_.HP_HURT if alive else Theme_.TEXT_DEAD)
+		header.add_child(tag_label)
+
+	var hp: int = int(p.get("hp", 0))
+	var max_hp: int = maxi(int(p.get("max_hp", 1)), 1)
+	var mp: int = int(p.get("mp", 0))
+	var max_mp: int = int(p.get("max_mp", 0))
+
+	var hp_frac := float(hp) / float(max_hp)
+	col.add_child(_build_stat_bar("HP", hp, max_hp, hp_frac, Theme_.hp_color(hp_frac)))
+	if max_mp > 0:
+		col.add_child(_build_stat_bar("MP", mp, max_mp, float(mp) / float(max_mp), Theme_.MP_COLOR))
+
+	return row
+
+## A labelled bar. The fill is a plain ColorRect sized by fraction rather than a ProgressBar,
+## to match how the enemy HP bars above the sprites are already drawn.
+func _build_stat_bar(tag: String, value: int, maximum: int, fraction: float, fill: Color) -> Control:
+	var line = HBoxContainer.new()
+	line.add_theme_constant_override("separation", 8)
+
+	var tag_label = Label.new()
+	tag_label.text = tag
+	tag_label.custom_minimum_size = Vector2(46, 0)
+	tag_label.add_theme_font_size_override("font_size", 21)
+	tag_label.add_theme_color_override("font_color", Theme_.TEXT_DIM)
+	line.add_child(tag_label)
+
+	var track = PanelContainer.new()
+	track.custom_minimum_size = Vector2(BAR_WIDTH, BAR_HEIGHT)
+	var track_style := StyleBoxFlat.new()
+	track_style.bg_color = Theme_.BAR_TRACK
+	track_style.border_color = Color(0, 0, 0, 0.6)
+	track_style.set_border_width_all(1)
+	track_style.set_corner_radius_all(4)
+	track.add_theme_stylebox_override("panel", track_style)
+	line.add_child(track)
+
+	var bar = ColorRect.new()
+	bar.color = fill
+	bar.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
+	bar.custom_minimum_size = Vector2(BAR_WIDTH * clampf(fraction, 0.0, 1.0), BAR_HEIGHT)
+	track.add_child(bar)
+
+	var value_label = Label.new()
+	value_label.text = "%d/%d" % [value, maximum]
+	value_label.add_theme_font_size_override("font_size", 21)
+	value_label.add_theme_color_override("font_color", Theme_.TEXT_DIM)
+	line.add_child(value_label)
+
+	return line
 
 func _update_initiative_list() -> void:
 	if not _battle_controller:
@@ -814,29 +933,36 @@ func _update_initiative_list() -> void:
 	var current_id = _current_turn_combatant.get("id", "")
 	
 	var title = Label.new()
-	title.text = "Iniciativa"
+	title.text = "INICIATIVA"
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	title.add_theme_font_size_override("font_size", 14)
-	title.add_theme_color_override("font_color", Color(0.6, 0.6, 0.6))
+	title.add_theme_font_size_override("font_size", 20)
+	title.add_theme_color_override("font_color", Theme_.GOLD_TEXT)
 	_initiative_list.add_child(title)
-	
+
+	var rule = ColorRect.new()
+	rule.color = Theme_.GOLD_DIM
+	rule.custom_minimum_size = Vector2(0, 2)
+	_initiative_list.add_child(rule)
+
 	for entry in queue:
 		var combatant = entry.get("combatant", {})
 		if combatant.get("hp", 0) <= 0:
 			continue
-		
+
 		var name = combatant.get("name", "???")
 		var is_current = combatant.get("id", "") == current_id
-		
+
 		var label = Label.new()
-		label.text = name
-		label.add_theme_font_size_override("font_size", 12)
+		# The one acting gets the cursor here too, so the panel and the battlefield agree.
+		label.text = (MENU_CURSOR if is_current else MENU_CURSOR_BLANK) + str(name)
+		label.add_theme_font_size_override("font_size", 22)
 		if is_current:
-			label.add_theme_color_override("font_color", Color(1, 0.9, 0.2))
+			label.add_theme_color_override("font_color", Theme_.GOLD_TEXT)
+			label.add_theme_stylebox_override("normal", Theme_.menu_selection())
 		elif combatant.get("is_player", false):
-			label.add_theme_color_override("font_color", Color(0.4, 0.7, 1.0))
+			label.add_theme_color_override("font_color", Color(0.55, 0.78, 1.0))
 		else:
-			label.add_theme_color_override("font_color", Color(0.9, 0.5, 0.5))
+			label.add_theme_color_override("font_color", Color(0.95, 0.55, 0.5))
 		_initiative_list.add_child(label)
 
 ## Greys out whoever is down, on BOTH sides — enemies used to keep their living tint forever,
@@ -882,6 +1008,7 @@ func _draw_zone_backdrop() -> void:
 	if _zone_backdrop == null:
 		return
 	var to_local := _zone_backdrop.get_global_transform().affine_inverse()
+	var size_of_field: float = _zone_backdrop.size.y
 	for side in [_position_zone_boxes, _enemy_zone_boxes]:
 		for i in range(side.size()):
 			var box: Control = side[i]
@@ -894,10 +1021,13 @@ func _draw_zone_backdrop() -> void:
 			# Columns collapse to nothing before the first layout pass; skip until they have size.
 			if r.size.x < 1.0:
 				continue
+			# Grown downward as well as outward: over a lit floor the bands need to read as a
+			# standing area, not as a tight box cropped to whatever sprites happen to be in it.
 			var rect := Rect2(to_local * r.position, r.size)
+			rect.size.y = maxf(rect.size.y, size_of_field * 0.62 - rect.position.y)
 			var front := i == Combatant.POS_FRONT
-			var fill := Color(0.42, 0.24, 0.14, 0.30) if front else Color(0.14, 0.15, 0.22, 0.30)
-			var edge := Color(0.75, 0.45, 0.25, 0.35) if front else Color(0.35, 0.37, 0.48, 0.25)
+			var fill := Theme_.ZONE_FRONT_FILL if front else Theme_.ZONE_BACK_FILL
+			var edge := Theme_.ZONE_FRONT_EDGE if front else Theme_.ZONE_BACK_EDGE
 			_zone_backdrop.draw_rect(rect, fill, true)
 			_zone_backdrop.draw_rect(rect, edge, false, 2.0)
 
@@ -928,7 +1058,6 @@ func _draw_engagement_lines() -> void:
 	all.append_array(_battle_controller.get_party())
 	all.append_array(_battle_controller.get_enemies())
 
-	var line_color := Color(0.95, 0.45, 0.25, 0.75)
 	var to_local := _engagement_overlay.get_global_transform().affine_inverse()
 	for c in all:
 		if c.get("hp", 0) <= 0:
@@ -944,9 +1073,20 @@ func _draw_engagement_lines() -> void:
 			continue
 		var a: Vector2 = to_local * from_node.get_global_rect().get_center()
 		var b: Vector2 = to_local * to_node.get_global_rect().get_center()
-		_engagement_overlay.draw_line(a, b, line_color, 3.0, true)
-		_engagement_overlay.draw_circle(a, 6.0, line_color)
-		_engagement_overlay.draw_circle(b, 6.0, line_color)
+		# Three passes, wide-and-faint to thin-and-bright, so the line reads as a glowing tether
+		# rather than as a flat 3px stroke laid over the art. Cheaper and steadier than a shader,
+		# and it survives whatever ends up behind it.
+		for pass_i in range(GLOW_PASSES.size()):
+			var spec: Array = GLOW_PASSES[pass_i]
+			_engagement_overlay.draw_line(a, b, Color(ENGAGE_COLOR, float(spec[1])), float(spec[0]), true)
+		_engagement_overlay.draw_circle(a, 11.0, Color(ENGAGE_COLOR, 0.22))
+		_engagement_overlay.draw_circle(b, 11.0, Color(ENGAGE_COLOR, 0.22))
+		_engagement_overlay.draw_circle(a, 5.0, Color(ENGAGE_COLOR, 0.95))
+		_engagement_overlay.draw_circle(b, 5.0, Color(ENGAGE_COLOR, 0.95))
+
+## width, alpha — outermost first.
+const ENGAGE_COLOR := Color(1.0, 0.62, 0.32)
+const GLOW_PASSES := [[13.0, 0.13], [7.0, 0.28], [2.5, 0.95]]
 
 ## Reparents each party member's sprite vbox into the position-zone box matching their CURRENT
 ## position, whenever it changed since the last refresh (e.g. after a "move" action) — cheap
@@ -1104,9 +1244,46 @@ func setup_sprites(party: Array, enemies: Array) -> void:
 		_start_idle_bob(visual)
 
 func _on_damage_dealt(target: Dictionary, amount: int, is_heal: bool) -> void:
+	_spawn_impact_burst(target, is_heal)
 	_spawn_floating_number(target, amount, is_heal)
 	_flash_sprite(target, is_heal)
 	AudioManager.play_sfx("heal" if is_heal else "attack_hit")
+
+## A starburst on the struck sprite, thrown in the same overlay as the damage numbers and gone in
+## a quarter of a second. It exists to give the hit a moment of contact — the number tells you how
+## much, the flash tells you who, and neither tells you *when* on its own.
+const BURST_SPIKES := 9
+const BURST_LIFETIME := 0.26
+
+func _spawn_impact_burst(target: Dictionary, is_heal: bool) -> void:
+	if not _float_overlay:
+		return
+	var anchor: Control = _sprite_visual_of(target)
+	if anchor == null or not is_instance_valid(anchor):
+		return
+
+	var burst = Control.new()
+	burst.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var tint := Color(0.45, 1.0, 0.55) if is_heal else Color(1.0, 0.72, 0.25)
+	var seed_angle := randf() * TAU
+	burst.draw.connect(func():
+		var pts: PackedVector2Array = []
+		for i in range(BURST_SPIKES * 2):
+			var r := 58.0 if i % 2 == 0 else 22.0
+			var a := seed_angle + TAU * float(i) / float(BURST_SPIKES * 2)
+			pts.append(Vector2(cos(a) * r, sin(a) * r))
+		burst.draw_colored_polygon(pts, Color(tint, 0.75))
+	)
+	_float_overlay.add_child(burst)
+
+	var to_local := _float_overlay.get_global_transform().affine_inverse()
+	burst.position = to_local * anchor.get_global_rect().get_center()
+	burst.scale = Vector2(0.35, 0.35)
+
+	var tween := burst.create_tween()
+	tween.tween_property(burst, "scale", Vector2(1.25, 1.25), BURST_LIFETIME).set_ease(Tween.EASE_OUT)
+	tween.parallel().tween_property(burst, "modulate:a", 0.0, BURST_LIFETIME).set_ease(Tween.EASE_IN)
+	tween.tween_callback(burst.queue_free)
 
 ## Sprite lookup shared by every bit of combat juice below. Reads the map filled in by
 ## setup_sprites rather than taking the vbox's first child: an enemy cell leads with its HP bar,
