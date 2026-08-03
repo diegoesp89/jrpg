@@ -221,7 +221,9 @@ func _show_equipment() -> void:
 		return
 	for m in GameState.party:
 		var wid := str(m.get("weapon", ""))
-		var wname := DataLoader.get_item(wid).get("name", "") if wid != "" else "-"
+		# Explicitly typed: Dictionary.get() returns Variant, and inferring from it is a parse
+		# error under this project's warnings-as-errors setting.
+		var wname: String = str(DataLoader.get_item(wid).get("name", "")) if wid != "" else "-"
 		_add_row("%s — %s" % [m["name"], wname], 24)
 	_add_row("Z cambia el arma del personaje marcado. Cada arma la lleva uno solo.", 16)
 	_selected_index = 0
