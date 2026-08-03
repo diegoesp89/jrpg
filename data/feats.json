@@ -2,7 +2,7 @@
   "tough": {
     "id": "tough",
     "name": "Resistente",
-    "description": "Tu Máximo de HP aumenta un 50% de forma permanente (por ejemplo, de 20 a 30). El aumento se calcula una sola vez, al crear el personaje, y se mantiene durante toda la aventura.",
+    "description": "Tu Máximo de HP aumenta un 50% de forma permanente. El bono se recalcula cada vez que subes de nivel, así que crece contigo en lugar de quedarse fijo en el valor que tenías al ganarlo.",
     "effect": "hp_bonus_pct",
     "value": 50
   },
@@ -22,7 +22,7 @@
   "heavily_armored": {
     "id": "heavily_armored",
     "name": "Fuertemente Armada",
-    "description": "Tu Clase de Armadura (CA) aumenta permanentemente en +2. Esto hace que los enemigos fallen sus ataques contra ti con más frecuencia. Se calcula una sola vez al crear el personaje.",
+    "description": "Tu Clase de Armadura (CA) aumenta permanentemente en +2 desde el momento en que ganas el feat. Esto hace que los enemigos fallen sus ataques contra ti con más frecuencia.",
     "effect": "ca_bonus_flat",
     "value": 2
   },
@@ -149,7 +149,7 @@
   "pacto_de_sangre": {
     "id": "pacto_de_sangre",
     "name": "Pacto de Sangre",
-    "description": "Tu patrón cobra en carne y devuelve en vigor: tu Máximo de HP aumenta un 25% de forma permanente. Se calcula una sola vez, al ganar el feat.",
+    "description": "Tu patrón cobra en carne y devuelve en vigor: tu Máximo de HP aumenta un 25% de forma permanente. El bono se recalcula cada vez que subes de nivel, así que crece contigo.",
     "effect": "hp_bonus_pct",
     "value": 25
   },

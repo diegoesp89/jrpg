@@ -7,6 +7,10 @@ signal action_performed(log_text: String)
 signal turn_changed(combatant: Dictionary, is_player: bool)
 signal hp_updated()
 signal damage_dealt(target: Dictionary, amount: int, is_heal: bool)
+## Fired the moment an attack resolves, so the UI can throw the attacker's sprite forward. Purely
+## presentational — nothing in the combat rules listens to it. Deliberately not emitted for the
+## Lucky re-roll, which is a second roll on a swing that was already announced.
+signal attack_started(attacker: Dictionary)
 
 var _party: Array[Dictionary] = []
 var _enemies: Array[Dictionary] = []
@@ -262,6 +266,7 @@ func _try_shock_wave(attacker: Dictionary) -> bool:
 func _opportunity_attack(attacker: Dictionary, target: Dictionary) -> void:
 	if attacker.get("hp", 0) <= 0 or target.get("hp", 0) <= 0:
 		return
+	attack_started.emit(attacker)
 	var result = Combatant.attack_roll(attacker, target) if attacker.get("is_player", false) \
 		else Combatant.enemy_attack(attacker, target)
 	if result.hit:
@@ -378,6 +383,7 @@ func _execute_enemy_turn(enemy: Dictionary) -> void:
 				_next_turn()
 				return
 			
+			attack_started.emit(enemy)
 			var result = Combatant.enemy_attack(enemy, target, _party)
 			
 			if result.hit:
@@ -437,6 +443,7 @@ func _execute_enemy_turn(enemy: Dictionary) -> void:
 					damage_dealt.emit(target, heal, true)
 					action_performed.emit("%s usa %s en %s: %d(poder)+%d(mod) = %d HP curados!" % [enemy["name"], skill_name, target["name"], skill_power, stat_mod, heal])
 				elif skill.get("effect_type", "") == "physical":
+					attack_started.emit(enemy)
 					var result = Combatant.attack_roll(enemy, target, false, 0, _party)
 					if result.hit:
 						var dmg = Combatant.apply_position_modifiers(result.damage + skill_power, enemy, target)
@@ -488,6 +495,7 @@ func player_action(action: Dictionary) -> void:
 
 			var use_premonition = action.get("use_premonition", false)
 			var forced_roll = current.get("premonition_roll", 0) if use_premonition else 0
+			attack_started.emit(current)
 			var result = Combatant.attack_roll(current, target, false, forced_roll, _enemies)
 			if use_premonition and current.get("class", "") == "Hechicera":
 				current["premonition_roll"] = 20 if Combatant.has_feat_effect(current, "premonition_always_max") \
@@ -565,6 +573,7 @@ func player_action(action: Dictionary) -> void:
 			else:
 				var target = action.get("target", {})
 				if effect_type == "physical":
+					attack_started.emit(current)
 					var result = Combatant.attack_roll(current, target, false, 0, _enemies)
 					if result.hit:
 						var dmg = Combatant.apply_position_modifiers(result.damage + power, current, target)
@@ -642,6 +651,7 @@ func _apply_alert_feat() -> void:
 		if alive_enemies.is_empty():
 			return
 		var target = alive_enemies[randi_range(0, alive_enemies.size() - 1)]
+		attack_started.emit(p)
 		var result = Combatant.attack_roll(p, target, false, 0, _enemies)
 		if result.hit:
 			var final_dmg = Combatant.apply_position_modifiers(result.damage, p, target)
@@ -656,6 +666,7 @@ func _apply_alert_feat() -> void:
 func _do_reckless(attacker: Dictionary, target: Dictionary) -> void:
 	if target.is_empty():
 		return
+	attack_started.emit(attacker)
 	var result = Combatant.attack_roll(attacker, target, true, 0, _enemies)
 	if result.hit:
 		var final_dmg = Combatant.apply_position_modifiers(result.damage, attacker, target)
@@ -676,6 +687,7 @@ func _do_flurry(attacker: Dictionary, target: Dictionary) -> void:
 	for i in range(hits):
 		if target.get("hp", 0) <= 0:
 			break
+		attack_started.emit(attacker)
 		var result = Combatant.attack_roll(attacker, target, false, 0, _enemies)
 		if result.hit:
 			var final_dmg = Combatant.apply_position_modifiers(result.damage, attacker, target)
@@ -690,6 +702,7 @@ func _do_flurry(attacker: Dictionary, target: Dictionary) -> void:
 func _do_recoil(attacker: Dictionary, target: Dictionary) -> void:
 	if target.is_empty():
 		return
+	attack_started.emit(attacker)
 	var result = Combatant.attack_roll(attacker, target, false, 0, _enemies)
 	if not result.hit:
 		action_performed.emit("%s (Retroceso): %d(1d20)+%d = %d vs %d CA -> %s" % [attacker["name"], result.roll, result.bonus, result.total, target.get("ca", 10), result.message])
@@ -723,6 +736,7 @@ func _do_recoil(attacker: Dictionary, target: Dictionary) -> void:
 func _do_shadow(attacker: Dictionary, target: Dictionary) -> void:
 	if target.is_empty():
 		return
+	attack_started.emit(attacker)
 	var result = Combatant.attack_roll(attacker, target, true, 0, _enemies)
 	if result.hit:
 		var final_dmg = Combatant.apply_position_modifiers(result.damage, attacker, target)

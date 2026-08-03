@@ -70,6 +70,7 @@ func setup(battle_ctrl) -> void:
 	_battle_controller.hp_updated.connect(_on_hp_updated)
 	_battle_controller.battle_ended.connect(_on_battle_ended)
 	_battle_controller.damage_dealt.connect(_on_damage_dealt)
+	_battle_controller.attack_started.connect(play_attack_lunge)
 
 func _build_ui() -> void:
 	var root = Control.new()
@@ -972,40 +973,106 @@ func setup_sprites(party: Array, enemies: Array) -> void:
 
 func _on_damage_dealt(target: Dictionary, amount: int, is_heal: bool) -> void:
 	_spawn_floating_number(target, amount, is_heal)
+	_flash_sprite(target, is_heal)
 	AudioManager.play_sfx("heal" if is_heal else "attack_hit")
+
+## Sprite lookup shared by every bit of combat juice below. Returns the TextureRect (or the
+## ColorRect fallback used for enemies with no art) rather than the whole vbox, so tinting the
+## sprite doesn't wash out the name label under it.
+func _sprite_visual_of(combatant: Dictionary) -> Control:
+	var vbox = _combatant_sprite_map.get(combatant.get("id", ""))
+	if vbox == null or not is_instance_valid(vbox) or vbox.get_child_count() == 0:
+		return null
+	var visual = vbox.get_child(0)
+	return visual if visual is Control else null
+
+## A short colour punch on whoever just got hit — red for damage, green for healing. Tweens back
+## to the sprite's resting tint rather than to white, so a downed combatant stays greyed out.
+func _flash_sprite(target: Dictionary, is_heal: bool) -> void:
+	var visual := _sprite_visual_of(target)
+	if visual == null:
+		return
+	var resting := Color(1, 1, 1) if target.get("hp", 0) > 0 else Color(0.3, 0.3, 0.3)
+	var flash := Color(0.35, 1.0, 0.45) if is_heal else Color(1.0, 0.25, 0.2)
+	visual.modulate = flash
+	var tween := visual.create_tween()
+	tween.tween_property(visual, "modulate", resting, 0.28).set_ease(Tween.EASE_OUT)
+
+## The little lunge an attacker makes toward its target. Party sprites sit on the left and enemies
+## on the right, so "forward" is simply a sign flip — no need to read anyone's real position.
+## Uses the sprite's own offset via `position`, and always returns to zero, so it can never
+## desync the zone containers that own the layout.
+const LUNGE_DISTANCE := 34.0
+
+func play_attack_lunge(attacker: Dictionary) -> void:
+	var visual := _sprite_visual_of(attacker)
+	if visual == null:
+		return
+	var forward := LUNGE_DISTANCE if attacker.get("is_player", false) else -LUNGE_DISTANCE
+	var home := Vector2.ZERO
+	var tween := visual.create_tween()
+	tween.tween_property(visual, "position", home + Vector2(forward, 0.0), 0.09).set_ease(Tween.EASE_OUT)
+	tween.tween_property(visual, "position", home, 0.16).set_ease(Tween.EASE_IN).set_trans(Tween.TRANS_BACK)
+
+## Floating combat numbers. Three things were wrong with the previous version and each one on its
+## own was enough to make them hard to notice:
+##
+##   1. The label spawned at (0,0) and only jumped onto the target a frame later, because the
+##      position was computed after an `await`. Now it is hidden until placed.
+##   2. It was anchored above the sprite BOX, which for party members is a tall zone-column cell —
+##      so the number drifted into empty space instead of over the character. Now it uses the
+##      sprite visual itself and starts on top of it.
+##   3. Plain white text on a dark battlefield with no outline, 48px, gone in 0.8s. Now it is
+##      bigger, outlined, colour-coded, pops on arrival, and holds before fading.
+const FLOAT_RISE := 90.0
+const FLOAT_LIFETIME := 1.1
 
 func _spawn_floating_number(target: Dictionary, amount: int, is_heal: bool) -> void:
 	if not _float_overlay or amount <= 0:
 		return
-	var target_id = target.get("id", "")
-	var vbox = _combatant_sprite_map.get(target_id)
-	if not vbox or not is_instance_valid(vbox):
+	var anchor: Control = _sprite_visual_of(target)
+	if anchor == null:
+		anchor = _combatant_sprite_map.get(target.get("id", ""))
+	if anchor == null or not is_instance_valid(anchor):
 		return
 
 	var label = Label.new()
-	label.text = str(amount) if not is_heal else "+" + str(amount)
-	label.add_theme_font_size_override("font_size", 48)
-	if is_heal:
-		label.add_theme_color_override("font_color", Color(0.2, 1.0, 0.3))
-	else:
-		label.add_theme_color_override("font_color", Color(1.0, 1.0, 1.0))
+	label.text = ("+" + str(amount)) if is_heal else str(amount)
+	label.add_theme_font_size_override("font_size", 64)
+	# Damage the player takes reads red, damage they deal reads gold, healing reads green — the
+	# colour says whose problem it is before the number is even read.
+	var tint := Color(0.35, 1.0, 0.4)
+	if not is_heal:
+		tint = Color(1.0, 0.35, 0.3) if target.get("is_player", false) else Color(1.0, 0.85, 0.25)
+	label.add_theme_color_override("font_color", tint)
+	# A hard outline is what makes it readable over sprites of any colour.
+	label.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.9))
+	label.add_theme_constant_override("outline_size", 10)
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-
+	label.visible = false  # stays hidden until it has a real position
 	_float_overlay.add_child(label)
-	# Wait one frame so layout resolves and we can read positions
-	await label.get_tree().process_frame
-	if not is_instance_valid(label):
-		return
-	var vbox_center_x = vbox.global_position.x + vbox.size.x * 0.5
-	var vbox_top_y = vbox.global_position.y
-	label.position = Vector2(vbox_center_x - 30, vbox_top_y - 20)
 
-	var start_y = label.position.y
-	var tween = label.create_tween()
-	tween.set_parallel(true)
-	tween.tween_property(label, "position:y", start_y - 50.0, 0.8).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_QUAD)
-	tween.tween_property(label, "modulate:a", 0.0, 0.8).set_ease(Tween.EASE_IN).set_trans(Tween.TRANS_QUAD)
+	# One frame so the label reports a real size and the sprite's layout has settled.
+	await label.get_tree().process_frame
+	if not is_instance_valid(label) or not is_instance_valid(anchor):
+		return
+
+	var rect := anchor.get_global_rect()
+	var to_local := _float_overlay.get_global_transform().affine_inverse()
+	var start := to_local * Vector2(rect.get_center().x, rect.position.y + rect.size.y * 0.35)
+	label.position = start - label.size * 0.5
+	label.pivot_offset = label.size * 0.5
+	label.scale = Vector2(0.4, 0.4)
+	label.visible = true
+
+	var tween := label.create_tween()
+	# Pop in, drift up the whole time, then fade only at the end so it is legible while it rises.
+	tween.tween_property(label, "scale", Vector2.ONE, 0.16).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_BACK)
+	tween.parallel().tween_property(label, "position:y", label.position.y - FLOAT_RISE, FLOAT_LIFETIME) \
+		.set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_QUAD)
+	tween.parallel().tween_property(label, "modulate:a", 0.0, FLOAT_LIFETIME * 0.4) \
+		.set_delay(FLOAT_LIFETIME * 0.6).set_ease(Tween.EASE_IN)
 	tween.chain().tween_callback(label.queue_free)
 
 func _clear_container(container) -> void:

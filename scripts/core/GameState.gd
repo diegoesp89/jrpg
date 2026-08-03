@@ -394,11 +394,16 @@ func prepare_combat(encounter_id: String, scene_path: String, position: Vector3,
 	current_intro_message = intro_message
 	current_death_message = death_message
 
+## Writes the battle's end state back onto the persistent party. MP used to be dropped here even
+## though the controller has always sent it, which quietly refilled everyone's MP after every
+## fight — that made spell costs matter only inside a single battle, and made both the level-up
+## restore and the rest zones pointless. MP is meant to be a dungeon-long resource.
 func restore_party_from_combat(party_state: Array) -> void:
 	for ps in party_state:
 		var m = get_party_member(ps["id"])
 		if m.size() > 0:
 			m["hp"] = ps["hp"]
+			m["mp"] = int(ps.get("mp", m.get("mp", 0)))
 
 # --- Full reset (used on defeat to restart cleanly) ---
 func reset() -> void:
