@@ -1050,7 +1050,15 @@ const IDLE_BOB := 4.0
 func _start_idle_bob(visual: Control) -> void:
 	if visual == null:
 		return
+	# Kill any bob already running on this sprite. Reseating a combatant calls back in here, and
+	# two looping tweens writing the same property fight for it forever. has_meta() first because
+	# get_meta(name, null) cannot express "no default" — it errors on a missing key regardless.
+	if visual.has_meta("bob_tween"):
+		var running = visual.get_meta("bob_tween")
+		if running != null and is_instance_valid(running):
+			running.kill()
 	var tween := visual.create_tween().set_loops()
+	visual.set_meta("bob_tween", tween)
 	# A random phase keeps the whole party from bobbing in lockstep.
 	var period := randf_range(1.4, 2.0)
 	tween.tween_property(visual, "position:y", -IDLE_BOB, period * 0.5) \
@@ -1076,14 +1084,19 @@ func _draw_engagement_lines() -> void:
 		var locked: String = Combatant.engaged_target_id(c)
 		if locked == "":
 			continue
-		var from_node = _combatant_sprite_map.get(c.get("id", ""))
-		var to_node = _combatant_sprite_map.get(locked)
+		# Anchored to the artwork, not to the whole cell: a party cell is [sprite, name] and an
+		# enemy cell is [hp bar, sprite, name], so their centres sit at different heights and the
+		# tether would slant for reasons that have nothing to do with the fight.
+		var from_node = _combatant_visual_map.get(c.get("id", ""))
+		var to_node = _combatant_visual_map.get(locked)
 		if from_node == null or to_node == null:
 			continue
 		if not is_instance_valid(from_node) or not is_instance_valid(to_node):
 			continue
-		var a: Vector2 = to_local * from_node.get_global_rect().get_center()
-		var b: Vector2 = to_local * to_node.get_global_rect().get_center()
+		var ra := _art_rect(from_node)
+		var rb := _art_rect(to_node)
+		var a: Vector2 = to_local * _edge_anchor(ra, rb.get_center())
+		var b: Vector2 = to_local * _edge_anchor(rb, ra.get_center())
 		# Three passes, wide-and-faint to thin-and-bright, so the line reads as a glowing tether
 		# rather than as a flat 3px stroke laid over the art. Cheaper and steadier than a shader,
 		# and it survives whatever ends up behind it.
@@ -1098,6 +1111,37 @@ func _draw_engagement_lines() -> void:
 ## width, alpha — outermost first.
 const ENGAGE_COLOR := Color(1.0, 0.62, 0.32)
 const GLOW_PASSES := [[13.0, 0.13], [7.0, 0.28], [2.5, 0.95]]
+## How far past the sprite's edge the tether's endpoint dot sits.
+const ENGAGE_MARGIN := 7.0
+
+## The rectangle the artwork actually occupies, which is NOT the TextureRect's rectangle: the
+## sprites use STRETCH_KEEP_ASPECT_CENTERED inside a cell as wide as the zone column, so a 64px
+## character sits in a 150px box with empty space either side. Anchoring to the box would push the
+## tether's endpoint far out into that emptiness and read as unattached.
+func _art_rect(visual: Control) -> Rect2:
+	var rect := visual.get_global_rect()
+	var art: Vector2 = visual.custom_minimum_size
+	if art.x <= 0.0 or art.y <= 0.0:
+		return rect
+	art.x = minf(art.x, rect.size.x)
+	art.y = minf(art.y, rect.size.y)
+	return Rect2(rect.get_center() - art * 0.5, art)
+
+## Where the tether meets a combatant: the point where the line leaves the sprite's own rectangle,
+## plus a small margin — rather than the sprite's centre, where the dot sat on top of the character
+## and hid it. Solved as a ray/box exit so it is correct at any angle, not just for the roughly
+## horizontal lines the front ranks happen to produce.
+func _edge_anchor(rect: Rect2, toward: Vector2) -> Vector2:
+	var centre := rect.get_center()
+	var delta := toward - centre
+	if delta.length_squared() < 0.01:
+		return centre
+	var dir := delta.normalized()
+	var t_x: float = (rect.size.x * 0.5) / absf(dir.x) if absf(dir.x) > 0.0001 else INF
+	var t_y: float = (rect.size.y * 0.5) / absf(dir.y) if absf(dir.y) > 0.0001 else INF
+	# Never overshoot past the midpoint, or two adjacent combatants would cross their own dots.
+	var t: float = minf(minf(t_x, t_y) + ENGAGE_MARGIN, delta.length() * 0.45)
+	return centre + dir * t
 
 ## Reparents each party member's sprite vbox into the position-zone box matching their CURRENT
 ## position, whenever it changed since the last refresh (e.g. after a "move" action) — cheap
@@ -1122,7 +1166,10 @@ func _reseat_side(combatants: Array, zone_boxes: Array) -> void:
 		if vbox.get_parent() != target_box:
 			vbox.get_parent().remove_child(vbox)
 			target_box.add_child(vbox)
-			_start_idle_bob(vbox)
+			# The bob belongs to the sprite, not the cell. Restarting it on the cell here — as this
+			# did — tweened a node the VBoxContainer owns the position of, and left the sprite's own
+			# bob running underneath, so a repositioned combatant ended up with two.
+			_start_idle_bob(_sprite_visual_of(c))
 
 func _update_hp_bars() -> void:
 	for entry in _hp_bars:
