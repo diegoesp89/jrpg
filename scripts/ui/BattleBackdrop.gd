@@ -11,8 +11,21 @@ extends Control
 ## Sprites stand on this, so the middle of the corridor is deliberately the darkest, flattest part
 ## of the frame — the light is pushed out to the walls, where nothing has to stay readable.
 ##
-## If real painted art turns up later, the swap is to drop a TextureRect in place of the corridor
-## layer and keep the vignette over it.
+## When a painted background IS available it is used instead, and the drawn corridor becomes the
+## fallback: delete the image and the battle screen still has somewhere to happen rather than
+## opening onto a black void. That is the point of keeping both.
+
+## Painted background, if present. See assets/sprites/backgrounds/CREDITS.txt for provenance.
+const BACKGROUND_PATH := "res://assets/sprites/backgrounds/battle_dungeon.png"
+## Which horizontal band of the source art survives the crop: 0 keeps the top, 1 the bottom.
+## The battlefield is far wider than it is tall (1920x645, ~2.98:1) while background art is
+## usually 3:2 or 16:9, so a centred crop is a real choice, not a formality — it decides whether
+## you see the ceiling or the floor.
+const BACKGROUND_FOCUS := 0.52
+## Painted art is lit for its own sake, not for 32px sprites standing on it. This knocks it back
+## so the party reads against it; without it the sprites sink into the artwork.
+const BACKGROUND_TINT := Color(0.62, 0.64, 0.74)
+const BACKGROUND_WASH := Color(0.04, 0.05, 0.11, 0.30)
 
 ## Where the corridor's far end sits, as a fraction of the battlefield's height.
 const HORIZON := 0.30
@@ -39,9 +52,15 @@ const TORCH_PLACEMENTS := [[0.06, 0.62], [0.30, 0.60], [0.55, 0.58], [0.76, 0.56
 var _corridor: Control = null
 ## Screen-space lights rebuilt each redraw: {pos, radius, strength}.
 var _lights: Array = []
+## Null when there is no painted background, which is what selects the drawn corridor below.
+var _background: Texture2D = null
 
 func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
+	# ResourceLoader.exists() first: load() on a missing path pushes an engine error, and a missing
+	# background is a supported state here, not a fault.
+	if ResourceLoader.exists(BACKGROUND_PATH):
+		_background = load(BACKGROUND_PATH) as Texture2D
 	_build()
 
 func _build() -> void:
@@ -89,6 +108,10 @@ func _draw_corridor() -> void:
 	var h := size.y
 	if w < 10.0 or h < 10.0:
 		return
+	if _background != null:
+		_draw_background_image(w, h)
+		return
+
 	var horizon := h * HORIZON
 	var cx := w * 0.5
 	var geom := _row_geometry(h, horizon)
@@ -100,6 +123,31 @@ func _draw_corridor() -> void:
 	_draw_walls(cx, ys, ks)
 	_draw_floor(w, cx, ys, ks)
 	_draw_flames()
+
+## Painted background, cropped to cover rather than stretched to fit.
+##
+## Stretching is what makes reused art look cheap — the stones go oval and every straight edge in
+## the scene skews. So the largest sub-rectangle of the source with the battlefield's aspect is
+## taken instead, and BACKGROUND_FOCUS slides that window up or down. Nothing is ever scaled
+## non-uniformly, and the destination is always fully covered, so there can be no black bars.
+func _draw_background_image(w: float, h: float) -> void:
+	var tw := float(_background.get_width())
+	var th := float(_background.get_height())
+	if tw < 1.0 or th < 1.0:
+		return
+	var target_aspect := w / h
+	var src_w := tw
+	var src_h := tw / target_aspect
+	if src_h > th:
+		src_h = th
+		src_w = th * target_aspect
+	var src := Rect2(
+		(tw - src_w) * 0.5,
+		(th - src_h) * clampf(BACKGROUND_FOCUS, 0.0, 1.0),
+		src_w, src_h,
+	)
+	_corridor.draw_texture_rect_region(_background, Rect2(0.0, 0.0, w, h), src, BACKGROUND_TINT)
+	_corridor.draw_rect(Rect2(0.0, 0.0, w, h), BACKGROUND_WASH, true)
 
 ## Torches sit on the wall line at a given depth, so they shrink and converge with everything else.
 func _place_lights(cx: float, ys: Array[float], ks: Array[float]) -> void:

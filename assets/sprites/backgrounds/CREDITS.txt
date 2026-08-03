@@ -1,0 +1,27 @@
+Battle background — source and mapping
+=========================================
+
+Source: "Free Dungeon Backgrounds" by The Outlander
+https://the-outlander.itch.io/free-dungeon-backgrounds
+License: CC0 (Creative Commons Zero v1.0 Universal) — public domain. The author's own wording:
+"You can use on any project, even commercially. Credit is not needed." Credited here anyway, as
+a courtesy and so the provenance is on the record.
+
+DISCLOSURE: the author tags this pack as AI-assisted / AI-generated graphics. The CC0 grant is
+unaffected, but note it if this ever ships somewhere that asks about generated content.
+
+file                    -> source
+------------------------------------------------------------
+battle_dungeon.png      -> pack preview image 3 (1536x1024), a stone chamber with wall torches
+                           either side and a lit archway at the centre. Taken from the store
+                           page's full-resolution previews rather than the .zip: the download is
+                           behind itch's "name your own price" flow, which needs a real browser
+                           session. The remaining 9 images of the pack are in that zip if a
+                           different one is ever wanted.
+
+Framing note: the battlefield is 1920x645 (~2.98:1) and this art is 3:2, so BattleBackdrop.gd
+crops a horizontal band out of it rather than stretching — see BACKGROUND_FOCUS there for which
+band. Anything roughly 3:2 or wider drops in with the same filename and no code change.
+
+If this file is deleted, BattleBackdrop.gd falls back to drawing its procedural corridor, so the
+battle screen still has a background. That fallback is deliberate — see the header comment there.
