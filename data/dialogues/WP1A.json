@@ -11,7 +11,7 @@
     "leader": "Rosa",
     "mood": "happy",
     "dialogue": [
-      "Rosa: ¡{respuesta}! Qué romántico que la entrada a la Montaña del Penacho Blanco se abra con algo tan bello.",
+      "Rosa: ¡{respuesta}! Qué elegante solución para una puerta tan terca.",
       "Azafran: Menos mal que recordaste el patrón astral, Rosa. No quería gastar munición tan pronto.",
       "Barbara: Noble respuesta para una criatura antigua. Aunque me hubiera gustado romper ese pedestal.",
       "Huguito: ¡Huguito, el chiquito, prefiere las palabras a los golpes! ¡Entremos antes de que cambie de opinión!"
@@ -137,7 +137,7 @@
     "leader": "Lulu",
     "mood": "playful",
     "dialogue": [
-      "Lulu: ¡{respuesta}! ¡Como el juguete de plata que tenía de pequeña, miau!",
+      "Lulu: ¡{respuesta}! ¡Lo reconocí enseguida, como algo de cuando era pequeña, miau!",
       "Daragat: Si Llave la rana pudiera hablar, diría que ese acertijo fue demasiado fácil para nosotros.",
       "Huguito: ¡Fácil es bueno! ¡Huguito, el chiquito, ama las cosas que no intentan morderlo!",
       "Barbara: No se confíen. La montaña nos deja pasar solo para devorarnos más adentro."
@@ -551,7 +551,7 @@
     "leader": "Rosa",
     "mood": "flirty",
     "dialogue": [
-      "Rosa: Entramos bajo el signo de {respuesta}. ¿No te parece una señal de que deberías hacerme caso, Azafrán?",
+      "Rosa: Resolviste el acertijo con solo pronunciar {respuesta}. ¿No te parece una señal de que deberías hacerme más caso, Azafrán?",
       "Azafran: La única señal que veo es que la puerta está abierta y perdemos tiempo. Camina.",
       "Lulu: El amor es más difícil que el acertijo, miau.",
       "Daragat: Lathander dice que la perseverancia es clave, Rosa. Pero tal vez no con Azafrán."
