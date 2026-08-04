@@ -29,7 +29,7 @@
     "leader": "Lulu",
     "mood": "curious",
     "dialogue": [
-      "Lulu: La Luna brilla en el cielo y abre puertas en la roca, miau. ¿Habrá ratones lunares dentro?",
+      "Lulu: {respuesta} abrió la puerta en la roca, miau. ¿Qué sorpresas habrá dentro?",
       "Rosa: Si los hay, serán mágicos, pequeña. Mystra nos sonríe hoy.",
       "Barbara: La Esfinge tuvo suerte. Mi furia estaba a un segundo de estallar si no nos dejaba pasar.",
       "Huguito: ¡No asustes a la piedra, Barbara! ¡Huguito, el chiquito, celebra que seguimos enteros!"
@@ -104,7 +104,7 @@
       "Huguito: ¡Huguito, el chiquito, es un genio de los puzzles! ¡{respuesta} nos dio el paso!",
       "Daragat: Bueno, en realidad Azafrán lo dijo primero, pero te dejaremos el crédito para que no llores.",
       "Azafran: (Sorbiendo café) Mientras la puerta esté abierta, no me importa quién se lleve el mérito.",
-      "Barbara: Mi abuela decía que la Luna guía a los perdidos. Espero que tenga razón hoy."
+      "Barbara: Mi abuela decía que {respuesta} guía a los perdidos. Espero que tenga razón hoy."
     ]
   },
   {
@@ -155,7 +155,7 @@
     "leader": "Solana",
     "mood": "mysterious",
     "dialogue": [
-      "Solana: La Luna revela lo que el día oculta. Barovia me enseñó a temerle, pero aquí nos abre camino.",
+      "Solana: {respuesta} revela lo que el día oculta. Barovia me enseñó a temerle, pero aquí nos abre camino.",
       "Lulu: A mí me gusta la noche, miau. Se ve mejor el peligro.",
       "Huguito: ¡Huguito, el chiquito, prefiere no ver el peligro en absoluto, gracias!",
       "Barbara: Si el peligro aparece, lo romperé. Sea bajo la luna o bajo el sol."
@@ -319,7 +319,7 @@
     "dialogue": [
       "Solana: La Montaña del Penacho Blanco nos ha aceptado. Pero es una aceptación hostil.",
       "Azafran: Siempre lo es. Revisen sus suministros, esto no será un viaje corto.",
-      "Lulu: Mis garras están afiladas para cualquier cosa que no sea una luna, miau.",
+      "Lulu: Mis garras están afiladas para lo que venga después, miau.",
       "Barbara: Que venga la hostilidad. Mi nobleza se crece ante el castigo."
     ]
   },
