@@ -112,6 +112,13 @@ func _build_ui() -> void:
 	field.clip_contents = false
 	root.add_child(field)
 
+	# Off-screen ruler for _name_line_height. It has to live in the tree to resolve the same theme
+	# the real labels do; hidden and zero-width so it costs nothing and lays nothing out.
+	_line_probe = Label.new()
+	_line_probe.text = "Ay"
+	_line_probe.visible = false
+	root.add_child(_line_probe)
+
 	# The cave itself, behind everything else in the field. Anchored from out here, before it is
 	# added, exactly like every other full-rect overlay in this function — a Control that sets its
 	# own anchors from _ready() misses the parent's first layout pass and stays 0x0.
@@ -131,10 +138,10 @@ func _build_ui() -> void:
 	# (Retaguardia leftmost, Adelante rightmost) so the front line ends up closest to the enemy
 	# sprites on the right, matching where each zone actually is on the battlefield.
 	_battle_sprites_container = HBoxContainer.new()
-	# Sits low enough that a damage number rising off a front-row sprite still lands inside the
-	# battlefield instead of in the "Turno: X" title. A party is always three (the 35 combos are
-	# C(7,3)), so the tallest column is three cells and there is room to spare below.
-	_battle_sprites_container.position = Vector2(120, 140)
+	# Low enough that a damage number rising off a front-row sprite still lands inside the
+	# battlefield rather than in the "Turno: X" title, high enough that a full column still fits
+	# underneath. Cell sizes adapt to the crowd — see _cell_metrics.
+	_battle_sprites_container.position = Vector2(120, SPRITES_TOP)
 	_battle_sprites_container.add_theme_constant_override("separation", 30)
 	field.add_child(_battle_sprites_container)
 
@@ -147,7 +154,7 @@ func _build_ui() -> void:
 		zone_label.text = POSITION_NAMES[i]
 		zone_label.custom_minimum_size = Vector2(150, 0)
 		zone_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		zone_label.add_theme_font_size_override("font_size", 20)
+		zone_label.add_theme_font_size_override("font_size", ZONE_LABEL_FONT)
 		zone_label.add_theme_color_override("font_color", Color(0.6, 0.6, 0.65))
 		zone_column.add_child(zone_label)
 		var chars_box = VBoxContainer.new()
@@ -159,7 +166,7 @@ func _build_ui() -> void:
 	# Enemy sprites (right side), in the same three bands as the party but mirrored, so the two
 	# Adelante columns end up adjacent in the centre of the screen.
 	_enemy_sprites_container = HBoxContainer.new()
-	_enemy_sprites_container.position = Vector2(1010, 140)
+	_enemy_sprites_container.position = Vector2(1010, SPRITES_TOP)
 	_enemy_sprites_container.add_theme_constant_override("separation", 30)
 	field.add_child(_enemy_sprites_container)
 
@@ -172,7 +179,7 @@ func _build_ui() -> void:
 		zone_label.text = POSITION_NAMES[i]
 		zone_label.custom_minimum_size = Vector2(150, 0)
 		zone_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		zone_label.add_theme_font_size_override("font_size", 20)
+		zone_label.add_theme_font_size_override("font_size", ZONE_LABEL_FONT)
 		zone_label.add_theme_color_override("font_color", Color(0.62, 0.5, 0.5))
 		zone_column.add_child(zone_label)
 		var chars_box = VBoxContainer.new()
@@ -214,7 +221,7 @@ func _build_ui() -> void:
 	bottom_hbox.add_child(stats_panel)
 
 	_party_stats_container = VBoxContainer.new()
-	_party_stats_container.add_theme_constant_override("separation", 10)
+	_party_stats_container.add_theme_constant_override("separation", 8)
 	stats_panel.add_child(_party_stats_container)
 
 	# Center: Action menu
@@ -506,7 +513,9 @@ func _show_skill_menu() -> void:
 		if skill:
 			_menu_items.append(skill_id)
 			var label = Label.new()
-			label.text = "%s (MP: %d)" % [skill["name"], skill["mp_cost"]]
+			label.text = "%s (MP: %d)%s" % [
+				skill["name"], skill["mp_cost"], _skill_state_suffix(skill, current),
+			]
 			label.add_theme_font_size_override("font_size", 34)
 			_skill_menu.add_child(label)
 
@@ -521,6 +530,20 @@ func _show_skill_menu() -> void:
 	_show_only_menu(_skill_menu_wrapper)
 	_update_menu_highlight(_skill_menu)
 	_update_skill_tooltip()
+
+## Live state a skill's outcome depends on, appended to its menu row.
+##
+## Ráfaga de Golpes throws one strike per point of Enfoque and then spends all of it, so its value
+## swings from 1 hit to 5 depending on a counter that was never shown anywhere. Choosing it well
+## meant remembering how many ordinary attacks the Monk had made since the last flurry. The row
+## now says what it will actually do.
+func _skill_state_suffix(skill: Dictionary, user: Dictionary) -> String:
+	if str(skill.get("effect_type", "")) != "flurry":
+		return ""
+	var hits := maxi(1, int(user.get("focus", 0)))
+	return "  [Enfoque %d -> %d %s]" % [
+		int(user.get("focus", 0)), hits, "golpe" if hits == 1 else "golpes",
+	]
 
 ## Shows the currently-highlighted skill's description below the skill list (empty if there's
 ## nothing selectable, e.g. "Sin habilidades").
@@ -820,9 +843,11 @@ func _update_all_stats() -> void:
 ## numbers to answer "who is about to die". The bars answer that at a glance and the colour
 ## carries the warning — green, amber under half, red under a quarter — so the digits are there
 ## for when the exact number matters rather than for the routine check.
-const PORTRAIT_SIZE := 74.0
+const PORTRAIT_SIZE := 84.0
 const BAR_WIDTH := 300.0
-const BAR_HEIGHT := 16.0
+const BAR_HEIGHT := 13.0
+const ROW_NAME_FONT := 24
+const ROW_BAR_FONT := 17
 
 func _build_party_row(p: Dictionary) -> Control:
 	var alive: bool = int(p.get("hp", 0)) > 0
@@ -839,7 +864,7 @@ func _build_party_row(p: Dictionary) -> Control:
 	row.add_child(portrait)
 
 	var col = VBoxContainer.new()
-	col.add_theme_constant_override("separation", 3)
+	col.add_theme_constant_override("separation", 2)
 	col.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	row.add_child(col)
 
@@ -849,7 +874,7 @@ func _build_party_row(p: Dictionary) -> Control:
 
 	var name_label = Label.new()
 	name_label.text = str(p.get("name", "?"))
-	name_label.add_theme_font_size_override("font_size", 32)
+	name_label.add_theme_font_size_override("font_size", ROW_NAME_FONT)
 	if not alive:
 		name_label.add_theme_color_override("font_color", Theme_.TEXT_DEAD)
 	elif is_turn:
@@ -864,6 +889,11 @@ func _build_party_row(p: Dictionary) -> Control:
 		tags.append("CAIDO")
 	if p.get("defending", false):
 		tags.append("DEF")
+	# Focus is spent by Ráfaga de Golpes, one strike per point, and is built by ordinary attacks.
+	# It was tracked invisibly, so the only way to know how big your flurry would be was to count
+	# your own attacks since the last one.
+	if int(p.get("focus", 0)) > 0:
+		tags.append("ENFOQUE %d" % int(p["focus"]))
 	if int(p.get("poison_damage", 0)) > 0:
 		tags.append("VENENO")
 	if int(p.get("burn_damage", 0)) > 0:
@@ -873,7 +903,7 @@ func _build_party_row(p: Dictionary) -> Control:
 	if not tags.is_empty():
 		var tag_label = Label.new()
 		tag_label.text = "  ".join(tags)
-		tag_label.add_theme_font_size_override("font_size", 22)
+		tag_label.add_theme_font_size_override("font_size", 18)
 		tag_label.add_theme_color_override("font_color", Theme_.HP_HURT if alive else Theme_.TEXT_DEAD)
 		header.add_child(tag_label)
 
@@ -898,7 +928,7 @@ func _build_stat_bar(tag: String, value: int, maximum: int, fraction: float, fil
 	var tag_label = Label.new()
 	tag_label.text = tag
 	tag_label.custom_minimum_size = Vector2(46, 0)
-	tag_label.add_theme_font_size_override("font_size", 21)
+	tag_label.add_theme_font_size_override("font_size", ROW_BAR_FONT)
 	tag_label.add_theme_color_override("font_color", Theme_.TEXT_DIM)
 	line.add_child(tag_label)
 
@@ -920,7 +950,7 @@ func _build_stat_bar(tag: String, value: int, maximum: int, fraction: float, fil
 
 	var value_label = Label.new()
 	value_label.text = "%d/%d" % [value, maximum]
-	value_label.add_theme_font_size_override("font_size", 21)
+	value_label.add_theme_font_size_override("font_size", ROW_BAR_FONT)
 	value_label.add_theme_color_override("font_color", Theme_.TEXT_DIM)
 	line.add_child(value_label)
 
@@ -1195,21 +1225,23 @@ func _update_hp_bars() -> void:
 			else:
 				bar.color = Color(0.2, 0.85, 0.2)
 
+const HP_BAR_H := 8.0
+
 func _create_hp_bar(combatant: Dictionary, bar_width: float, is_player: bool) -> Control:
 	## Creates an HP bar widget: background (dark) + foreground (colored).
 	## Returns the container Control. Stores the foreground ref in _hp_bars.
 	var container = Control.new()
-	container.custom_minimum_size = Vector2(bar_width, 8)
+	container.custom_minimum_size = Vector2(bar_width, HP_BAR_H)
 
 	# Background
 	var bg = ColorRect.new()
-	bg.custom_minimum_size = Vector2(bar_width, 8)
+	bg.custom_minimum_size = Vector2(bar_width, HP_BAR_H)
 	bg.color = Color(0.15, 0.15, 0.15)
 	container.add_child(bg)
 
 	# Foreground
 	var fg = ColorRect.new()
-	fg.custom_minimum_size = Vector2(bar_width, 8)
+	fg.custom_minimum_size = Vector2(bar_width, HP_BAR_H)
 	fg.color = Color(0.9, 0.9, 0.9) if is_player else Color(0.2, 0.85, 0.2)
 	container.add_child(fg)
 
@@ -1221,6 +1253,82 @@ func _create_hp_bar(combatant: Dictionary, bar_width: float, is_player: bool) ->
 	})
 
 	return container
+
+## Battlefield geometry. A zone column has to fit between the sprites' top edge and the bottom of
+## the field, and how much room each combatant gets depends entirely on how many share their band:
+## a party is FOUR (MAX_PARTY_SIZE — the 35 combinations are C(7,4)), and an encounter can field
+## ENEMY_COUNT_CAP enemies that the AI is free to pile into one band. Fixed cell sizes worked for
+## the two-bugbear case and ran off the bottom of the screen for everything bigger.
+const FIELD_HEIGHT := 645.0
+const SPRITES_TOP := 104.0
+## The band's title above the sprites: its label plus the zone column's separation. Measured
+## rather than guessed, for the same reason as the name line.
+const ZONE_LABEL_FONT := 20
+const ZONE_COLUMN_SEP := 10.0
+## Slack so layout rounding can never tip a full column over the edge of the field.
+const CELL_SAFETY := 8.0
+const CELL_SPRITE_MAX := 80.0
+const CELL_SPRITE_MIN := 32.0
+const CELL_NAME_MAX := 30
+const CELL_NAME_MIN := 14
+
+## A Label's real height at a given size, asked of an actual Label rather than estimated.
+##
+## Two things this avoids. A fixed font*ratio is badly wrong at small sizes — the fonts carry a
+## near-constant amount of leading, so 1.4x holds at 76px and undershoots by 40% at 14px, which is
+## exactly where the budget is tight. And the probe has to be IN THE TREE: an orphan Label does not
+## resolve the same theme the real ones do and came back ~7px short per row, which is enough to
+## push a four-cell column off the bottom of the field.
+var _line_probe: Label = null
+var _line_height_cache: Dictionary = {}
+
+func _name_line_height(font_size: int) -> float:
+	if _line_height_cache.has(font_size):
+		return float(_line_height_cache[font_size])
+	if _line_probe == null or not is_instance_valid(_line_probe):
+		return float(font_size) * 1.6
+	_line_probe.add_theme_font_size_override("font_size", font_size)
+	var h: float = _line_probe.get_minimum_size().y
+	_line_height_cache[font_size] = h
+	return h
+
+## Sprite height, name size and spacing for a band holding `count` combatants. `extra_top` is
+## whatever sits above the sprite in that side's cell — the enemies' HP bar, nothing for the party.
+func _cell_metrics(count: int, extra_top: float) -> Dictionary:
+	var n := maxi(count, 1)
+	var sep := 12.0 if n <= 4 else 5.0
+	var header := _name_line_height(ZONE_LABEL_FONT) + ZONE_COLUMN_SEP
+	var room := FIELD_HEIGHT - SPRITES_TOP - header - CELL_SAFETY - sep * float(n - 1)
+	var budget := room / float(n)
+	budget -= extra_top
+
+	# Take the largest name that still leaves room for a legible sprite, and drop the name entirely
+	# if even the smallest does not fit. Eight identical "Necrofago" labels stacked in one band are
+	# noise anyway: the target menu names them, and what you actually pick from is the silhouette
+	# and its HP bar.
+	var font := CELL_NAME_MAX
+	while font > CELL_NAME_MIN and _name_line_height(font) + CELL_SPRITE_MIN > budget:
+		font -= 1
+	var line := _name_line_height(font)
+	var show_name := line + CELL_SPRITE_MIN <= budget
+	if not show_name:
+		line = 0.0
+	var sprite_h := clampf(budget - line, CELL_SPRITE_MIN, CELL_SPRITE_MAX)
+	return {
+		"sprite_h": sprite_h, "name_font": font, "separation": sep, "show_name": show_name,
+	}
+
+## How many combatants sit in the busiest band of one side — the only number that decides whether
+## a column fits, since the bands are laid out side by side.
+func _busiest_band(combatants: Array) -> int:
+	var per_zone := {}
+	for c in combatants:
+		var z := clampi(int(c.get("position", 0)), 0, POSITION_NAMES.size() - 1)
+		per_zone[z] = int(per_zone.get(z, 0)) + 1
+	var busiest := 1
+	for z in per_zone:
+		busiest = maxi(busiest, int(per_zone[z]))
+	return busiest
 
 func setup_sprites(party: Array, enemies: Array) -> void:
 	# Only the per-zone CharsBoxes get cleared here — the zone rows/labels themselves are built
@@ -1235,16 +1343,19 @@ func setup_sprites(party: Array, enemies: Array) -> void:
 	_combatant_name_map.clear()
 
 	# Party sprites (side-view battle pose) — no HP bar (stats shown in HUD panel), placed in
-	# the CharsBox matching their current position zone (see _position_zone_boxes). Font is
-	# smaller than the enemy labels' so all four fit stacked in a single zone column.
+	# the CharsBox matching their current position zone (see _position_zone_boxes).
+	var party_cell := _cell_metrics(_busiest_band(party), 0.0)
+	for chars_box in _position_zone_boxes:
+		chars_box.add_theme_constant_override("separation", int(party_cell["separation"]))
 	for p in party:
 		var vbox = VBoxContainer.new()
 		vbox.alignment = BoxContainer.ALIGNMENT_END
-		var sprite_w := 64.0
+		var sprite_h: float = party_cell["sprite_h"]
+		var sprite_w: float = sprite_h * 0.8
 		vbox.add_theme_constant_override("separation", 0)
 		# Sprite
 		var rect = TextureRect.new()
-		rect.custom_minimum_size = Vector2(sprite_w, 80)
+		rect.custom_minimum_size = Vector2(sprite_w, sprite_h)
 		rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 		rect.texture = CharacterSprites.get_battle_texture(p)
 		rect.modulate = Color(1, 1, 1) if p["hp"] > 0 else Color(0.3, 0.3, 0.3)
@@ -1253,7 +1364,8 @@ func setup_sprites(party: Array, enemies: Array) -> void:
 		var name_label = Label.new()
 		name_label.text = p["name"]
 		name_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		name_label.add_theme_font_size_override("font_size", 26)
+		name_label.add_theme_font_size_override("font_size", int(party_cell["name_font"]))
+		name_label.visible = bool(party_cell["show_name"])
 		vbox.add_child(name_label)
 		var zone_idx = clampi(int(p.get("position", 0)), 0, _position_zone_boxes.size() - 1)
 		_position_zone_boxes[zone_idx].add_child(vbox)
@@ -1262,13 +1374,19 @@ func setup_sprites(party: Array, enemies: Array) -> void:
 		_combatant_name_map[p.get("id", "")] = name_label
 		_start_idle_bob(rect)
 
-	# Enemy sprites (battle art if available, else a red placeholder rectangle) with HP bar above
+	# Enemy sprites (battle art if available, else a red placeholder rectangle) with HP bar above.
+	# HP_BAR_H is the `extra_top` the enemy cells carry that the party's do not.
+	var enemy_cell := _cell_metrics(_busiest_band(enemies), HP_BAR_H)
+	for chars_box in _enemy_zone_boxes:
+		chars_box.add_theme_constant_override("separation", int(enemy_cell["separation"]))
 	for e in enemies:
 		var vbox = VBoxContainer.new()
 		vbox.alignment = BoxContainer.ALIGNMENT_END
+		vbox.add_theme_constant_override("separation", 0)
 		var is_boss_sprite = "guardian" in e.get("base_id", e.get("id", ""))
-		var sprite_w := 100.0 if is_boss_sprite else 64.0
-		var sprite_h := 120.0 if is_boss_sprite else 80.0
+		# A boss gets a bigger silhouette, but only as much bigger as the column can still hold.
+		var sprite_h: float = float(enemy_cell["sprite_h"]) * (1.35 if is_boss_sprite else 1.0)
+		var sprite_w: float = sprite_h * 0.8
 		# HP bar
 		var hp_bar = _create_hp_bar(e, sprite_w, false)
 		vbox.add_child(hp_bar)
@@ -1292,7 +1410,8 @@ func setup_sprites(party: Array, enemies: Array) -> void:
 		var name_label = Label.new()
 		name_label.text = e["name"]
 		name_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		name_label.add_theme_font_size_override("font_size", 33)
+		name_label.add_theme_font_size_override("font_size", int(enemy_cell["name_font"]))
+		name_label.visible = bool(enemy_cell["show_name"])
 		vbox.add_child(name_label)
 		var zone_idx = clampi(int(e.get("position", 0)), 0, _enemy_zone_boxes.size() - 1)
 		_enemy_zone_boxes[zone_idx].add_child(vbox)
