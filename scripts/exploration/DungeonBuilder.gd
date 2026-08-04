@@ -749,7 +749,16 @@ func _show_victory_screen() -> void:
 func _unhandled_input(event: InputEvent) -> void:
 	if _exit_triggered and event.is_action_pressed("action1"):
 		get_viewport().set_input_as_handled()
-		SceneFlow.change_scene("res://scenes/boot/Boot.tscn")
+		# Straight to the main menu rather than back through Boot.tscn. Boot only exists as the
+		# engine's own startup stub — it works there because nothing else is transitioning yet —
+		# but reached via change_scene() its own redirect into ContinueScreen fired while THIS
+		# transition was still fading in, and the old reentrancy guard silently dropped it,
+		# leaving the run stuck on a blank scene forever with no way out but killing the game.
+		# GameState.reset() here mirrors the defeat path in BattleScene.gd: without it the
+		# finished run's party/gold/XP would still be sitting in GameState the next time the
+		# player starts or resumes one from the menu.
+		GameState.reset()
+		SceneFlow.change_scene("res://scenes/boot/ContinueScreen.tscn")
 
 # --- Fog shader helpers ---
 

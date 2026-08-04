@@ -24,9 +24,16 @@ func _setup_fade_overlay() -> void:
 # --- Public API ---
 
 ## Transition to a scene with fade-to-black
+##
+## Waits for an in-flight transition rather than dropping the call: a scene's own _ready() calling
+## this immediately after being loaded (Boot.tscn's redirect into ContinueScreen.tscn is the one
+## real example) lands while the transition that loaded it is still mid fade-in. Returning early
+## used to silently swallow that second call, leaving the player stuck on whatever stub scene
+## triggered it — reachable only through this exact reentrant pattern, so nothing else exercised
+## it, but this waits instead so any future caller in the same shape doesn't hit it either.
 func change_scene(scene_path: String) -> void:
-	if _is_transitioning:
-		return
+	while _is_transitioning:
+		await get_tree().process_frame
 	_is_transitioning = true
 	AudioManager.play_music(_music_track_for_scene(scene_path))
 	await _fade_out()
