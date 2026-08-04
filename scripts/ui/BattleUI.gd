@@ -64,6 +64,8 @@ var _combatant_sprite_map: Dictionary = {}
 var _combatant_visual_map: Dictionary = {}
 ## id → the name Label under the sprite, so the combatant whose turn it is can be lit up.
 var _combatant_name_map: Dictionary = {}
+## id → the Gunslinger's target reticle, parented to the sprite so it tracks it for free.
+var _combatant_mark_map: Dictionary = {}
 
 # State
 enum MenuState { MAIN, SKILL, ITEM, TARGET_ENEMY, TARGET_ALLY, POSITION, PREMONITION }
@@ -823,6 +825,7 @@ func _on_battle_ended(result: String) -> void:
 func _update_all_stats() -> void:
 	_refresh_party_position_zones()
 	_update_turn_name_highlight()
+	_update_marks()
 	if _engagement_overlay:
 		_engagement_overlay.queue_redraw()
 	if _zone_backdrop:
@@ -1059,6 +1062,61 @@ func _update_battle_sprites() -> void:
 				continue
 			visual.modulate = Color(1, 1, 1) if c.get("hp", 0) > 0 else Color(0.3, 0.3, 0.3)
 	_update_hp_bars()
+
+## The Gunslinger's mark. Her basic attack brands whoever she shot and clears the brand off
+## everyone else; the branded enemy then takes 25% more damage from ANY source, so it is a party
+## decision — the Barbarian should be swinging at the same target. That was worth a quarter of the
+## incoming damage and appeared nowhere on screen.
+##
+## Parented to the sprite rather than drawn into the engagement overlay, so it tracks the idle bob
+## exactly instead of lagging a few pixels behind it the way that overlay does.
+const MARK_COLOR := Color(1.0, 0.30, 0.24)
+
+func _build_mark_reticle(visual: Control) -> Control:
+	var mark := Control.new()
+	mark.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	mark.set_anchors_preset(Control.PRESET_FULL_RECT)
+	mark.visible = false
+	mark.draw.connect(func(): _draw_reticle(mark, visual))
+	visual.add_child(mark)
+
+	# A slow pulse, so a reticle sitting on a monster for several turns still reads as live.
+	var tween := mark.create_tween().set_loops()
+	tween.tween_property(mark, "modulate:a", 0.45, 0.55).set_ease(Tween.EASE_IN_OUT)
+	tween.tween_property(mark, "modulate:a", 1.0, 0.55).set_ease(Tween.EASE_IN_OUT)
+	return mark
+
+## Corner brackets plus a ring, sized to the ARTWORK rather than to the cell — the sprite is
+## centred in a box as wide as the zone column, and a reticle drawn to the box would float well
+## clear of the monster it is supposed to be aiming at.
+func _draw_reticle(mark: Control, visual: Control) -> void:
+	var art: Vector2 = visual.custom_minimum_size
+	if art.x <= 0.0 or art.y <= 0.0:
+		art = mark.size
+	var centre := mark.size * 0.5
+	var half := art * 0.5 * 1.15
+	var r: float = minf(half.x, half.y)
+
+	mark.draw_arc(centre, r, 0.0, TAU, 32, Color(MARK_COLOR, 0.75), 2.5, true)
+	# Four brackets, leaving gaps at the diagonals so the silhouette stays readable through it.
+	var arm: float = r * 0.55
+	for i in range(4):
+		var a := TAU * float(i) / 4.0
+		var dir := Vector2(cos(a), sin(a))
+		mark.draw_line(centre + dir * (r * 0.55), centre + dir * (r + arm * 0.35),
+			Color(MARK_COLOR, 0.95), 3.0, true)
+	mark.draw_circle(centre, 3.0, Color(MARK_COLOR, 0.9))
+
+## Shows the reticle on whoever currently carries the mark. Cleared off the dead: the mark is only
+## rewritten when the Gunslinger next fires, so it would otherwise sit on a corpse.
+func _update_marks() -> void:
+	if not _battle_controller:
+		return
+	for e in _battle_controller.get_enemies():
+		var mark = _combatant_mark_map.get(str(e.get("id", "")))
+		if mark == null or not is_instance_valid(mark):
+			continue
+		mark.visible = bool(e.get("marked", false)) and int(e.get("hp", 0)) > 0
 
 ## Lights up the name under whoever is acting, in the same yellow the menu cursor and the
 ## initiative list already use for "this one" — so the turn is readable on the battlefield itself
@@ -1380,6 +1438,7 @@ func setup_sprites(party: Array, enemies: Array) -> void:
 	_combatant_sprite_map.clear()
 	_combatant_visual_map.clear()
 	_combatant_name_map.clear()
+	_combatant_mark_map.clear()
 
 	# Party sprites (side-view battle pose) — no HP bar (stats shown in HUD panel), placed in
 	# the CharsBox matching their current position zone (see _position_zone_boxes).
@@ -1457,6 +1516,7 @@ func setup_sprites(party: Array, enemies: Array) -> void:
 		_combatant_sprite_map[e.get("id", "")] = vbox
 		_combatant_visual_map[e.get("id", "")] = visual
 		_combatant_name_map[e.get("id", "")] = name_label
+		_combatant_mark_map[e.get("id", "")] = _build_mark_reticle(visual)
 		_start_idle_bob(visual)
 
 func _on_damage_dealt(target: Dictionary, amount: int, is_heal: bool) -> void:
