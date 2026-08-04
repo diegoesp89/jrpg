@@ -12,11 +12,25 @@ const WALK_HOP_HEIGHT: float = 0.16
 const WALK_HOP_SPEED: float = 11.0
 const SPRITE_BASE_Y: float = 0.8
 
-## Turning is a Paper Mario flip: the sprite swings around its own vertical axis, going edge-on
-## and thin at the halfway point. Done with scale.x through zero rather than a real Y rotation,
-## because the sprite is billboarded — billboarding overrides node rotation every frame, so a
-## rotated sprite would simply snap back to facing the camera. Mirroring reads identically.
+## Turning is a Paper Mario flip: the sprite shrinks to edge-on, swaps which side it's drawn on,
+## then opens back out. Two things that look like they should work here don't:
+##   - A real Y rotation doesn't, because the sprite is billboarded — billboarding recomputes the
+##     facing transform every frame and overrides node rotation, so a rotated sprite just snaps
+##     back to facing the camera.
+##   - A negative scale.x doesn't mirror it either, and this one is a genuine Godot surprise: a
+##     billboarded Sprite3D silently drops the SIGN of scale.x when it rebuilds that transform, so
+##     "flip by negating scale" is completely inert under billboarding. Confirmed by rendering both
+##     and diffing the actual pixels — scale.x=+1 and scale.x=-1 produced byte-identical frames.
+## So the two halves of the effect are split: scale.x magnitude still drives the shrink/grow (that
+## part IS respected), and flip_h — the property SpriteBase3D actually provides for this — does
+## the mirroring, swapped at the thin instant so the reveal reads as one continuous turn.
 const TURN_SPEED: float = 7.0
+## Below this openness the sprite is thin enough that swapping which side it faces is invisible;
+## this is the instant the mirror actually happens.
+const TURN_FLIP_THRESHOLD: float = 0.06
+## Never quite zero: a fully-collapsed scale is a singular transform, and some renderers are
+## unhappy with that even for one frame.
+const TURN_MIN_SCALE: float = 0.02
 ## Ignore facing changes below this much sideways movement, so walking straight at or away from
 ## the camera does not make the character waver between left and right.
 const TURN_DEADZONE: float = 0.25
@@ -36,8 +50,11 @@ var _current_interactable: Node = null
 var _movement_disabled: bool = false
 var _is_moving: bool = false
 var _hop_phase: float = 0.0
-var _facing: float = 1.0
-var _facing_target: float = 1.0
+## How open the sprite currently is: 1.0 = full width facing the camera, 0.0 = edge-on/thin.
+var _turn_open: float = 1.0
+## Which side flip_h currently shows. Only changes at the thin instant, never mid-swing.
+var _turn_side: float = 1.0
+var _turn_side_target: float = 1.0
 var _shadow: Sprite3D = null
 
 @onready var _sprite: Sprite3D = $Sprite3D
@@ -160,7 +177,7 @@ func _physics_process(delta: float) -> void:
 	if _is_moving:
 		var sideways: float = move_dir.dot(cam_right)
 		if absf(sideways) > TURN_DEADZONE:
-			_facing_target = 1.0 if sideways > 0.0 else -1.0
+			_turn_side_target = 1.0 if sideways > 0.0 else -1.0
 	_animate_sprite(delta)
 
 ## The hop, the turn and the shadow, all driven off the same frame.
@@ -168,10 +185,14 @@ func _animate_sprite(delta: float) -> void:
 	if not _sprite:
 		return
 
-	# Turn: swing towards the target facing. Passing through zero is the flip — the sprite goes
-	# edge-on and thin for an instant, exactly as a sheet of paper turning would.
-	_facing = move_toward(_facing, _facing_target, delta * TURN_SPEED)
-	_sprite.scale.x = _facing if absf(_facing) > 0.001 else 0.001
+	# Turn: close towards edge-on whenever the target side disagrees with what's currently shown,
+	# swap the mirrored face the instant it's thin enough not to show the seam, then open back up.
+	var target_open := 0.0 if _turn_side != _turn_side_target else 1.0
+	_turn_open = move_toward(_turn_open, target_open, delta * TURN_SPEED)
+	if _turn_open <= TURN_FLIP_THRESHOLD:
+		_turn_side = _turn_side_target
+	_sprite.scale.x = maxf(_turn_open, TURN_MIN_SCALE)
+	_sprite.flip_h = _turn_side < 0.0
 
 	var height := 0.0
 	if _is_moving:
