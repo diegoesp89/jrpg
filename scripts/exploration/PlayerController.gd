@@ -4,35 +4,18 @@ class_name PlayerController
 
 const MOVE_SPEED: float = 5.0
 const INTERACTION_RANGE: float = 2.0
-const ANIM_FPS: float = 6.0  # frames per second for walk animation
 
-# Spritesheet path
-const SPRITESHEET_PATH = "res://assets/sprites/spritesheet.png"
-# Background color to replace with transparency
-const BG_COLOR = Color(255.0/255.0, 5.0/255.0, 238.0/255.0)
-const BG_TOLERANCE = 0.05
-
-## Walk cycle frame regions (Rect2: x, y, w, h) from spritesheet analysis.
-## Band 2 (y=84..114): 12 frames = 4 directions x 3 frames each.
-## Order in spritesheet: down(3), left(3), right(3), up(3)
-## Using uniform 26x30 cells centered on each sprite.
-const FRAME_W: int = 26
-const FRAME_H: int = 30
-
-# Direction enum
-enum Dir { DOWN, LEFT, RIGHT, UP }
-
-# Frame rects per direction: 3 frames each (left-step, center, right-step)
-# Band 2 frames - x positions based on content centers
-var _dir_frames: Dictionary = {}
+## How high the sprite hops while walking, and how fast. The party art is a single frame per
+## character — there is no walk cycle to play — so this is what keeps a moving character from
+## looking like it is being slid across the floor.
+const WALK_BOB_HEIGHT: float = 0.09
+const WALK_BOB_SPEED: float = 9.0
+const SPRITE_BASE_Y: float = 0.8
 
 var _current_interactable: Node = null
 var _movement_disabled: bool = false
-var _current_dir: int = Dir.DOWN
-var _anim_timer: float = 0.0
-var _anim_frame: int = 1  # start on center frame (idle)
 var _is_moving: bool = false
-var _sprite_texture: Texture2D = null
+var _bob_phase: float = 0.0
 
 @onready var _sprite: Sprite3D = $Sprite3D
 @onready var _interaction_area: Area3D = $InteractionArea
@@ -41,85 +24,44 @@ signal interactable_changed(interactable: Node)
 
 func _ready() -> void:
 	add_to_group("player")
-	_init_frame_rects()
-	_load_spritesheet()
-	_setup_sprite()
+	_apply_lead_sprite()
 
-func _init_frame_rects() -> void:
-	# Frame x-centers derived from spritesheet analysis (band 2, y=84)
-	# Down: frames 0-2, Left: frames 3-5, Right: frames 6-8, Up: frames 9-11
-	var band_y: int = 84
-	var frame_x_starts = [3, 27, 51, 84, 107, 129, 163, 186, 219, 243, 275, 300]
-
-	_dir_frames[Dir.DOWN] = [
-		Rect2(frame_x_starts[0], band_y, FRAME_W, FRAME_H),
-		Rect2(frame_x_starts[1], band_y, FRAME_W, FRAME_H),
-		Rect2(frame_x_starts[2], band_y, FRAME_W, FRAME_H),
-	]
-	_dir_frames[Dir.LEFT] = [
-		Rect2(frame_x_starts[3], band_y, FRAME_W, FRAME_H),
-		Rect2(frame_x_starts[4], band_y, FRAME_W, FRAME_H),
-		Rect2(frame_x_starts[5], band_y, FRAME_W, FRAME_H),
-	]
-	_dir_frames[Dir.RIGHT] = [
-		Rect2(frame_x_starts[6], band_y, FRAME_W, FRAME_H),
-		Rect2(frame_x_starts[7], band_y, FRAME_W, FRAME_H),
-		Rect2(frame_x_starts[8], band_y, FRAME_W, FRAME_H),
-	]
-	_dir_frames[Dir.UP] = [
-		Rect2(frame_x_starts[9], band_y, FRAME_W, FRAME_H),
-		Rect2(frame_x_starts[10], band_y, FRAME_W, FRAME_H),
-		Rect2(frame_x_starts[11], band_y, FRAME_W, FRAME_H),
-	]
-
-func _load_spritesheet() -> void:
-	var tex = load(SPRITESHEET_PATH) as Texture2D
-	if not tex:
-		push_warning("PlayerController: spritesheet not found at %s" % SPRITESHEET_PATH)
-		return
-
-	# Get the image and replace background with transparency
-	var img = tex.get_image()
-	if not img:
-		push_warning("PlayerController: could not get image from spritesheet")
-		return
-
-	# Convert to RGBA if needed
-	if img.get_format() != Image.FORMAT_RGBA8:
-		img.convert(Image.FORMAT_RGBA8)
-
-	# Replace BG color with transparent
-	var bg_r = BG_COLOR.r
-	var bg_g = BG_COLOR.g
-	var bg_b = BG_COLOR.b
-	for y in range(img.get_height()):
-		for x in range(img.get_width()):
-			var px = img.get_pixel(x, y)
-			if absf(px.r - bg_r) < BG_TOLERANCE and absf(px.g - bg_g) < BG_TOLERANCE and absf(px.b - bg_b) < BG_TOLERANCE:
-				img.set_pixel(x, y, Color(0, 0, 0, 0))
-
-	_sprite_texture = ImageTexture.create_from_image(img)
-
-func _setup_sprite() -> void:
+## Draws whichever party member is currently being led. Falls back to a placeholder when there is
+## no party at all — the map editor and the debug boot paths both reach this scene that way.
+func _apply_lead_sprite() -> void:
 	if not _sprite:
 		return
-	if _sprite_texture:
-		_sprite.texture = _sprite_texture
-		_sprite.region_enabled = true
-		_sprite.region_rect = _dir_frames[Dir.DOWN][1]  # center/idle frame facing down
-	else:
-		# Fallback to placeholder
+	var member := _lead_member()
+	if member.is_empty():
 		_sprite.texture = _create_placeholder_texture(Color(0.2, 0.4, 0.9), Color(0.1, 0.2, 0.6))
+	else:
+		_sprite.texture = CharacterSprites.get_battle_texture(member)
+	_sprite.region_enabled = false
 	_sprite.billboard = BaseMaterial3D.BILLBOARD_ENABLED
-	_sprite.pixel_size = 0.05
+	# Nearest, so the pixel art stays pixel art at this magnification.
+	_sprite.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST
 	_sprite.alpha_cut = SpriteBase3D.ALPHA_CUT_OPAQUE_PREPASS
 	_sprite.render_priority = 0
+
+func _lead_member() -> Dictionary:
+	if GameState.party.is_empty():
+		return {}
+	GameState.lead_index = posmod(GameState.lead_index, GameState.party.size())
+	return GameState.party[GameState.lead_index]
+
+## Q / E walk as the previous / next party member. Cosmetic only: nothing about the party, the
+## turn order or the stats changes, just who you are looking at.
+func cycle_lead(step: int) -> void:
+	if GameState.party.size() < 2:
+		return
+	GameState.lead_index = posmod(GameState.lead_index + step, GameState.party.size())
+	_apply_lead_sprite()
 
 func _physics_process(delta: float) -> void:
 	if _movement_disabled:
 		velocity = Vector3.ZERO
 		_is_moving = false
-		_set_idle_frame()
+		_settle_sprite(delta)
 		move_and_slide()
 		return
 
@@ -152,53 +94,26 @@ func _physics_process(delta: float) -> void:
 	velocity.y = 0
 	move_and_slide()
 
-	# Update animation direction and frame
-	if input_dir.length() > 0.1:
-		_is_moving = true
-		_update_direction(input_dir)
-		_update_animation(delta)
-	else:
-		if _is_moving:
-			_is_moving = false
-			_set_idle_frame()
+	_is_moving = input_dir.length() > 0.1
+	_animate_sprite(delta)
 
-func _update_direction(input_dir: Vector2) -> void:
-	# Choose direction based on dominant input axis
-	# input_dir: x>0 = right, x<0 = left, y>0 = down, y<0 = up
-	if absf(input_dir.x) > absf(input_dir.y):
-		_current_dir = Dir.RIGHT if input_dir.x > 0 else Dir.LEFT
-	else:
-		_current_dir = Dir.DOWN if input_dir.y > 0 else Dir.UP
-
-func _update_animation(delta: float) -> void:
-	_anim_timer += delta
-	var frame_duration = 1.0 / ANIM_FPS
-	if _anim_timer >= frame_duration:
-		_anim_timer -= frame_duration
-		# Cycle through 0, 1, 2, 1, 0, 1, 2, ... (ping-pong for smooth walk)
-		_anim_frame = (_anim_frame + 1) % 4
-	_apply_frame()
-
-func _set_idle_frame() -> void:
-	_anim_frame = 1  # center frame
-	_anim_timer = 0.0
-	_apply_frame()
-
-func _apply_frame() -> void:
-	if not _sprite or not _sprite.region_enabled:
+## A hop while walking. There is no walk cycle in the party art — one frame per character — so
+## the movement has to come from somewhere, and a bob costs nothing and reads at this camera angle.
+func _animate_sprite(delta: float) -> void:
+	if not _sprite:
 		return
-	if _current_dir not in _dir_frames:
+	if not _is_moving:
+		_settle_sprite(delta)
 		return
-	var frames = _dir_frames[_current_dir]
-	# Ping-pong pattern: 0→1→2→1→0→1→2→...
-	var actual_frame: int
-	match _anim_frame:
-		0: actual_frame = 0
-		1: actual_frame = 1
-		2: actual_frame = 2
-		3: actual_frame = 1
-		_: actual_frame = 1
-	_sprite.region_rect = frames[actual_frame]
+	_bob_phase += delta * WALK_BOB_SPEED
+	_sprite.position.y = SPRITE_BASE_Y + absf(sin(_bob_phase)) * WALK_BOB_HEIGHT
+
+## Eases back down to standing rather than snapping, so stopping mid-hop does not jump.
+func _settle_sprite(delta: float) -> void:
+	if not _sprite:
+		return
+	_bob_phase = 0.0
+	_sprite.position.y = move_toward(_sprite.position.y, SPRITE_BASE_Y, delta * 0.6)
 
 func _unhandled_input(event: InputEvent) -> void:
 	if _movement_disabled:
@@ -206,6 +121,10 @@ func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("action1") and _current_interactable:
 		if _current_interactable.has_method("interact"):
 			_current_interactable.interact()
+	elif event.is_action_pressed("lead_next"):
+		cycle_lead(1)
+	elif event.is_action_pressed("lead_prev"):
+		cycle_lead(-1)
 
 func set_movement_disabled(disabled: bool) -> void:
 	_movement_disabled = disabled

@@ -3,6 +3,10 @@ extends Node
 ## Manages party, inventory, dungeon flags, minimap state, combat return info.
 
 var party: Array[Dictionary] = []
+## Which party member is the one you see walking around the dungeon. Purely cosmetic — it changes
+## the sprite and nothing else, not turn order, not who acts, not stats. Deliberately not saved:
+## it costs one keypress to set and carrying it in the save file would mean versioning it.
+var lead_index: int = 0
 var inventory: Array[Dictionary] = []
 var gold: int = 0
 var total_xp: int = 0
@@ -408,6 +412,7 @@ func restore_party_from_combat(party_state: Array) -> void:
 # --- Full reset (used on defeat to restart cleanly) ---
 func reset() -> void:
 	party.clear()
+	lead_index = 0
 	inventory.clear()
 	pending_level_ups.clear()
 	gold = 0

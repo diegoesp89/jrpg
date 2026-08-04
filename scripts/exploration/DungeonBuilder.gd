@@ -278,6 +278,7 @@ func _create_door(pos: Vector3, config: Dictionary = {}) -> void:
 	sprite.name = "Sprite3D"
 	sprite.pixel_size = 0.03
 	sprite.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	sprite.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST
 	sprite.alpha_cut = SpriteBase3D.ALPHA_CUT_OPAQUE_PREPASS
 	sprite.position = Vector3(0, 1.2, 0)
 	door.add_child(sprite)
@@ -313,6 +314,7 @@ func _create_npc(pos: Vector3, config: Dictionary = {}) -> void:
 	sprite.name = "Sprite3D"
 	sprite.pixel_size = 0.03
 	sprite.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	sprite.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST
 	sprite.alpha_cut = SpriteBase3D.ALPHA_CUT_OPAQUE_PREPASS
 	sprite.texture = _npc_texture
 	sprite.position = Vector3(0, 0.8, 0)
@@ -344,6 +346,7 @@ func _create_rest_zone(pos: Vector3, config: Dictionary = {}) -> void:
 	sprite.name = "Sprite3D"
 	sprite.pixel_size = 0.03
 	sprite.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	sprite.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST
 	sprite.alpha_cut = SpriteBase3D.ALPHA_CUT_OPAQUE_PREPASS
 	sprite.texture = _create_rect_texture(REST_ZONE_COLOR, REST_ZONE_BORDER, 32, 32)
 	sprite.position = Vector3(0, 0.5, 0)
@@ -373,6 +376,7 @@ func _create_chest(pos: Vector3, config: Dictionary = {}) -> void:
 	sprite.name = "Sprite3D"
 	sprite.pixel_size = 0.03
 	sprite.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	sprite.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST
 	sprite.alpha_cut = SpriteBase3D.ALPHA_CUT_OPAQUE_PREPASS
 	sprite.texture = _chest_closed_texture
 	sprite.position = Vector3(0, 0.5, 0)
@@ -412,6 +416,7 @@ func _create_floor_item(pos: Vector3, config: Dictionary = {}) -> void:
 	sprite.name = "Sprite3D"
 	sprite.pixel_size = 0.03
 	sprite.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	sprite.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST
 	sprite.alpha_cut = SpriteBase3D.ALPHA_CUT_OPAQUE_PREPASS
 	sprite.texture = _floor_item_texture
 	sprite.position = Vector3(0, 0.3, 0)
@@ -511,6 +516,7 @@ func _create_riddle_gate(pos: Vector3, config: Dictionary = {}) -> void:
 	sprite.name = "Sprite3D"
 	sprite.pixel_size = 0.03
 	sprite.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	sprite.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST
 	sprite.alpha_cut = SpriteBase3D.ALPHA_CUT_OPAQUE_PREPASS
 	sprite.texture = _create_rect_texture(Color(0.55, 0.15, 0.55), Color(0.3, 0.05, 0.3), 32, 48)
 	sprite.position = Vector3(0, 1.2, 0)
@@ -780,7 +786,7 @@ global uniform vec3 player_world_pos;
 global uniform float fog_start;
 global uniform float fog_end;
 
-uniform sampler2D base_texture : source_color;
+uniform sampler2D base_texture : source_color, filter_nearest;
 
 varying vec3 world_pos;
 
@@ -805,7 +811,7 @@ global uniform vec3 player_world_pos;
 global uniform float fog_start;
 global uniform float fog_end;
 
-uniform sampler2D base_texture : source_color;
+uniform sampler2D base_texture : source_color, filter_nearest;
 uniform float alpha : hint_range(0.0, 1.0) = 1.0;
 
 varying vec3 world_pos;
