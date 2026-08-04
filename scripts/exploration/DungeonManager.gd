@@ -2,6 +2,9 @@ extends Node3D
 class_name DungeonManager
 ## DungeonManager — Top-level manager
 
+## Preloaded by path rather than through its class_name — see the note in DungeonBuilder.gd.
+const NarrativeToastScript = preload("res://scripts/ui/NarrativeToast.gd")
+
 @onready var _player: CharacterBody3D = $Player
 @onready var _camera_rig = $CameraRig
 @onready var _dungeon_builder = $DungeonBuilder
@@ -28,6 +31,18 @@ func _ready() -> void:
 	_setup_occlusion_controller()
 	_setup_player_fog_global()
 	_setup_map_editor()
+	_show_pending_tier_message()
+
+## Catches a legendary-weapon toast that fired while the party was still in the Battle scene (a
+## boss drop): GameState.add_item() has no way to show UI itself, so it just queues the message,
+## and whichever scene next loads picks it up. A floor pickup shows it immediately instead — see
+## Pickup.gd — since grabbing one doesn't leave this scene for anything to catch it here.
+func _show_pending_tier_message() -> void:
+	if GameState.pending_tier_message == "":
+		return
+	var msg := GameState.pending_tier_message
+	GameState.pending_tier_message = ""
+	await NarrativeToastScript.show_at(self, msg)
 
 func _setup_environment() -> void:
 	var env = Environment.new()

@@ -54,7 +54,8 @@
   },
   "encounter_efreet_duo": {
 	"enemies": [
-      "efreet_nix"
+      "efreet_nix",
+      "efreet_nox"
 	],
 	"id": "encounter_efreet_duo",
 	"rewards": {

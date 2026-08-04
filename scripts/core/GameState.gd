@@ -37,6 +37,25 @@ const MAX_LEVEL: int = 5
 ## and drained one entry at a time by LevelUpPanel via apply_level_up_choice().
 var pending_level_ups: Array[Dictionary] = []
 
+## The dungeon reacting to how much of it the party has already conquered, keyed by
+## progression_tier(). Deliberately vague about WHAT gets harder — no monster names, no numbers —
+## same spoiler discipline as the Ayuda pages. Tier 3 is the only one that tells the player
+## anything actionable: leave.
+const TIER_MESSAGES := {
+	1: "El calabozo ha sentido la pérdida de una de sus reliquias. En la oscuridad, algo empieza a removerse — sus criaturas ya no descansan tan tranquilas.",
+	2: "El calabozo sabe de ti. Refuerza sus fuerzas: sus monstruos son más letales que antes.",
+	3: "El calabozo entero ha despertado en tu contra. Sus monstruos ya no muestran cautela alguna. Es hora de escapar.",
+}
+## Set by _check_tier_up() when progression_tier() just increased; cleared by whoever displays
+## it. Deferred rather than shown immediately, because the item that triggers it can arrive from
+## either of two different scenes: a floor pickup (already in the dungeon — Pickup.gd shows it
+## right away) or a boss drop (still in the Battle scene — DungeonManager shows it once control
+## returns), and add_item() itself has no reliable way to know which one just happened.
+var pending_tier_message: String = ""
+## -1 so the very first _check_tier_up() call always syncs cleanly rather than comparing against
+## a real tier value that happens to match by coincidence.
+var _last_progression_tier: int = -1
+
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	_init_inventory()
@@ -257,10 +276,29 @@ func add_item(item_id: String, qty: int = 1) -> void:
 	for item in inventory:
 		if item["id"] == item_id:
 			item["quantity"] += qty
+			_check_tier_up()
 			return
 	var item_data = DataLoader.get_item(item_id)
 	if item_data:
 		inventory.append({ "id": item_id, "name": item_data["name"], "quantity": qty })
+		_check_tier_up()
+
+## Queues TIER_MESSAGES[new tier] whenever progression_tier() just went up. Silent (no message,
+## just resyncs the baseline) the first time it runs after a fresh reset() or a load_game() —
+## otherwise resuming a save with two legendary weapons already in the bag, or starting a new
+## game, would replay every message the party "gained" since _last_progression_tier's sentinel.
+func _check_tier_up() -> void:
+	var tier := progression_tier()
+	if tier > _last_progression_tier and _last_progression_tier >= 0 and TIER_MESSAGES.has(tier):
+		pending_tier_message = str(TIER_MESSAGES[tier])
+	_last_progression_tier = tier
+
+## Called once after SaveManager.load_game() repopulates inventory directly (bypassing add_item,
+## so _check_tier_up() never ran during the load). Without this, the next item picked up after
+## resuming a save would see _last_progression_tier still at its -1 sentinel and misfire every
+## message up to the restored tier at once.
+func sync_progression_tier() -> void:
+	_last_progression_tier = progression_tier()
 
 func remove_item(item_id: String, qty: int = 1) -> bool:
 	for i in range(inventory.size()):
@@ -425,6 +463,8 @@ func reset() -> void:
 	current_intro_message = ""
 	current_death_message = ""
 	rest_charges_left = MAX_REST_CHARGES
+	pending_tier_message = ""
+	_last_progression_tier = 0
 	_init_inventory()
 
 func _init_inventory() -> void:

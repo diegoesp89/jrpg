@@ -2,6 +2,10 @@ extends StaticBody3D
 class_name Pickup
 ## Pickup — Chest/item pickup
 
+## Preloaded by path rather than through its class_name — see the note in DungeonBuilder.gd on why
+## a class_name added in the same change as the code using it can't be trusted yet.
+const NarrativeToastScript = preload("res://scripts/ui/NarrativeToast.gd")
+
 @export var item_id: String = "potion"
 @export var item_quantity: int = 1
 @export var chest_id: String = "chest_sala3"
@@ -38,6 +42,14 @@ func interact() -> void:
 	var item_name = item_data.get("name", item_id) if item_data else item_id
 	print("Obtained: %s x%d!" % [item_name, item_quantity])
 	_hide_chest()
+
+	# A floor pickup never changes scenes, so — unlike a boss drop — nothing will reload this map
+	# and catch the message later. Show it here, right away, and consume it so DungeonManager's
+	# own check on the next scene load doesn't show it a second time.
+	if GameState.pending_tier_message != "":
+		var msg := GameState.pending_tier_message
+		GameState.pending_tier_message = ""
+		await NarrativeToastScript.show_at(self, msg)
 
 	var player = get_tree().get_first_node_in_group("player")
 	if player:

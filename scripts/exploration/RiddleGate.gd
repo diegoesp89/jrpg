@@ -9,6 +9,14 @@ class_name RiddleGate
 @export var success_event_id: String = "WP1A"
 @export var combat_event_id: String = "WP1B"
 
+## Preloaded by path rather than through its class_name — see the note in DungeonBuilder.gd.
+const NarrativeToastScript = preload("res://scripts/ui/NarrativeToast.gd")
+
+## Shown after winning the guardian fight (i.e. NOT solving the riddle peacefully) — a warning
+## that something harsher is waiting further in. Deliberately doesn't name what: same spoiler
+## discipline as the Ayuda pages, and it's the answer to a puzzle the player just failed.
+const NEW_GUARDIAN_WARNING := "Al vencer a la guardiana, algo más ha despertado en las profundidades para ocupar su lugar. Prepárate — no será tan piadoso como ella."
+
 const FLAG_OPEN := "riddle_gate_open"
 const ACCENTED := "áéíóúñ"
 const PLAIN := "aeioun"
@@ -35,7 +43,16 @@ func _ready() -> void:
 		# The player already won the guardian fight in a previous load of this scene.
 		GameState.set_flag(FLAG_OPEN)
 		_set_open(true)
-		_play_scene(combat_event_id, {})
+		_play_and_warn()
+
+## Plays the post-fight banter, then the warning that a new guardian replaced this one — in that
+## order, so the warning reads as the last, ominous word rather than getting talked over by the
+## party's in-character reactions. Split out from _ready() (rather than awaited inline there) only
+## because the FLAG_OPEN early-return above guarantees this whole branch runs exactly once per
+## save, so there is nothing time-sensitive about it not being awaited by the caller.
+func _play_and_warn() -> void:
+	await _play_scene(combat_event_id, {})
+	await NarrativeToastScript.show_at(self, NEW_GUARDIAN_WARNING)
 
 func interact() -> void:
 	if GameState.get_flag(FLAG_OPEN):

@@ -44,6 +44,10 @@ func load_game() -> Dictionary:
 	GameState.flags = data.get("flags", {})
 	GameState.revealed_cells = data.get("revealed_cells", {})
 	GameState.rest_charges_left = int(data.get("rest_charges_left", GameState.MAX_REST_CHARGES))
+	# Inventory was just restored directly, above, bypassing add_item() and the tier-message check
+	# it drives — sync the baseline now so the NEXT legendary weapon picked up this session is
+	# compared against the tier actually being resumed, not against the fresh-boot sentinel.
+	GameState.sync_progression_tier()
 
 	var pos = data.get("player_position", {})
 	return {
