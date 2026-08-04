@@ -883,28 +883,18 @@ func _build_party_row(p: Dictionary) -> Control:
 		name_label.add_theme_color_override("font_color", Theme_.TEXT)
 	header.add_child(name_label)
 
-	# Whatever is true about this member right now, in the space the old line spent on "MP:14/14".
-	var tags: Array[String] = []
-	if not alive:
-		tags.append("CAIDO")
-	if p.get("defending", false):
-		tags.append("DEF")
-	# Focus is spent by Ráfaga de Golpes, one strike per point, and is built by ordinary attacks.
-	# It was tracked invisibly, so the only way to know how big your flurry would be was to count
-	# your own attacks since the last one.
-	if int(p.get("focus", 0)) > 0:
-		tags.append("ENFOQUE %d" % int(p["focus"]))
-	if int(p.get("poison_damage", 0)) > 0:
-		tags.append("VENENO")
-	if int(p.get("burn_damage", 0)) > 0:
-		tags.append("QUEMADURA")
-	if int(p.get("stunned_turns", 0)) > 0:
-		tags.append("ATURDIDO")
+	var tags := _status_tags(p)
 	if not tags.is_empty():
 		var tag_label = Label.new()
 		tag_label.text = "  ".join(tags)
 		tag_label.add_theme_font_size_override("font_size", 18)
 		tag_label.add_theme_color_override("font_color", Theme_.HP_HURT if alive else Theme_.TEXT_DEAD)
+		# Clipped rather than allowed to grow: a character can in principle carry a dozen of these
+		# at once, and a row that widens with them would push the whole panel out of the screen —
+		# the failure this layout has already had twice. The list is ordered so a clip drops the
+		# least urgent items.
+		tag_label.clip_text = true
+		tag_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		header.add_child(tag_label)
 
 	var hp: int = int(p.get("hp", 0))
@@ -918,6 +908,55 @@ func _build_party_row(p: Dictionary) -> Control:
 		col.add_child(_build_stat_bar("MP", mp, max_mp, float(mp) / float(max_mp), Theme_.MP_COLOR))
 
 	return row
+
+## Everything true about a party member right now that the numbers above do not already say.
+##
+## Combat tracks a lot of per-character state that only ever surfaced in the log as it happened,
+## which meant the player had to remember it. Each of these changes a decision:
+##
+##   CIEGO      you attack at disadvantage AND are attacked with advantage — both directions
+##   EXPUESTO   after Temerario, every attack against you has advantage until your next turn
+##   ATURDIDO   your turn is skipped
+##   INDULTO    the Cleric's capstone will cancel one lethal blow
+##   TEMP       Blackrazor's devoured souls absorb damage BEFORE hp, so the HP bar under-reports
+##   ENFOQUE    strikes the Monk's Ráfaga will throw
+##   SUERTE     re-rolls left on a missed attack (Afortunada)
+##   ADEPTO     stuns left on hit (Adepto Marcial)
+##   PRESA      immobilises left on hit (Luchador)
+##   PREM       the d20 the Sorceress has already foreseen for her next attack
+##
+## Ordered most urgent first, because the label clips.
+func _status_tags(p: Dictionary) -> Array[String]:
+	var tags: Array[String] = []
+	if int(p.get("hp", 0)) <= 0:
+		tags.append("CAIDO")
+	if int(p.get("blind_turns", 0)) > 0:
+		tags.append("CIEGO %d" % int(p["blind_turns"]))
+	if bool(p.get("grants_advantage", false)):
+		tags.append("EXPUESTO")
+	if int(p.get("stunned_turns", 0)) > 0:
+		tags.append("ATURDIDO")
+	if int(p.get("death_ward_charges", 0)) > 0:
+		tags.append("INDULTO %d" % int(p["death_ward_charges"]))
+	if int(p.get("temp_hp", 0)) > 0:
+		tags.append("TEMP %d" % int(p["temp_hp"]))
+	if bool(p.get("defending", false)):
+		tags.append("DEF")
+	if int(p.get("poison_damage", 0)) > 0:
+		tags.append("VENENO")
+	if int(p.get("burn_damage", 0)) > 0:
+		tags.append("QUEMADURA")
+	if int(p.get("focus", 0)) > 0:
+		tags.append("ENFOQUE %d" % int(p["focus"]))
+	if int(p.get("lucky_charges", 0)) > 0:
+		tags.append("SUERTE %d" % int(p["lucky_charges"]))
+	if int(p.get("martial_adept_charges", 0)) > 0:
+		tags.append("ADEPTO %d" % int(p["martial_adept_charges"]))
+	if int(p.get("grappler_charges", 0)) > 0:
+		tags.append("PRESA %d" % int(p["grappler_charges"]))
+	if int(p.get("premonition_roll", 0)) > 0:
+		tags.append("PREM %d" % int(p["premonition_roll"]))
+	return tags
 
 ## A labelled bar. The fill is a plain ColorRect sized by fraction rather than a ProgressBar,
 ## to match how the enemy HP bars above the sprites are already drawn.
