@@ -81,7 +81,8 @@ func _process(_delta: float) -> void:
 func _update_hp_display() -> void:
 	var hp_label = _hud.get_node_or_null("HPLabel")
 	if hp_label and GameState.party.size() > 0:
-		var leader = GameState.party[0]
+		# The one you are actually walking as (Q/E), so the HUD and the sprite never disagree.
+		var leader = GameState.party[posmod(GameState.lead_index, GameState.party.size())]
 		var mp = leader.get("mp", 0)
 		var max_mp = leader.get("max_mp", 0)
 		hp_label.text = "%s  HP: %d/%d  MP: %d/%d" % [

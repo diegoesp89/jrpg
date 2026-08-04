@@ -5,17 +5,40 @@ class_name PlayerController
 const MOVE_SPEED: float = 5.0
 const INTERACTION_RANGE: float = 2.0
 
-## How high the sprite hops while walking, and how fast. The party art is a single frame per
-## character — there is no walk cycle to play — so this is what keeps a moving character from
-## looking like it is being slid across the floor.
-const WALK_BOB_HEIGHT: float = 0.09
-const WALK_BOB_SPEED: float = 9.0
+## The walk is a hop, not a frame animation: the party art is a single frame per character, so
+## there is no walk cycle to play. abs(sin) rather than sin, because that gives the bounce its
+## sharp landing and rounded apex instead of an even float.
+const WALK_HOP_HEIGHT: float = 0.16
+const WALK_HOP_SPEED: float = 11.0
 const SPRITE_BASE_Y: float = 0.8
+
+## Turning is a Paper Mario flip: the sprite swings around its own vertical axis, going edge-on
+## and thin at the halfway point. Done with scale.x through zero rather than a real Y rotation,
+## because the sprite is billboarded — billboarding overrides node rotation every frame, so a
+## rotated sprite would simply snap back to facing the camera. Mirroring reads identically.
+const TURN_SPEED: float = 7.0
+## Ignore facing changes below this much sideways movement, so walking straight at or away from
+## the camera does not make the character waver between left and right.
+const TURN_DEADZONE: float = 0.25
+
+## A soft round shadow pinned to the floor. Without it a hopping billboard reads as floating —
+## the hop is what makes the contact point matter, so the two go together.
+##
+## Note on how much this actually shows: a shadow can only darken what is already there, and this
+## dungeon's floor art sits at a median luminance of 26/255 (the wall art is 112). Under the fog
+## it reaches the screen at about 11. So the shadow reads on lit ground — inside a torch's pool —
+## and is close to invisible on the plain floor, because there is no brightness left to take away.
+## Raising the alpha further does nothing; the floor art is what would have to change.
+const SHADOW_SIZE: float = 0.62
+const SHADOW_ALPHA: float = 0.55
 
 var _current_interactable: Node = null
 var _movement_disabled: bool = false
 var _is_moving: bool = false
-var _bob_phase: float = 0.0
+var _hop_phase: float = 0.0
+var _facing: float = 1.0
+var _facing_target: float = 1.0
+var _shadow: Sprite3D = null
 
 @onready var _sprite: Sprite3D = $Sprite3D
 @onready var _interaction_area: Area3D = $InteractionArea
@@ -25,6 +48,43 @@ signal interactable_changed(interactable: Node)
 func _ready() -> void:
 	add_to_group("player")
 	_apply_lead_sprite()
+	_build_shadow()
+
+## Built in code rather than added to Player.tscn so the gradient and the sizing live next to the
+## hop that depends on them.
+func _build_shadow() -> void:
+	_shadow = Sprite3D.new()
+	_shadow.texture = _make_shadow_texture()
+	# Flat on the ground, and NOT billboarded — a shadow that turns to face the camera is the one
+	# thing that would give away that none of this is really 3D.
+	_shadow.billboard = BaseMaterial3D.BILLBOARD_DISABLED
+	_shadow.rotation_degrees.x = -90.0
+	_shadow.position.y = 0.02
+	_shadow.pixel_size = SHADOW_SIZE / 64.0
+	_shadow.shaded = false
+	_shadow.transparent = true
+	_shadow.alpha_cut = SpriteBase3D.ALPHA_CUT_DISABLED
+	# Linear here on purpose: this is a soft gradient, not pixel art, and nearest would band it
+	# into visible rings.
+	_shadow.texture_filter = BaseMaterial3D.TEXTURE_FILTER_LINEAR
+	_shadow.render_priority = -1
+	add_child(_shadow)
+
+## A radial falloff, dark in the middle and gone at the rim.
+static func _make_shadow_texture() -> GradientTexture2D:
+	var g := Gradient.new()
+	g.offsets = PackedFloat32Array([0.0, 0.55, 1.0])
+	g.colors = PackedColorArray([
+		Color(0, 0, 0, SHADOW_ALPHA), Color(0, 0, 0, SHADOW_ALPHA * 0.5), Color(0, 0, 0, 0.0),
+	])
+	var t := GradientTexture2D.new()
+	t.gradient = g
+	t.width = 64
+	t.height = 64
+	t.fill = GradientTexture2D.FILL_RADIAL
+	t.fill_from = Vector2(0.5, 0.5)
+	t.fill_to = Vector2(1.0, 0.5)
+	return t
 
 ## Draws whichever party member is currently being led. Falls back to a placeholder when there is
 ## no party at all — the map editor and the debug boot paths both reach this scene that way.
@@ -95,25 +155,44 @@ func _physics_process(delta: float) -> void:
 	move_and_slide()
 
 	_is_moving = input_dir.length() > 0.1
+	# Which way to face: how much of the movement runs along the camera's right, not along world
+	# X, so the flip stays correct whatever angle the camera sits at.
+	if _is_moving:
+		var sideways: float = move_dir.dot(cam_right)
+		if absf(sideways) > TURN_DEADZONE:
+			_facing_target = 1.0 if sideways > 0.0 else -1.0
 	_animate_sprite(delta)
 
-## A hop while walking. There is no walk cycle in the party art — one frame per character — so
-## the movement has to come from somewhere, and a bob costs nothing and reads at this camera angle.
+## The hop, the turn and the shadow, all driven off the same frame.
 func _animate_sprite(delta: float) -> void:
 	if not _sprite:
 		return
-	if not _is_moving:
-		_settle_sprite(delta)
-		return
-	_bob_phase += delta * WALK_BOB_SPEED
-	_sprite.position.y = SPRITE_BASE_Y + absf(sin(_bob_phase)) * WALK_BOB_HEIGHT
 
-## Eases back down to standing rather than snapping, so stopping mid-hop does not jump.
+	# Turn: swing towards the target facing. Passing through zero is the flip — the sprite goes
+	# edge-on and thin for an instant, exactly as a sheet of paper turning would.
+	_facing = move_toward(_facing, _facing_target, delta * TURN_SPEED)
+	_sprite.scale.x = _facing if absf(_facing) > 0.001 else 0.001
+
+	var height := 0.0
+	if _is_moving:
+		_hop_phase += delta * WALK_HOP_SPEED
+		height = absf(sin(_hop_phase)) * WALK_HOP_HEIGHT
+	else:
+		_hop_phase = 0.0
+	_sprite.position.y = move_toward(_sprite.position.y, SPRITE_BASE_Y + height, delta * 1.6)
+
+	# The shadow shrinks and fades as the character rises, which is what sells the hop as a hop
+	# rather than the sprite just sliding upward.
+	if _shadow:
+		var lift: float = clampf(height / maxf(WALK_HOP_HEIGHT, 0.001), 0.0, 1.0)
+		var shrink: float = 1.0 - lift * 0.22
+		_shadow.scale = Vector3(shrink, shrink, shrink)
+		_shadow.modulate.a = 1.0 - lift * 0.3
+
+## Eases back down to standing rather than snapping, so stopping mid-hop does not drop.
 func _settle_sprite(delta: float) -> void:
-	if not _sprite:
-		return
-	_bob_phase = 0.0
-	_sprite.position.y = move_toward(_sprite.position.y, SPRITE_BASE_Y, delta * 0.6)
+	_is_moving = false
+	_animate_sprite(delta)
 
 func _unhandled_input(event: InputEvent) -> void:
 	if _movement_disabled:
