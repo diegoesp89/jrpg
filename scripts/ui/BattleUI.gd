@@ -1161,8 +1161,10 @@ func _draw_zone_backdrop() -> void:
 				continue
 			# Grown downward as well as outward: over a lit floor the bands need to read as a
 			# standing area, not as a tight box cropped to whatever sprites happen to be in it.
+			# Down to the field's own bottom edge, not some fraction of it — a floor that stops
+			# short of the field boundary reads as a gap of unbanded ground underneath the party.
 			var rect := Rect2(to_local * r.position, r.size)
-			rect.size.y = maxf(rect.size.y, size_of_field * 0.62 - rect.position.y)
+			rect.size.y = maxf(rect.size.y, size_of_field - rect.position.y)
 			var front := i == Combatant.POS_FRONT
 			var fill := Theme_.ZONE_FRONT_FILL if front else Theme_.ZONE_BACK_FILL
 			var edge := Theme_.ZONE_FRONT_EDGE if front else Theme_.ZONE_BACK_EDGE
