@@ -21,7 +21,7 @@
   },
   "heavily_armored": {
     "id": "heavily_armored",
-    "name": "Fuertemente Armada",
+    "name": "Fuertemente Armado",
     "description": "Tu Clase de Armadura (CA) aumenta permanentemente en +2 desde el momento en que ganas el feat. Esto hace que los enemigos fallen sus ataques contra ti con más frecuencia.",
     "effect": "ca_bonus_flat",
     "value": 2
@@ -41,34 +41,34 @@
   },
   "dungeon_delver": {
     "id": "dungeon_delver",
-    "name": "Exploradora de Mazmorras",
+    "name": "Explorador de Mazmorras",
     "description": "Tu instinto para el peligro reduce a la mitad el daño que recibes de las trampas de la mazmorra (redondeando hacia arriba). Solo aplica si eres tú quien falla la tirada de salvación contra la trampa (siempre intenta esquivarla quien tenga mayor Agilidad en la party).",
     "effect": "trap_damage_half"
   },
   "martial_adept": {
     "id": "martial_adept",
-    "name": "Adepta Marcial",
+    "name": "Adepto Marcial",
     "description": "Una vez por combate, si tu ataque básico conecta, además del daño normal el objetivo queda aturdido y pierde su próximo turno.",
     "effect": "stun_on_attack_charges",
     "value": 1
   },
   "lucky": {
     "id": "lucky",
-    "name": "Afortunada",
+    "name": "Afortunado",
     "description": "Tienes 3 cargas por combate (se recargan al empezar cada batalla nueva). Cada vez que tu ataque básico falla, si te queda al menos 1 carga, se gasta automáticamente 1 carga y se vuelve a tirar el ataque una vez, reemplazando el resultado fallido.",
     "effect": "reroll_miss_charges",
     "value": 3
   },
   "actor": {
     "id": "actor",
-    "name": "Actriz",
+    "name": "Actor",
     "description": "Sumas +20 puntos a tu probabilidad de huir del combate (por ejemplo, de 70% a 90%). Se aplica mientras estés en la party, sin importar quién intente huir.",
     "effect": "flee_bonus_flat",
     "value": 20
   },
   "inspiring_leader": {
     "id": "inspiring_leader",
-    "name": "Líder Inspiradora",
+    "name": "Líder Inspirador",
     "description": "Toda curación que hagas (con hechizos u objetos) sana un 20% más de HP. Se aplica siempre, sin límite de usos.",
     "effect": "heal_bonus_pct",
     "value": 20
@@ -87,28 +87,28 @@
   },
   "elemental_adept": {
     "id": "elemental_adept",
-    "name": "Adepta Elemental",
+    "name": "Adepto Elemental",
     "description": "Todas tus habilidades mágicas (hechizos que no son ataques físicos) suman +3 de daño plano, además del poder base y el modificador de característica.",
     "effect": "magical_damage_bonus_flat",
     "value": 3
   },
   "magic_initiate": {
     "id": "magic_initiate",
-    "name": "Iniciada en la Magia",
+    "name": "Iniciado en la Magia",
     "description": "Aprendes de forma permanente la habilidad 'Golpe de Poder' (power_strike) además de las que ya tenías, disponible desde el primer combate en el menú de Habilidad.",
     "effect": "bonus_skill",
     "value": "power_strike"
   },
   "mage_slayer": {
     "id": "mage_slayer",
-    "name": "Cazadora de Magos",
+    "name": "Cazador de Magos",
     "description": "Tus ataques básicos suman +3 de daño plano contra enemigos que tengan habilidades especiales propias (es decir, los que sepan hacer algo más que atacar).",
     "effect": "bonus_vs_casters",
     "value": 3
   },
   "skulker": {
     "id": "skulker",
-    "name": "Merodeadora",
+    "name": "Merodeador",
     "description": "Los enemigos te atacan con desventaja (tiran el d20 dos veces y se quedan con el peor resultado) gracias a tu evasión natural.",
     "effect": "attacker_disadvantage"
   },
@@ -121,7 +121,7 @@
   },
   "grappler": {
     "id": "grappler",
-    "name": "Forcejeadora",
+    "name": "Forcejeador",
     "description": "Una vez por combate, si tu ataque básico conecta, además del daño normal el objetivo queda inmovilizado y pierde su próximo turno.",
     "effect": "immobilize_charges",
     "value": 1
@@ -135,7 +135,7 @@
   },
   "healer": {
     "id": "healer",
-    "name": "Sanadora",
+    "name": "Sanador",
     "description": "Todas las curaciones que haces (con hechizos, objetos, o cualquier otra fuente que pase por el cálculo de curación) sanan el doble de HP de lo normal. Se aplica siempre, sin límite de usos.",
     "effect": "heal_double"
   },
