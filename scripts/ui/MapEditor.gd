@@ -36,6 +36,9 @@ var _map_data: Dictionary = {}
 var _map_path: String = ""
 var _tiles: Array = []
 var _entities: Dictionary = {}
+## Ending-credits text for this map (scripts/core/CreditsScreen.gd). Plain array of strings, same
+## save-alongside-tiles/entities convention — see _write_current_map_to()/_on_playtest_pressed().
+var _credits: Array = []
 
 var _current_tool: Dictionary = TOOLS[0]
 var _drag_start_cell: Vector2i = Vector2i(-1, -1)
@@ -84,6 +87,9 @@ var _new_encounter_id_field: LineEdit
 var _new_encounter_enemies_field: LineEdit
 var _new_encounter_hint_label: Label
 
+var _credits_panel: Control
+var _credits_text_edit: TextEdit
+
 func _ready() -> void:
 	layer = 70
 	var current = DataLoader.get_current_map()
@@ -91,6 +97,7 @@ func _ready() -> void:
 	_map_path = DataLoader.get_current_map_path()
 	_tiles = _map_data.get("tiles", [])
 	_entities = _map_data.get("entities", {})
+	_credits = _map_data.get("credits", [])
 	_build_ui()
 	if standalone:
 		_is_open = true
@@ -240,6 +247,7 @@ func _build_ui() -> void:
 	_add_action_button(action_bar, "Redimensionar", _on_resize_pressed)
 	_add_action_button(action_bar, "Nuevo Enemigo", _on_new_enemy_pressed)
 	_add_action_button(action_bar, "Nuevo Encuentro", _on_new_encounter_pressed)
+	_add_action_button(action_bar, "Créditos", _on_credits_pressed)
 	_add_action_button(action_bar, "Playtest", _on_playtest_pressed)
 	_add_action_button(action_bar, "Cerrar", close_editor)
 
@@ -257,6 +265,7 @@ func _build_ui() -> void:
 	_build_key_location_panel()
 	_build_enemy_editor_panel()
 	_build_new_encounter_panel()
+	_build_credits_panel()
 
 func _make_panel_style() -> StyleBoxFlat:
 	var style = StyleBoxFlat.new()
@@ -1096,6 +1105,80 @@ func _on_new_encounter_save() -> void:
 	if _selected_kind in ["combat_trigger", "boss_trigger", "riddle_gate"]:
 		_open_property_panel(_selected_kind, _selected_list_key, _selected_entry)
 
+# --- Credits editor ("Créditos") ---
+
+## Same modal shape as _build_new_encounter_panel(), but with a real multiline TextEdit instead
+## of a LineEdit — the only place in this file that needs one, since _credits is a whole block of
+## text rather than a handful of short fields. One line in the box = one entry of data.credits,
+## read by scripts/core/CreditsScreen.gd: a line starting with "# " renders as a big title, an
+## empty line is a blank spacer, anything else is a normal line.
+func _build_credits_panel() -> void:
+	_credits_panel = Control.new()
+	_credits_panel.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_credits_panel.visible = false
+	_root.add_child(_credits_panel)
+
+	var dim = ColorRect.new()
+	dim.color = Color(0, 0, 0, 0.7)
+	dim.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_credits_panel.add_child(dim)
+
+	var box = PanelContainer.new()
+	box.set_anchors_preset(Control.PRESET_CENTER)
+	box.offset_left = -320
+	box.offset_right = 320
+	box.offset_top = -280
+	box.offset_bottom = 280
+	box.add_theme_stylebox_override("panel", _make_panel_style())
+	_credits_panel.add_child(box)
+
+	var vbox = VBoxContainer.new()
+	vbox.add_theme_constant_override("separation", 10)
+	box.add_child(vbox)
+
+	var title = Label.new()
+	title.text = "Créditos"
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	title.add_theme_font_size_override("font_size", 20)
+	title.add_theme_color_override("font_color", Color(0.9, 0.8, 0.4))
+	vbox.add_child(title)
+
+	var hint = Label.new()
+	hint.text = "Una línea por entrada. '# Texto' = título grande. Línea vacía = espacio."
+	hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	hint.add_theme_font_size_override("font_size", 12)
+	hint.add_theme_color_override("font_color", Color(0.6, 0.6, 0.6))
+	vbox.add_child(hint)
+
+	_credits_text_edit = TextEdit.new()
+	_credits_text_edit.custom_minimum_size = Vector2(560, 380)
+	_credits_text_edit.wrap_mode = TextEdit.LINE_WRAPPING_BOUNDARY
+	vbox.add_child(_credits_text_edit)
+
+	var buttons = HBoxContainer.new()
+	buttons.alignment = BoxContainer.ALIGNMENT_CENTER
+	buttons.add_theme_constant_override("separation", 20)
+	vbox.add_child(buttons)
+
+	var save_btn = Button.new()
+	save_btn.text = "Guardar"
+	save_btn.pressed.connect(_on_credits_save)
+	buttons.add_child(save_btn)
+
+	var cancel_btn = Button.new()
+	cancel_btn.text = "Cancelar"
+	cancel_btn.pressed.connect(func(): _credits_panel.visible = false)
+	buttons.add_child(cancel_btn)
+
+func _on_credits_pressed() -> void:
+	_credits_text_edit.text = "\n".join(_credits)
+	_credits_panel.visible = true
+
+func _on_credits_save() -> void:
+	_credits = _credits_text_edit.text.split("\n")
+	_credits_panel.visible = false
+	_set_status("Créditos actualizados (%d línea(s)) — se guardan con el mapa" % _credits.size())
+
 # --- Door key-location modal ("Ubicar la llave...") ---
 
 func _on_generate_key_pressed() -> void:
@@ -1434,6 +1517,7 @@ func _load_map_into_editor(path: String) -> void:
 	_map_data = data
 	_tiles = data.get("tiles", [])
 	_entities = data.get("entities", {})
+	_credits = data.get("credits", [])
 	_map_path = path
 	_grid.set_data(_tiles, _entities)
 	_show_no_selection()
@@ -1462,6 +1546,7 @@ func _do_save_as(map_name: String) -> void:
 func _write_current_map_to(path: String) -> void:
 	_map_data["tiles"] = _tiles
 	_map_data["entities"] = _entities
+	_map_data["credits"] = _credits
 	if not _map_data.has("name") or str(_map_data["name"]) == "":
 		_map_data["name"] = path.get_file().get_basename()
 
@@ -1571,6 +1656,7 @@ func _do_new_map(map_name: String) -> void:
 			row.append(0)
 		_tiles.append(row)
 	_entities = {}
+	_credits = []
 	_map_data = {"name": map_name, "tile_size": 2.0}
 	_map_path = ""
 	_grid.set_data(_tiles, _entities)
@@ -1580,6 +1666,7 @@ func _do_new_map(map_name: String) -> void:
 func _on_playtest_pressed() -> void:
 	_map_data["tiles"] = _tiles
 	_map_data["entities"] = _entities
+	_map_data["credits"] = _credits
 	DataLoader.set_current_map(_map_data)
 	if standalone:
 		SceneFlow.change_scene("res://scenes/boot/CharacterSelection.tscn")

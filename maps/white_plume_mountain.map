@@ -2729,5 +2729,35 @@
 			0,
 			0
 		]
+	],
+	"credits": [
+		"# La Montaña del Penacho Blanco",
+		"",
+		"Una aventura libre inspirada en White Plume Mountain",
+		"",
+		"",
+		"DIRECCIÓN Y DISEÑO",
+		"Tu Nombre Aquí",
+		"",
+		"PROGRAMACIÓN",
+		"Tu Nombre Aquí",
+		"",
+		"ARTE Y SPRITES",
+		"Tu Nombre Aquí",
+		"(ver CREDITS.txt en assets/sprites/ para la atribución del arte de terceros)",
+		"",
+		"MÚSICA Y SONIDO",
+		"Tu Nombre Aquí",
+		"",
+		"DISEÑO DE MAZMORRA",
+		"Tu Nombre Aquí",
+		"",
+		"",
+		"UN AGRADECIMIENTO ESPECIAL",
+		"A quien llegó hasta acá",
+		"",
+		"",
+		"# ¡Gracias por jugar!",
+		""
 	]
 }
