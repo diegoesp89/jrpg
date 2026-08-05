@@ -10,6 +10,11 @@ var _option_labels: Array[Label] = []
 
 func _ready() -> void:
 	_maps = DataLoader.list_maps()
+	# Skip the picker entirely when there's nothing to pick between. Admin mode still shows it,
+	# since it's also the only way to reach that map's "Editar" button from here.
+	if _maps.size() == 1 and not GameState.admin_mode:
+		_choose_map(_maps[0])
+		return
 	_build_ui()
 	_update_highlight()
 
@@ -100,10 +105,12 @@ func _unhandled_input(event: InputEvent) -> void:
 		_update_highlight()
 		get_viewport().set_input_as_handled()
 	elif event.is_action_pressed("action1"):
-		var chosen = _maps[_selected_index]
-		DataLoader.load_map(str(chosen.get("path", "")))
-		SceneFlow.change_scene("res://scenes/boot/CharacterSelection.tscn")
+		_choose_map(_maps[_selected_index])
 		get_viewport().set_input_as_handled()
+
+func _choose_map(map_entry: Dictionary) -> void:
+	DataLoader.load_map(str(map_entry.get("path", "")))
+	SceneFlow.change_scene("res://scenes/boot/CharacterSelection.tscn")
 
 func _on_edit_pressed(path: String) -> void:
 	DataLoader.load_map(path)
