@@ -66,6 +66,10 @@ var run_flawless: bool = true
 ## developer toggle for the current game session, not save-game progress.
 var admin_mode: bool = false
 
+## Debug Panel toggle: clamps any party member's HP to 1 instead of letting it hit 0. Same
+## reset()-exempt convention as admin_mode — a developer toggle for the session, not save progress.
+var invincible_mode: bool = false
+
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	_init_inventory()

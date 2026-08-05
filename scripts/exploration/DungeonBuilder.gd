@@ -34,6 +34,12 @@ var _wall_nodes: Array[Node3D] = []
 var _floor_mesh: MeshInstance3D = null
 var _wall_texture: Texture2D = null
 
+## Debug Panel's "Mostrar triggers en el mapa" — one entry per non-wall, non-floor, non-trap
+## entity created below, {"node": Node3D, "kind": String, "config": Dictionary}. Traps are
+## deliberately excluded: they're hidden until sprung, same spoiler-free rule as the Ayuda pages.
+var _debug_entities: Array = []
+var _debug_labels: Array[Label3D] = []
+
 # Dungeon dressing textures (placeholder art — see assets/sprites/dungeon/CREDITS.txt),
 # loaded once and reused across every tile/entity instance.
 var _floor_texture_a: Texture2D = null
@@ -127,6 +133,7 @@ func _create_standalone_story_triggers() -> void:
 			trigger.auto_trigger = true
 
 		add_child(trigger)
+		_debug_entities.append({"node": trigger, "kind": "story_trigger", "config": cfg})
 
 func _build_floor() -> void:
 	# Count floor tiles to determine floor extent
@@ -295,6 +302,7 @@ func _create_door(pos: Vector3, config: Dictionary = {}) -> void:
 		sprite.texture = unlocked_texture
 
 	add_child(door)
+	_debug_entities.append({"node": door, "kind": "door", "config": config})
 
 func _create_npc(pos: Vector3, config: Dictionary = {}) -> void:
 	var npc_script = load("res://scripts/exploration/NPCIntro.gd")
@@ -327,6 +335,7 @@ func _create_npc(pos: Vector3, config: Dictionary = {}) -> void:
 			npc.dialogue_id = config["dialogue_id"]
 
 	add_child(npc)
+	_debug_entities.append({"node": npc, "kind": "npc", "config": config})
 
 func _create_rest_zone(pos: Vector3, config: Dictionary = {}) -> void:
 	var rest_script = load("res://scripts/exploration/RestZone.gd")
@@ -357,6 +366,7 @@ func _create_rest_zone(pos: Vector3, config: Dictionary = {}) -> void:
 		rest.set_script(rest_script)
 
 	add_child(rest)
+	_debug_entities.append({"node": rest, "kind": "rest_zone", "config": config})
 
 func _create_chest(pos: Vector3, config: Dictionary = {}) -> void:
 	var pickup_script = load("res://scripts/exploration/Pickup.gd")
@@ -395,6 +405,7 @@ func _create_chest(pos: Vector3, config: Dictionary = {}) -> void:
 			chest.chest_id = config["chest_id"]
 
 	add_child(chest)
+	_debug_entities.append({"node": chest, "kind": "chest", "config": config})
 
 ## An item lying directly on the floor (no chest) — same Pickup.gd logic as a chest, just a
 ## smaller, differently-colored sprite so it reads as a loose item rather than a container.
@@ -433,6 +444,7 @@ func _create_floor_item(pos: Vector3, config: Dictionary = {}) -> void:
 			item.chest_id = config["chest_id"]
 
 	add_child(item)
+	_debug_entities.append({"node": item, "kind": "floor_item", "config": config})
 
 func _create_combat_trigger(pos: Vector3, config: Dictionary = {}) -> void:
 	var trigger_script = load("res://scripts/exploration/CombatTrigger.gd")
@@ -457,6 +469,7 @@ func _create_combat_trigger(pos: Vector3, config: Dictionary = {}) -> void:
 		trigger.death_message = config.get("death_message", "")
 
 	add_child(trigger)
+	_debug_entities.append({"node": trigger, "kind": "combat_trigger", "config": {"encounter_id": encounter_id}})
 
 func _create_trap(pos: Vector3, config: Dictionary = {}) -> void:
 	# Trap: an area that damages player on enter
@@ -533,6 +546,7 @@ func _create_riddle_gate(pos: Vector3, config: Dictionary = {}) -> void:
 			gate.combat_event_id = config["combat_event_id"]
 
 	add_child(gate)
+	_debug_entities.append({"node": gate, "kind": "riddle_gate", "config": config})
 
 func _create_random_encounter_zones() -> void:
 	var zone_script = load("res://scripts/exploration/RandomEncounterZone.gd")
@@ -562,6 +576,7 @@ func _create_random_encounter_zones() -> void:
 			zone.check_interval = float(cfg.get("interval", 8.0))
 
 		add_child(zone)
+		_debug_entities.append({"node": zone, "kind": "random_encounter_zone", "config": cfg})
 
 func _create_boss_trigger(pos: Vector3, config: Dictionary = {}) -> void:
 	var trigger_script = load("res://scripts/exploration/CombatTrigger.gd")
@@ -586,6 +601,7 @@ func _create_boss_trigger(pos: Vector3, config: Dictionary = {}) -> void:
 		trigger.death_message = config.get("death_message", "")
 
 	add_child(trigger)
+	_debug_entities.append({"node": trigger, "kind": "boss_trigger", "config": {"encounter_id": encounter_id}})
 
 func _create_exit(pos: Vector3, row: int, col: int) -> void:
 	# Exit: touching this ends the slice with victory
@@ -613,6 +629,7 @@ func _create_exit(pos: Vector3, row: int, col: int) -> void:
 
 	exit_area.body_entered.connect(_on_exit_entered)
 	add_child(exit_area)
+	_debug_entities.append({"node": exit_area, "kind": "exit", "config": {}})
 
 	# Co-located story trigger: plays the exit banter (matched to the current party) before the
 	# victory screen. auto_trigger=false avoids a body_entered race with exit_area; _on_exit_entered
@@ -920,3 +937,61 @@ func get_player_start_position() -> Vector3:
 
 func get_wall_nodes() -> Array[Node3D]:
 	return _wall_nodes
+
+## Debug Panel's "Mostrar triggers en el mapa" — a floating Label3D above every tracked entity.
+## Rebuilds from scratch each call: cheap, and avoids having to reconcile with entities that may
+## have been freed (e.g. a picked-up chest) since the last toggle.
+func set_debug_labels_visible(show: bool) -> void:
+	for lbl in _debug_labels:
+		if is_instance_valid(lbl):
+			lbl.queue_free()
+	_debug_labels.clear()
+	if not show:
+		return
+	for entry in _debug_entities:
+		var node = entry.get("node")
+		if node == null or not is_instance_valid(node):
+			continue
+		var label = Label3D.new()
+		label.text = _debug_label_text(str(entry.get("kind", "")), entry.get("config", {}))
+		label.font_size = 48
+		label.outline_size = 8
+		label.modulate = Color(1.0, 0.9, 0.3)
+		label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+		label.no_depth_test = true
+		label.position = node.global_position + Vector3(0, 2.2, 0)
+		add_child(label)
+		_debug_labels.append(label)
+
+func _debug_label_text(kind: String, config: Dictionary) -> String:
+	match kind:
+		"door":
+			var required := str(config.get("required_item_id", ""))
+			if bool(config.get("locked", false)) and required != "":
+				var item = DataLoader.get_item(required)
+				return "Puerta (requiere: %s)" % str(item.get("name", required))
+			return "Puerta"
+		"npc":
+			return "NPC"
+		"rest_zone":
+			return "Zona de Descanso"
+		"chest":
+			var item = DataLoader.get_item(str(config.get("item_id", "")))
+			return "Cofre: %s x%d" % [str(item.get("name", config.get("item_id", "?"))), int(config.get("quantity", 1))]
+		"floor_item":
+			var item = DataLoader.get_item(str(config.get("item_id", "")))
+			return "Item: %s x%d" % [str(item.get("name", config.get("item_id", "?"))), int(config.get("quantity", 1))]
+		"combat_trigger":
+			return "Combate: %s" % str(config.get("encounter_id", "?"))
+		"boss_trigger":
+			return "Jefe: %s" % str(config.get("encounter_id", "?"))
+		"riddle_gate":
+			return "Enigma (esfinge)"
+		"random_encounter_zone":
+			var ids: Array = config.get("encounter_ids", [])
+			return "Zona aleatoria: %s" % ", ".join(ids)
+		"exit":
+			return "Salida"
+		"story_trigger":
+			return "Evento: %s" % str(config.get("event_id", "?"))
+	return kind

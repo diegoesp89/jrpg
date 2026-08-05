@@ -373,9 +373,13 @@ static func apply_damage(target: Dictionary, damage: int) -> void:
 		target["temp_hp"] = temp - absorbed
 		reduced -= absorbed
 	var new_hp = maxi(0, target.get("hp", 0) - reduced)
+	# Debug Panel's "Modo invencible" — checked before death_ward_charges so testing with it on
+	# doesn't burn Daragat's real charge for nothing.
+	if new_hp <= 0 and bool(target.get("is_player", false)) and GameState.invincible_mode:
+		new_hp = 1
 	# "Bendición de Lathander": granted to the whole party in _setup_party when Daragat has the
 	# feat, spent here the first time a blow would put someone down.
-	if new_hp <= 0 and int(target.get("death_ward_charges", 0)) > 0:
+	elif new_hp <= 0 and int(target.get("death_ward_charges", 0)) > 0:
 		target["death_ward_charges"] = int(target["death_ward_charges"]) - 1
 		new_hp = 1
 	target["hp"] = new_hp

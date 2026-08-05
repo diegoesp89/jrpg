@@ -30,6 +30,7 @@ var _awaiting_answer: bool = false
 var _attempts_left: int = 0
 
 func _ready() -> void:
+	add_to_group("riddle_gate")
 	for child in get_children():
 		if child is CollisionShape3D:
 			_collision = child
@@ -162,6 +163,11 @@ func get_prompt_text() -> String:
 	if GameState.get_flag(FLAG_OPEN):
 		return ""
 	return "Z: Enfrentar a la guardiana"
+
+## Debug Panel's "Revelar respuesta del enigma" — the only public way to read this riddle's
+## answer from outside the file.
+func get_answer_display() -> String:
+	return str(_riddle.get("answer_display", ""))
 
 func is_available() -> bool:
 	return not GameState.get_flag(FLAG_OPEN)

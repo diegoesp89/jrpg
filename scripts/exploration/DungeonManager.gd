@@ -184,6 +184,7 @@ func _setup_debug_panel() -> void:
 	panel.set_script(panel_script)
 	add_child(panel)
 	_debug_panel = panel
+	_debug_panel._dungeon_builder = _dungeon_builder
 
 	var btn = Button.new()
 	btn.name = "DebugPanelButton"

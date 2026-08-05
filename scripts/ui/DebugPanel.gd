@@ -18,6 +18,13 @@ var _flags_container: VBoxContainer
 var _add_flag_field: LineEdit
 var _status_label: Label
 
+## Set externally by DungeonManager._setup_debug_panel() right after instancing this panel — the
+## only way "Mostrar triggers en el mapa" can reach the entities DungeonBuilder tracks.
+var _dungeon_builder = null
+var _gold_field: LineEdit
+var _encounter_field: LineEdit
+var _event_field: LineEdit
+
 func _ready() -> void:
 	layer = 65
 	_build_ui()
@@ -126,6 +133,99 @@ func _build_ui() -> void:
 	add_flag_btn.pressed.connect(_on_add_flag_pressed)
 	add_flag_row.add_child(add_flag_btn)
 
+	_build_section(main_vbox, "Progresión")
+	var progression_row = HBoxContainer.new()
+	progression_row.add_theme_constant_override("separation", 12)
+	main_vbox.add_child(progression_row)
+	var weapons_btn = Button.new()
+	weapons_btn.text = "Dar armas legendarias"
+	weapons_btn.pressed.connect(_on_give_legendary_weapons_pressed)
+	progression_row.add_child(weapons_btn)
+	var level_btn = Button.new()
+	level_btn.text = "Subir de nivel"
+	level_btn.pressed.connect(_on_level_up_pressed)
+	progression_row.add_child(level_btn)
+	var rest_btn = Button.new()
+	rest_btn.text = "Recargar descansos"
+	rest_btn.pressed.connect(_on_reload_rests_pressed)
+	progression_row.add_child(rest_btn)
+
+	var gold_row = HBoxContainer.new()
+	gold_row.add_theme_constant_override("separation", 8)
+	main_vbox.add_child(gold_row)
+	_gold_field = LineEdit.new()
+	_gold_field.placeholder_text = "monto de oro"
+	_gold_field.custom_minimum_size = Vector2(120, 0)
+	gold_row.add_child(_gold_field)
+	var gold_btn = Button.new()
+	gold_btn.text = "Dar oro"
+	gold_btn.pressed.connect(_on_give_gold_pressed)
+	gold_row.add_child(gold_btn)
+
+	_build_section(main_vbox, "Combate y mapa")
+	var encounter_row = HBoxContainer.new()
+	encounter_row.add_theme_constant_override("separation", 8)
+	main_vbox.add_child(encounter_row)
+	_encounter_field = LineEdit.new()
+	_encounter_field.placeholder_text = "id de encuentro"
+	_encounter_field.custom_minimum_size = Vector2(220, 0)
+	encounter_row.add_child(_encounter_field)
+	var encounter_btn = Button.new()
+	encounter_btn.text = "Forzar combate"
+	encounter_btn.pressed.connect(_on_force_encounter_pressed)
+	encounter_row.add_child(encounter_btn)
+
+	var encounter_hint = Label.new()
+	encounter_hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	encounter_hint.add_theme_font_size_override("font_size", 12)
+	encounter_hint.add_theme_color_override("font_color", Color(0.6, 0.6, 0.6))
+	encounter_hint.text = "Encuentros disponibles: %s" % ", ".join(DataLoader.get_all_encounter_ids())
+	main_vbox.add_child(encounter_hint)
+
+	var combat_toggles_row = HBoxContainer.new()
+	combat_toggles_row.add_theme_constant_override("separation", 16)
+	main_vbox.add_child(combat_toggles_row)
+	var triggers_cb = CheckBox.new()
+	triggers_cb.text = "Mostrar triggers en el mapa"
+	triggers_cb.button_pressed = false
+	triggers_cb.toggled.connect(_on_show_triggers_toggled)
+	combat_toggles_row.add_child(triggers_cb)
+	var invincible_cb = CheckBox.new()
+	invincible_cb.text = "Modo invencible"
+	invincible_cb.button_pressed = GameState.invincible_mode
+	invincible_cb.toggled.connect(func(pressed): GameState.invincible_mode = pressed)
+	combat_toggles_row.add_child(invincible_cb)
+
+	var defeat_btn = Button.new()
+	defeat_btn.text = "Forzar derrota"
+	defeat_btn.pressed.connect(_on_force_defeat_pressed)
+	main_vbox.add_child(defeat_btn)
+
+	_build_section(main_vbox, "Contenido")
+	var event_row = HBoxContainer.new()
+	event_row.add_theme_constant_override("separation", 8)
+	main_vbox.add_child(event_row)
+	_event_field = LineEdit.new()
+	_event_field.placeholder_text = "id de evento (ej. WP2)"
+	_event_field.custom_minimum_size = Vector2(220, 0)
+	event_row.add_child(_event_field)
+	var event_btn = Button.new()
+	event_btn.text = "Reproducir evento"
+	event_btn.pressed.connect(_on_play_event_pressed)
+	event_row.add_child(event_btn)
+
+	var event_hint = Label.new()
+	event_hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	event_hint.add_theme_font_size_override("font_size", 12)
+	event_hint.add_theme_color_override("font_color", Color(0.6, 0.6, 0.6))
+	event_hint.text = "Eventos disponibles: %s" % ", ".join(DataLoader.get_all_event_ids())
+	main_vbox.add_child(event_hint)
+
+	var riddle_btn = Button.new()
+	riddle_btn.text = "Revelar respuesta del enigma"
+	riddle_btn.pressed.connect(_on_reveal_riddle_pressed)
+	main_vbox.add_child(riddle_btn)
+
 	_build_section(main_vbox, "Accesos rápidos")
 	var quick_row = HBoxContainer.new()
 	quick_row.add_theme_constant_override("separation", 12)
@@ -138,6 +238,14 @@ func _build_ui() -> void:
 	credits_btn.text = "Ir a Créditos"
 	credits_btn.pressed.connect(_on_go_to_credits_pressed)
 	quick_row.add_child(credits_btn)
+	var dump_btn = Button.new()
+	dump_btn.text = "Volcar GameState a consola"
+	dump_btn.pressed.connect(_on_dump_gamestate_pressed)
+	quick_row.add_child(dump_btn)
+	var unlock_achievements_btn = Button.new()
+	unlock_achievements_btn.text = "Desbloquear todos los logros"
+	unlock_achievements_btn.pressed.connect(_on_unlock_all_achievements_pressed)
+	quick_row.add_child(unlock_achievements_btn)
 
 	_status_label = Label.new()
 	_status_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -323,6 +431,100 @@ func _on_add_flag_pressed() -> void:
 	_refresh_flags()
 	_set_status("Flag activada: %s" % flag_name)
 
+# --- Progresión ---
+
+func _on_give_legendary_weapons_pressed() -> void:
+	GameState.add_item("whelm")
+	GameState.add_item("wave")
+	GameState.add_item("blackrazor")
+	_refresh_inventory()
+	_set_status("Armas legendarias agregadas.")
+
+## Advances the whole party exactly ONE level per click (not straight to max) — feat choices go
+## into pending_level_ups the same as a real level-up, resolved the next time LevelUpPanel shows
+## after a real battle victory.
+func _on_level_up_pressed() -> void:
+	if GameState.party.is_empty():
+		_set_status("No hay party activa.")
+		return
+	var current_level := int(GameState.party[0].get("level", 1))
+	if current_level >= GameState.MAX_LEVEL:
+		_set_status("La party ya está en el nivel máximo.")
+		return
+	var target_level := current_level + 1
+	GameState.total_xp = maxi(GameState.total_xp, GameState.XP_LEVEL_THRESHOLDS[target_level - 1])
+	GameState.check_level_ups()
+	_refresh_party()
+	_set_status("Party subida a nivel %d." % target_level)
+
+func _on_reload_rests_pressed() -> void:
+	GameState.rest_charges_left = GameState.MAX_REST_CHARGES
+	_set_status("Descansos recargados.")
+
+func _on_give_gold_pressed() -> void:
+	var amount := _gold_field.text.to_int()
+	if amount <= 0:
+		amount = 100
+	GameState.add_gold(amount)
+	_set_status("Oro agregado: %d (total: %d)" % [amount, GameState.gold])
+
+# --- Combate y mapa ---
+
+func _on_force_encounter_pressed() -> void:
+	var encounter_id := _encounter_field.text.strip_edges()
+	if encounter_id == "":
+		return
+	if DataLoader.get_encounter(encounter_id).is_empty():
+		_set_status("Encuentro desconocido: %s" % encounter_id)
+		return
+	var player = get_tree().get_first_node_in_group("player")
+	if player == null:
+		_set_status("No se encontró al jugador.")
+		return
+	SceneFlow.start_battle(encounter_id, "res://scenes/exploration/Dungeon.tscn", player.global_position)
+
+func _on_show_triggers_toggled(pressed: bool) -> void:
+	if _dungeon_builder and _dungeon_builder.has_method("set_debug_labels_visible"):
+		_dungeon_builder.set_debug_labels_visible(pressed)
+
+func _on_force_defeat_pressed() -> void:
+	AudioManager.play_sfx("defeat")
+	await get_tree().create_timer(1.5).timeout
+	GameState.reset()
+	SceneFlow.change_scene("res://scenes/boot/CharacterSelection.tscn")
+
+# --- Contenido ---
+
+func _on_play_event_pressed() -> void:
+	var event_id := _event_field.text.strip_edges()
+	if event_id == "":
+		return
+	var party_names: Array = []
+	for member in GameState.party:
+		party_names.append(str(member.get("name", "")))
+	var entry := DataLoader.get_waypoint_scene(event_id, party_names)
+	if entry.is_empty():
+		entry = DataLoader.get_any_waypoint_variant(event_id)
+	if entry.is_empty():
+		_set_status("Evento desconocido: %s" % event_id)
+		return
+	var controllers = get_tree().get_nodes_in_group("dialogue_controller")
+	if controllers.is_empty():
+		_set_status("No hay un DialogueController activo.")
+		return
+	controllers[0].start_waypoint(entry, {})
+	_set_status("Reproduciendo: %s" % event_id)
+
+func _on_reveal_riddle_pressed() -> void:
+	var gates = get_tree().get_nodes_in_group("riddle_gate")
+	if gates.is_empty():
+		_set_status("No hay ningún enigma en este mapa.")
+		return
+	var answers: Array = []
+	for g in gates:
+		answers.append(g.get_answer_display())
+	_set_status("Respuesta(s): %s" % ", ".join(answers))
+
 # --- Quick actions ---
 
 func _on_heal_all_pressed() -> void:
@@ -334,6 +536,23 @@ func _on_heal_all_pressed() -> void:
 
 func _on_go_to_credits_pressed() -> void:
 	SceneFlow.change_scene("res://scenes/boot/CreditsScreen.tscn")
+
+func _on_dump_gamestate_pressed() -> void:
+	print("=== GameState (Panel de Debug) ===")
+	print("Party: ", GameState.party)
+	print("Inventario: ", GameState.inventory)
+	print("Flags: ", GameState.flags)
+	print("Oro: ", GameState.gold)
+	print("XP total: ", GameState.total_xp)
+	print("Descansos: ", GameState.rest_charges_left, " / ", GameState.MAX_REST_CHARGES)
+	print("Modo admin: ", GameState.admin_mode, "  Modo invencible: ", GameState.invincible_mode)
+	print("===================================")
+	_set_status("GameState volcado a la consola.")
+
+func _on_unlock_all_achievements_pressed() -> void:
+	for achievement in DataLoader.get_all_achievements():
+		SaveManager.unlock_achievement(str(achievement.get("id", "")))
+	_set_status("Todos los logros desbloqueados.")
 
 func _unhandled_input(event: InputEvent) -> void:
 	if not _is_open:
