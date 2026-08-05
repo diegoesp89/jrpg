@@ -217,11 +217,11 @@ func _apply_dot_from_skill(skill: Dictionary, target: Dictionary) -> String:
 		"poison_blade":
 			target["poison_turns"] = POISON_DURATION
 			target["poison_damage"] = POISON_DAMAGE
-			return " (envenenada)"
+			return " (envenenado)"
 		"fireball", "fire_breath":
 			target["burn_turns"] = BURN_DURATION
 			target["burn_damage"] = BURN_DAMAGE
-			return " (quemada)"
+			return " (quemado)"
 	return ""
 
 const POSITION_NAMES_LOWER := ["adelante", "medio", "retaguardia"]
@@ -544,11 +544,13 @@ func player_action(action: Dictionary) -> void:
 				if current.get("martial_adept_charges", 0) > 0:
 					current["martial_adept_charges"] -= 1
 					target["stunned_turns"] = target.get("stunned_turns", 0) + 1
-					action_performed.emit("%s usa Adepta Marcial: %s queda aturdida y pierde su próximo turno!" % [current["name"], target["name"]])
+					var martial_adept_name = DataLoader.get_feat("martial_adept").get("name", "Adepto Marcial")
+					action_performed.emit("%s usa %s: %s queda aturdido y pierde su próximo turno!" % [current["name"], martial_adept_name, target["name"]])
 				elif current.get("grappler_charges", 0) > 0:
 					current["grappler_charges"] -= 1
 					target["stunned_turns"] = target.get("stunned_turns", 0) + 1
-					action_performed.emit("%s usa Forcejeadora: %s queda inmovilizada y pierde su próximo turno!" % [current["name"], target["name"]])
+					var grappler_name = DataLoader.get_feat("grappler").get("name", "Forcejeador")
+					action_performed.emit("%s usa %s: %s queda inmovilizado y pierde su próximo turno!" % [current["name"], grappler_name, target["name"]])
 			else:
 				action_performed.emit("%s: %d(1d20)+%d(Fue) = %d vs %d CA -> %s" % [current["name"], result.roll, result.bonus, result.total, target.get("ca", 10), result.message])
 
