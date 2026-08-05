@@ -14,6 +14,7 @@ var _hud: CanvasLayer = null
 var _minimap_ui = null
 var _prompt_label: Label = null
 var _map_editor = null
+var _debug_panel = null
 
 func _ready() -> void:
 	_setup_environment()
@@ -31,6 +32,7 @@ func _ready() -> void:
 	_setup_occlusion_controller()
 	_setup_player_fog_global()
 	_setup_map_editor()
+	_setup_debug_panel()
 	_show_pending_tier_message()
 
 ## Catches a legendary-weapon toast that fired while the party was still in the Battle scene (a
@@ -153,6 +155,8 @@ func _setup_minimap() -> void:
 	_hud.add_child(_minimap_ui)
 
 func _setup_map_editor() -> void:
+	if not GameState.admin_mode:
+		return
 	var editor_script = load("res://scripts/ui/MapEditor.gd")
 	var editor = CanvasLayer.new()
 	editor.name = "MapEditor"
@@ -169,6 +173,27 @@ func _setup_map_editor() -> void:
 	btn.offset_top = -50
 	btn.offset_bottom = -10
 	btn.pressed.connect(func(): _map_editor.open_editor())
+	_hud.add_child(btn)
+
+func _setup_debug_panel() -> void:
+	if not GameState.admin_mode:
+		return
+	var panel_script = load("res://scripts/ui/DebugPanel.gd")
+	var panel = CanvasLayer.new()
+	panel.name = "DebugPanel"
+	panel.set_script(panel_script)
+	add_child(panel)
+	_debug_panel = panel
+
+	var btn = Button.new()
+	btn.name = "DebugPanelButton"
+	btn.text = "Debug"
+	btn.set_anchors_preset(Control.PRESET_BOTTOM_RIGHT)
+	btn.offset_left = -180
+	btn.offset_right = -10
+	btn.offset_top = -100
+	btn.offset_bottom = -60
+	btn.pressed.connect(func(): _debug_panel.open())
 	_hud.add_child(btn)
 
 func _setup_occlusion_controller() -> void:

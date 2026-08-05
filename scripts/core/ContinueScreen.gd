@@ -8,9 +8,15 @@ const HelpPanelScene = preload("res://scripts/ui/HelpPanel.gd")
 
 enum State { MAIN, RESET_CONFIRM }
 
+## Secret directional code that unlocks GameState.admin_mode (the Map Editor + Debug Panel).
+## move_left/move_right are otherwise unused on this screen, so tracking them here can't collide
+## with the existing move_up/move_down list navigation.
+const ADMIN_SEQUENCE := ["up", "up", "down", "down", "left", "right", "left", "right"]
+
 var _state: State = State.MAIN
 var _options: Array = []
 var _selected_index: int = 0
+var _admin_buffer: Array = []
 
 var _root: Control
 var _title: Label
@@ -18,6 +24,7 @@ var _list_container: VBoxContainer
 var _option_labels: Array[Label] = []
 var _options_panel: OptionsPanel
 var _help_panel: HelpPanelScene
+var _admin_badge: Label
 
 func _ready() -> void:
 	_build_ui()
@@ -74,9 +81,20 @@ func _build_ui() -> void:
 	add_child(_help_panel)
 	_help_panel.closed.connect(_show_main)
 
+	_admin_badge = Label.new()
+	_admin_badge.text = "MODO ADMIN"
+	_admin_badge.visible = false
+	_admin_badge.add_theme_font_size_override("font_size", 16)
+	_admin_badge.add_theme_color_override("font_color", Color(0.9, 0.4, 0.4))
+	_admin_badge.set_anchors_preset(Control.PRESET_TOP_LEFT)
+	_admin_badge.offset_left = 14
+	_admin_badge.offset_top = 10
+	_root.add_child(_admin_badge)
+
 func _show_main() -> void:
 	_state = State.MAIN
 	_title.text = "La Montana del Penacho Blanco"
+	_admin_badge.visible = GameState.admin_mode
 	_options = []
 	if SaveManager.has_save():
 		_options.append("Continuar partida")
@@ -125,10 +143,18 @@ func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("move_up"):
 		_selected_index = maxi(0, _selected_index - 1)
 		_update_highlight()
+		_track_admin_code("up")
 		get_viewport().set_input_as_handled()
 	elif event.is_action_pressed("move_down"):
 		_selected_index = mini(_option_labels.size() - 1, _selected_index + 1)
 		_update_highlight()
+		_track_admin_code("down")
+		get_viewport().set_input_as_handled()
+	elif event.is_action_pressed("move_left"):
+		_track_admin_code("left")
+		get_viewport().set_input_as_handled()
+	elif event.is_action_pressed("move_right"):
+		_track_admin_code("right")
 		get_viewport().set_input_as_handled()
 	elif event.is_action_pressed("action1"):
 		match _state:
@@ -137,6 +163,17 @@ func _unhandled_input(event: InputEvent) -> void:
 			State.RESET_CONFIRM:
 				_select_reset_confirm(_options[_selected_index])
 		get_viewport().set_input_as_handled()
+
+## Rolling window of the last 8 directional presses on this screen — checked against
+## ADMIN_SEQUENCE every time a new one comes in, so extra leading presses (or a wrong attempt)
+## never lock the player out of retrying; only the most recent 8 matter.
+func _track_admin_code(direction: String) -> void:
+	_admin_buffer.append(direction)
+	if _admin_buffer.size() > ADMIN_SEQUENCE.size():
+		_admin_buffer = _admin_buffer.slice(_admin_buffer.size() - ADMIN_SEQUENCE.size())
+	if not GameState.admin_mode and _admin_buffer == ADMIN_SEQUENCE:
+		GameState.admin_mode = true
+		_admin_badge.visible = true
 
 func _select_main(option: String) -> void:
 	match option:

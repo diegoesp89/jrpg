@@ -61,6 +61,11 @@ var _last_progression_tier: int = -1
 ## can fully restore. Backs the "Nadie se Queda Atrás" achievement, checked at the dungeon exit.
 var run_flawless: bool = true
 
+## Unlocks the Map Editor and the in-game Debug Panel. Activated by a secret directional code on
+## the main menu (see ContinueScreen.gd). Deliberately NOT cleared by reset() — this is a
+## developer toggle for the current game session, not save-game progress.
+var admin_mode: bool = false
+
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	_init_inventory()

@@ -65,10 +65,11 @@ func _build_ui() -> void:
 			row.add_child(label)
 			_option_labels.append(label)
 
-			var edit_btn = Button.new()
-			edit_btn.text = "Editar"
-			edit_btn.pressed.connect(_on_edit_pressed.bind(str(map_entry.get("path", ""))))
-			row.add_child(edit_btn)
+			if GameState.admin_mode:
+				var edit_btn = Button.new()
+				edit_btn.text = "Editar"
+				edit_btn.pressed.connect(_on_edit_pressed.bind(str(map_entry.get("path", ""))))
+				row.add_child(edit_btn)
 
 	var hint = Label.new()
 	hint.text = "WASD/Flechas: Navegar  |  Z: Elegir"
