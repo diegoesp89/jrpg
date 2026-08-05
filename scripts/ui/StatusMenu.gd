@@ -291,6 +291,9 @@ func _save_game() -> void:
 
 # --- Estado ---
 
+func _mod_str(value: int) -> String:
+	return ("+%d" % value) if value >= 0 else str(value)
+
 func _show_status() -> void:
 	_menu_state = MenuState.STATUS
 	_title.text = "Estado de la party"
@@ -304,6 +307,10 @@ func _show_status() -> void:
 		_add_row("HP %d/%d   MP %d/%d   CA %d" % [
 			m.get("hp", 0), m.get("max_hp", 0), m.get("mp", 0), m.get("max_mp", 0), m.get("ca", 10)
 		], 18)
+		_add_row("FUE %s   AGI %s   CON %s   SAB %s   INT %s   CAR %s" % [
+			_mod_str(m.get("str_mod", 0)), _mod_str(m.get("dex_mod", 0)), _mod_str(m.get("con_mod", 0)),
+			_mod_str(m.get("wis_mod", 0)), _mod_str(m.get("int_mod", 0)), _mod_str(m.get("cha_mod", 0)),
+		], 16)
 		_add_row("Feats: %s" % feats_text, 16)
 	_add_row(_xp_progress_text(), 16)
 	_root.visible = true
