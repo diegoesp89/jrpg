@@ -9,6 +9,7 @@ var _items: Dictionary = {}
 var _encounters: Dictionary = {}
 var _dialogues: Dictionary = {}
 var _feats: Dictionary = {}
+var _achievements: Dictionary = {}
 var _riddles: Array = []
 var _adventure: Array = []
 var _current_map: Dictionary = {}
@@ -26,6 +27,7 @@ func _load_all() -> void:
 	_encounters = _load_json_dict("res://data/encounters/encounters.json")
 	_dialogues = _load_json_dict("res://data/dialogues/dialogues.json")
 	_feats = _load_json_dict("res://data/feats.json")
+	_achievements = _load_json_dict("res://data/achievements.json")
 	_riddles = _load_json_array("res://data/riddles.json")
 	_adventure = _load_adventure_scenes("res://data/dialogues/")
 
@@ -127,6 +129,12 @@ func get_feat(feat_id: String) -> Dictionary:
 
 func get_all_feats() -> Array:
 	return _feats.values()
+
+func get_achievement(achievement_id: String) -> Dictionary:
+	return _achievements.get(achievement_id, {})
+
+func get_all_achievements() -> Array:
+	return _achievements.values()
 
 func get_random_riddle() -> Dictionary:
 	if _riddles.is_empty():

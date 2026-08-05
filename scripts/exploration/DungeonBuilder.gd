@@ -7,6 +7,7 @@ class_name DungeonBuilder
 ## the parse fails until the project is reloaded. preload() resolves at compile time from the
 ## path, so it works on the very first run after the file is created.
 const EasterEggsData = preload("res://scripts/data/EasterEggs.gd")
+const AchievementsScript = preload("res://scripts/core/Achievements.gd")
 
 const TILE_SIZE: float = 2.0
 
@@ -653,8 +654,49 @@ func _on_exit_entered(body: Node3D) -> void:
 			await _wp30_trigger.play_for_current_party()
 		print("Victory! You have escaped White Plume Mountain!")
 		SaveManager.record_profile_completion()
+		await _check_run_completion_achievements()
 		# Show victory screen
 		_show_victory_screen()
+
+## Run-completion achievement checkpoint — right after record_profile_completion() and before the
+## victory screen, so GameState.party/rest_charges_left/run_flawless/flags still hold this run's
+## real values (GameState.reset() only happens once the player dismisses the victory screen).
+## Sequenced with await so several unlocks queue one after another instead of overlapping.
+func _check_run_completion_achievements() -> void:
+	await AchievementsScript.unlock(self, "primer_paso")
+
+	var party_ids: Array = []
+	for m in GameState.party:
+		party_ids.append(str(m.get("id", "")))
+	if party_ids.has("huguito") and party_ids.has("lulu"):
+		await AchievementsScript.unlock(self, "garras_gemelas")
+
+	if GameState.rest_charges_left == GameState.MAX_REST_CHARGES:
+		await AchievementsScript.unlock(self, "sin_descanso")
+
+	if GameState.run_flawless:
+		await AchievementsScript.unlock(self, "nadie_se_queda_atras")
+
+	if _all_35_combos_completed():
+		await AchievementsScript.unlock(self, "todas_las_caras_del_destino")
+
+## Same C(7,4)=35 combination key convention as CharacterSelection._generate_all_combos() and
+## SaveManager.record_profile_completion() (sorted ids joined by ","), reimplemented here since
+## CharacterSelection isn't in the scene tree during exploration.
+func _all_35_combos_completed() -> bool:
+	var ids: Array = []
+	for c in DataLoader.get_all_characters():
+		ids.append(str(c.get("id", "")))
+	ids.sort()
+	var completed: Array = SaveManager.get_profile().get("completed_party_combos", [])
+	for a in range(ids.size()):
+		for b in range(a + 1, ids.size()):
+			for c_idx in range(b + 1, ids.size()):
+				for d in range(c_idx + 1, ids.size()):
+					var key = ",".join([ids[a], ids[b], ids[c_idx], ids[d]])
+					if not completed.has(key):
+						return false
+	return true
 
 func _show_victory_screen() -> void:
 	var canvas = CanvasLayer.new()

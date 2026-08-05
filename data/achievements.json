@@ -1,0 +1,92 @@
+{
+  "primer_paso": {
+    "id": "primer_paso",
+    "name": "Primer Paso",
+    "description": "Terminar el calabozo por primera vez.",
+    "difficulty": "Fácil"
+  },
+  "voz_de_la_razon": {
+    "id": "voz_de_la_razon",
+    "name": "Voz de la Razón",
+    "description": "Resolver el enigma de la esfinge sin pelear.",
+    "difficulty": "Fácil"
+  },
+  "cuando_las_palabras_fallan": {
+    "id": "cuando_las_palabras_fallan",
+    "name": "Cuando las Palabras Fallan",
+    "description": "Vencer a la guardiana de la esfinge en combate en vez de resolver el enigma.",
+    "difficulty": "Fácil"
+  },
+  "garras_gemelas": {
+    "id": "garras_gemelas",
+    "name": "Garras Gemelas",
+    "description": "Terminar el calabozo llevando a Huguito y Lulu en la misma party.",
+    "difficulty": "Fácil"
+  },
+  "marcada": {
+    "id": "marcada",
+    "name": "Marcada",
+    "description": "Rematar a un enemigo marcado por Rosa.",
+    "difficulty": "Fácil"
+  },
+  "enfoque_total": {
+    "id": "enfoque_total",
+    "name": "Enfoque Total",
+    "description": "Conectar los 5 golpes de una Ráfaga de Golpes de Huguito con el máximo de Enfoque acumulado.",
+    "difficulty": "Media"
+  },
+  "peaje_cobrado": {
+    "id": "peaje_cobrado",
+    "name": "Peaje Cobrado",
+    "description": "Ganar un combate en el que el Peaje de Guardia evitó un golpe que hubiera derribado a alguien.",
+    "difficulty": "Media"
+  },
+  "purista": {
+    "id": "purista",
+    "name": "Purista",
+    "description": "Ganar un combate usando solo ataques básicos, sin objetos ni habilidades.",
+    "difficulty": "Media"
+  },
+  "doble_filo": {
+    "id": "doble_filo",
+    "name": "Doble Filo",
+    "description": "Derrotar a un enemigo mientras sufre veneno y quemadura al mismo tiempo.",
+    "difficulty": "Media"
+  },
+  "sin_un_rasguño": {
+    "id": "sin_un_rasguño",
+    "name": "Sin un Rasguño",
+    "description": "Ganar un combate contra un jefe sin que ningún miembro de la party llegue a 0 HP.",
+    "difficulty": "Difícil"
+  },
+  "al_borde_del_abismo": {
+    "id": "al_borde_del_abismo",
+    "name": "Al Borde del Abismo",
+    "description": "Ganar un combate con toda la party por debajo del 25% de HP total.",
+    "difficulty": "Difícil"
+  },
+  "sin_descanso": {
+    "id": "sin_descanso",
+    "name": "Sin Descanso",
+    "description": "Terminar el calabozo sin usar ninguna recarga en una Zona de Descanso.",
+    "difficulty": "Difícil"
+  },
+  "nadie_se_queda_atras": {
+    "id": "nadie_se_queda_atras",
+    "name": "Nadie se Queda Atrás",
+    "description": "Terminar el calabozo sin que ningún personaje caiga en combate ni una sola vez en toda la partida.",
+    "difficulty": "Difícil"
+  },
+  "ultima_en_pie": {
+    "id": "ultima_en_pie",
+    "name": "Último en Pie",
+    "description": "Ganar un combate contra un jefe con un solo miembro de la party todavía consciente.",
+    "difficulty": "Difícil"
+  },
+  "todas_las_caras_del_destino": {
+    "id": "todas_las_caras_del_destino",
+    "name": "Todas las Caras del Destino",
+    "description": "Completar el calabozo con las 35 combinaciones de party posibles.",
+    "difficulty": "Muy difícil"
+  }
+}

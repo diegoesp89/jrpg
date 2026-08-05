@@ -12,6 +12,9 @@ signal damage_dealt(target: Dictionary, amount: int, is_heal: bool)
 ## Lucky re-roll, which is a second roll on a swing that was already announced.
 signal attack_started(attacker: Dictionary)
 
+## Preloaded by path rather than through its class_name — see the note in DungeonBuilder.gd.
+const AchievementsScript = preload("res://scripts/core/Achievements.gd")
+
 var _party: Array[Dictionary] = []
 var _enemies: Array[Dictionary] = []
 var _turn_system: TurnSystem = null
@@ -21,6 +24,11 @@ var _battle_active: bool = false
 # Player action selection state
 var _waiting_for_player: bool = false
 var _selected_action: Dictionary = {}
+
+## One entry per player action this battle ("attack", "skill", "item", "defend", "move", "flee"),
+## appended in player_action(). Backs the "Purista" achievement (only basic attacks, no skills or
+## items) — cleared at the start of every battle in start_battle().
+var _party_action_log: Array[String] = []
 
 # Persistent damage-over-time durations/amounts, applied once per round in _start_round()
 # alongside blind_turns — see _apply_dot_from_skill().
@@ -43,6 +51,7 @@ func start_battle(encounter_id: String) -> void:
 	_setup_party()
 	_setup_enemies()
 	_battle_active = true
+	_party_action_log.clear()
 
 	action_performed.emit("--- Comienza el combate! ---")
 	if GameState.current_intro_message != "":
@@ -179,7 +188,11 @@ func _start_round() -> void:
 		if c.get("blind_turns", 0) > 0:
 			c["blind_turns"] -= 1
 		if c.get("hp", 0) > 0:
-			if c.get("poison_turns", 0) > 0:
+			# Snapshot before either DOT ticks this round, so "was suffering both at once" isn't
+			# lost if poison's own tick is what kills them (burn's tick never runs to prove it).
+			var had_poison: bool = c.get("poison_turns", 0) > 0
+			var had_burn: bool = c.get("burn_turns", 0) > 0
+			if had_poison:
 				Combatant.apply_damage(c, c.get("poison_damage", 0))
 				damage_dealt.emit(c, c.get("poison_damage", 0), false)
 				c["poison_turns"] -= 1
@@ -189,6 +202,8 @@ func _start_round() -> void:
 				damage_dealt.emit(c, c.get("burn_damage", 0), false)
 				c["burn_turns"] -= 1
 				action_performed.emit("%s sufre %d de daño por quemadura! (%d turno(s) restante(s))" % [c["name"], c.get("burn_damage", 0), c["burn_turns"]])
+			if c.get("hp", 0) <= 0 and had_poison and had_burn and c.has("base_id"):
+				AchievementsScript.unlock(self, "doble_filo")
 	hp_updated.emit()
 
 	_turn_system.start_new_round()
@@ -234,6 +249,7 @@ func _apply_weapon_on_hit(attacker: Dictionary, target: Dictionary, was_crit: bo
 		var surge := maxi(1, int(target.get("max_hp", 1)) / 2)
 		Combatant.apply_damage(target, surge)
 		damage_dealt.emit(target, surge, false)
+		_check_enemy_kill_achievements(target)
 		action_performed.emit("¡La marea de %s arranca %d de vida a %s!" % [attacker["name"], surge, target["name"]])
 
 	if ability == "devour_soul":
@@ -273,6 +289,7 @@ func _opportunity_attack(attacker: Dictionary, target: Dictionary) -> void:
 		var dmg = Combatant.apply_position_modifiers(result.damage, attacker, target)
 		Combatant.apply_damage(target, dmg)
 		damage_dealt.emit(target, dmg, false)
+		_check_enemy_kill_achievements(target)
 		action_performed.emit("Ataque de oportunidad de %s: %d(1d20)+%d = %d vs %d CA -> Golpe! %d de daño a %s!" % [
 			attacker["name"], result.roll, result.bonus, result.total, target.get("ca", 10), dmg, target["name"]])
 	else:
@@ -424,9 +441,10 @@ func _execute_enemy_turn(enemy: Dictionary) -> void:
 				for t in _party:
 					if t.get("hp", 0) <= 0:
 						continue
-					var dmg = Combatant.calculate_magical_damage(enemy, t, skill_power)
-					dmg = int(dmg * Combatant.guard_damage_multiplier(enemy, t, _party))
+					var raw_dmg = Combatant.calculate_magical_damage(enemy, t, skill_power)
+					var dmg = int(raw_dmg * Combatant.guard_damage_multiplier(enemy, t, _party))
 					dmg = Combatant.apply_position_modifiers(dmg, enemy, t)
+					_check_guard_saved_life(raw_dmg, dmg, t)
 					Combatant.apply_damage(t, dmg)
 					damage_dealt.emit(t, dmg, false)
 					hit_log.append("%s -%d%s" % [t["name"], dmg, _apply_dot_from_skill(skill, t)])
@@ -455,9 +473,10 @@ func _execute_enemy_turn(enemy: Dictionary) -> void:
 						action_performed.emit("%s usa %s en %s: %d(1d20)+%d = %d vs %d CA -> %s" % [enemy["name"], skill_name, target["name"], result.roll, result.bonus, result.total, target.get("ca", 10), result.message])
 				else:
 					var stat_mod = Combatant.get_caster_stat_mod(enemy)
-					var dmg = Combatant.calculate_magical_damage(enemy, target, skill_power)
-					dmg = int(dmg * Combatant.guard_damage_multiplier(enemy, target, _party))
+					var raw_dmg = Combatant.calculate_magical_damage(enemy, target, skill_power)
+					var dmg = int(raw_dmg * Combatant.guard_damage_multiplier(enemy, target, _party))
 					dmg = Combatant.apply_position_modifiers(dmg, enemy, target)
+					_check_guard_saved_life(raw_dmg, dmg, target)
 					Combatant.apply_damage(target, dmg)
 					damage_dealt.emit(target, dmg, false)
 					var dot_suffix = _apply_dot_from_skill(skill, target) + _guard_suffix(enemy, target, _party)
@@ -472,6 +491,7 @@ func player_action(action: Dictionary) -> void:
 	if not _waiting_for_player:
 		return
 	_waiting_for_player = false
+	_party_action_log.append(str(action.get("type", "")))
 
 	var current = _turn_system.get_current_combatant()
 
@@ -520,6 +540,7 @@ func player_action(action: Dictionary) -> void:
 				var dmg_str = "daño!" if not result.crit else "daño CRÍTICO!"
 				action_performed.emit("%s: %d(1d20)+%d(Fue) = %d vs %d CA -> Golpe! Dañó %d a %s" % [current["name"], result.roll, result.bonus, result.total, target.get("ca", 10), final_dmg, target["name"]])
 				_apply_weapon_on_hit(current, target, result.crit)
+				_check_enemy_kill_achievements(target)
 				if current.get("martial_adept_charges", 0) > 0:
 					current["martial_adept_charges"] -= 1
 					target["stunned_turns"] = target.get("stunned_turns", 0) + 1
@@ -563,11 +584,13 @@ func player_action(action: Dictionary) -> void:
 				var hit_log: Array = []
 				for e in _enemies:
 					if e.get("hp", 0) > 0:
-						var dmg = Combatant.calculate_magical_damage(current, e, power)
-						dmg = int(dmg * Combatant.guard_damage_multiplier(current, e, _enemies))
+						var raw_dmg = Combatant.calculate_magical_damage(current, e, power)
+						var dmg = int(raw_dmg * Combatant.guard_damage_multiplier(current, e, _enemies))
 						dmg = Combatant.apply_position_modifiers(dmg, current, e)
+						_check_guard_saved_life(raw_dmg, dmg, e)
 						Combatant.apply_damage(e, dmg)
 						damage_dealt.emit(e, dmg, false)
+						_check_enemy_kill_achievements(e)
 						hit_log.append("%s -%d%s" % [e["name"], dmg, _apply_dot_from_skill(skill, e)])
 				action_performed.emit("%s usa %s (%d poder+%d mod cada uno): %s" % [current["name"], skill_name, power, stat_mod, ", ".join(hit_log)])
 			else:
@@ -579,17 +602,20 @@ func player_action(action: Dictionary) -> void:
 						var dmg = Combatant.apply_position_modifiers(result.damage + power, current, target)
 						Combatant.apply_damage(target, dmg)
 						damage_dealt.emit(target, dmg, false)
+						_check_enemy_kill_achievements(target)
 						var dot_suffix = _apply_dot_from_skill(skill, target)
 						action_performed.emit("%s usa %s en %s: %d(1d20)+%d = %d vs %d CA -> Golpe! %d de daño!%s" % [current["name"], skill_name, target["name"], result.roll, result.bonus, result.total, target.get("ca", 10), dmg, dot_suffix])
 					else:
 						action_performed.emit("%s usa %s en %s: %d(1d20)+%d = %d vs %d CA -> %s" % [current["name"], skill_name, target["name"], result.roll, result.bonus, result.total, target.get("ca", 10), result.message])
 				else:
 					var stat_mod = Combatant.get_caster_stat_mod(current)
-					var dmg = Combatant.calculate_magical_damage(current, target, power)
-					dmg = int(dmg * Combatant.guard_damage_multiplier(current, target, _enemies))
+					var raw_dmg = Combatant.calculate_magical_damage(current, target, power)
+					var dmg = int(raw_dmg * Combatant.guard_damage_multiplier(current, target, _enemies))
 					dmg = Combatant.apply_position_modifiers(dmg, current, target)
+					_check_guard_saved_life(raw_dmg, dmg, target)
 					Combatant.apply_damage(target, dmg)
 					damage_dealt.emit(target, dmg, false)
+					_check_enemy_kill_achievements(target)
 					var dot_suffix = _apply_dot_from_skill(skill, target) + _guard_suffix(current, target, _enemies)
 					action_performed.emit("%s usa %s en %s: %d(poder)+%d(mod) = %d de daño!%s" % [current["name"], skill_name, target["name"], power, stat_mod, dmg, dot_suffix])
 
@@ -657,6 +683,7 @@ func _apply_alert_feat() -> void:
 			var final_dmg = Combatant.apply_position_modifiers(result.damage, p, target)
 			Combatant.apply_damage(target, final_dmg)
 			damage_dealt.emit(target, final_dmg, false)
+			_check_enemy_kill_achievements(target)
 			action_performed.emit("%s (Alerta): %d(1d20)+%d = %d vs %d CA -> Golpe! %d de daño de sorpresa a %s" % [p["name"], result.roll, result.bonus, result.total, target.get("ca", 10), final_dmg, target["name"]])
 		else:
 			action_performed.emit("%s (Alerta): %d(1d20)+%d = %d vs %d CA -> %s" % [p["name"], result.roll, result.bonus, result.total, target.get("ca", 10), result.message])
@@ -672,6 +699,7 @@ func _do_reckless(attacker: Dictionary, target: Dictionary) -> void:
 		var final_dmg = Combatant.apply_position_modifiers(result.damage, attacker, target)
 		Combatant.apply_damage(target, final_dmg)
 		damage_dealt.emit(target, final_dmg, false)
+		_check_enemy_kill_achievements(target)
 		action_performed.emit("%s (Temerario, ventaja): %d(1d20)+%d = %d vs %d CA -> Golpe! %d de daño a %s" % [attacker["name"], result.roll, result.bonus, result.total, target.get("ca", 10), final_dmg, target["name"]])
 	else:
 		action_performed.emit("%s (Temerario, ventaja): %d(1d20)+%d = %d vs %d CA -> %s" % [attacker["name"], result.roll, result.bonus, result.total, target.get("ca", 10), result.message])
@@ -683,6 +711,7 @@ func _do_flurry(attacker: Dictionary, target: Dictionary) -> void:
 	var hits = maxi(1, attacker.get("focus", 0))
 	attacker["focus"] = 0
 	var total_dmg = 0
+	var landed = 0
 	var rolls_log: Array = []
 	for i in range(hits):
 		if target.get("hp", 0) <= 0:
@@ -693,11 +722,18 @@ func _do_flurry(attacker: Dictionary, target: Dictionary) -> void:
 			var final_dmg = Combatant.apply_position_modifiers(result.damage, attacker, target)
 			Combatant.apply_damage(target, final_dmg)
 			damage_dealt.emit(target, final_dmg, false)
+			_check_enemy_kill_achievements(target)
 			total_dmg += final_dmg
+			landed += 1
 			rolls_log.append("%d(1d20)+%d=%d✓-%d" % [result.roll, result.bonus, result.total, final_dmg])
 		else:
 			rolls_log.append("%d(1d20)+%d=%d✗" % [result.roll, result.bonus, result.total])
 	action_performed.emit("%s desata Ráfaga (%d golpes) en %s: [%s] -> %d de daño total" % [attacker["name"], hits, target["name"], ", ".join(rolls_log), total_dmg])
+
+	# "Enfoque Total" is Huguito-specific by name — Lulu shares the same Monje flurry mechanic but
+	# the achievement text names him, so gate on id rather than class.
+	if attacker.get("id", "") == "huguito" and hits == 5 and landed == hits:
+		AchievementsScript.unlock(self, "enfoque_total")
 
 func _do_recoil(attacker: Dictionary, target: Dictionary) -> void:
 	if target.is_empty():
@@ -713,6 +749,7 @@ func _do_recoil(attacker: Dictionary, target: Dictionary) -> void:
 		e["marked"] = (e.get("id", "") == target.get("id", ""))
 	Combatant.apply_damage(target, main_dmg)
 	damage_dealt.emit(target, main_dmg, false)
+	_check_enemy_kill_achievements(target)
 
 	var recoil_dmg = maxi(1, main_dmg / 2)
 	var other_targets: Array = []
@@ -725,10 +762,12 @@ func _do_recoil(attacker: Dictionary, target: Dictionary) -> void:
 		var other = other_targets[randi_range(0, other_targets.size() - 1)]
 		Combatant.apply_damage(other, recoil_dmg)
 		damage_dealt.emit(other, recoil_dmg, false)
+		_check_enemy_kill_achievements(other)
 		action_performed.emit("%s (Retroceso): %s %d daño a %s. El retroceso (mitad) golpea a %s: %d daño extra!" % [attacker["name"], roll_str, main_dmg, target["name"], other["name"], recoil_dmg])
 	elif target.get("hp", 0) > 0:
 		Combatant.apply_damage(target, recoil_dmg)
 		damage_dealt.emit(target, recoil_dmg, false)
+		_check_enemy_kill_achievements(target)
 		action_performed.emit("%s (Retroceso): %s %d daño a %s. Al ser el único enemigo, el retroceso (mitad) también lo golpea: %d daño extra!" % [attacker["name"], roll_str, main_dmg, target["name"], recoil_dmg])
 	else:
 		action_performed.emit("%s (Retroceso): %s %d daño a %s!" % [attacker["name"], roll_str, main_dmg, target["name"]])
@@ -742,6 +781,7 @@ func _do_shadow(attacker: Dictionary, target: Dictionary) -> void:
 		var final_dmg = Combatant.apply_position_modifiers(result.damage, attacker, target)
 		Combatant.apply_damage(target, final_dmg)
 		damage_dealt.emit(target, final_dmg, false)
+		_check_enemy_kill_achievements(target)
 		var crit_str = " ¡CRÍTICO!" if result.crit else ""
 		var blind_msg = ""
 		if result.crit:
@@ -763,6 +803,7 @@ func _do_call_lathander(caster: Dictionary) -> void:
 			var victim_hp = victim.get("hp", 0)
 			Combatant.apply_damage(victim, victim_hp)
 			damage_dealt.emit(victim, victim_hp, false)
+			_check_enemy_kill_achievements(victim)
 			action_performed.emit("%s invoca a Lathander (¡20 natural!) y elimina a %s al instante!" % [caster["name"], victim["name"]])
 			return
 	action_performed.emit("%s invoca a Lathander... (tirada: %d, sin efecto)" % [caster["name"], roll])
@@ -802,8 +843,67 @@ func _all_party_dead() -> bool:
 			return false
 	return true
 
+## Checked at the very top of _victory(), before rewards/sync/level-ups touch anything — _party
+## still holds each member's real end-of-fight HP, and _party_action_log has this whole battle's
+## action history. Fire-and-forget (no await): none of these should hold up the victory sequence.
+func _check_victory_achievements() -> void:
+	var alive_count := 0
+	var total_hp := 0.0
+	var total_max_hp := 0.0
+	var anyone_down := false
+	for p in _party:
+		var hp: int = p.get("hp", 0)
+		total_hp += hp
+		total_max_hp += float(p.get("max_hp", 1))
+		if hp > 0:
+			alive_count += 1
+		else:
+			anyone_down = true
+
+	if anyone_down:
+		GameState.run_flawless = false
+
+	if is_boss_encounter():
+		if not anyone_down:
+			AchievementsScript.unlock(self, "sin_un_rasguño")
+		if alive_count == 1:
+			AchievementsScript.unlock(self, "ultima_en_pie")
+
+	if total_max_hp > 0.0 and (total_hp / total_max_hp) < 0.25:
+		AchievementsScript.unlock(self, "al_borde_del_abismo")
+
+	if not _party_action_log.is_empty():
+		var used_skill_or_item := false
+		for t in _party_action_log:
+			if t == "skill" or t == "item":
+				used_skill_or_item = true
+				break
+		if not used_skill_or_item:
+			AchievementsScript.unlock(self, "purista")
+
+## Called right after any hit that might have just killed an enemy — no-ops unless `target` is a
+## freshly-killed enemy (has "base_id", hp <= 0). Fire-and-forget: neither achievement should hold
+## up the attack's own log line or animation.
+func _check_enemy_kill_achievements(target: Dictionary) -> void:
+	if target.get("hp", 0) > 0 or not target.has("base_id"):
+		return
+	if target.get("marked", false):
+		AchievementsScript.unlock(self, "marcada")
+	if target.get("poison_turns", 0) > 0 and target.get("burn_turns", 0) > 0:
+		AchievementsScript.unlock(self, "doble_filo")
+
+## Checked at each magic-damage site that applies Combatant.guard_damage_multiplier(). Unlocks
+## "Peaje Cobrado" when the toll (half damage against a protected target) is the difference between
+## a lethal hit and a survivable one. Melee's toll is a disadvantage roll with no "would have hit"
+## damage number to compare against, so this only applies to the magic/multiplier path.
+func _check_guard_saved_life(raw_dmg: int, final_dmg: int, target: Dictionary) -> void:
+	var hp_before: int = target.get("hp", 0)
+	if hp_before > 0 and raw_dmg >= hp_before and final_dmg < hp_before:
+		AchievementsScript.unlock(self, "peaje_cobrado")
+
 func _victory() -> void:
 	_battle_active = false
+	_check_victory_achievements()
 	# Rewards ride the same curve as the enemies, so a scaled-up fight is not worse value.
 	var reward_scale := GameState.enemy_scale_factor()
 	var rewards = _encounter_data.get("rewards", {})

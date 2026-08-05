@@ -11,6 +11,7 @@ class_name RiddleGate
 
 ## Preloaded by path rather than through its class_name — see the note in DungeonBuilder.gd.
 const NarrativeToastScript = preload("res://scripts/ui/NarrativeToast.gd")
+const AchievementsScript = preload("res://scripts/core/Achievements.gd")
 
 ## Shown after winning the guardian fight (i.e. NOT solving the riddle peacefully) — a warning
 ## that something harsher is waiting further in. Deliberately doesn't name what: same spoiler
@@ -53,6 +54,7 @@ func _ready() -> void:
 func _play_and_warn() -> void:
 	await _play_scene(combat_event_id, {})
 	await NarrativeToastScript.show_at(self, NEW_GUARDIAN_WARNING)
+	await AchievementsScript.unlock(self, "cuando_las_palabras_fallan")
 
 func interact() -> void:
 	if GameState.get_flag(FLAG_OPEN):
@@ -124,6 +126,7 @@ func _resolve_success() -> void:
 	GameState.set_flag(FLAG_OPEN)
 	_set_open(true)
 	_play_scene(success_event_id, {"respuesta": _riddle.get("answer_display", "")})
+	AchievementsScript.unlock(self, "voz_de_la_razon")
 
 func _start_combat() -> void:
 	var dungeon_path = "res://scenes/exploration/Dungeon.tscn"

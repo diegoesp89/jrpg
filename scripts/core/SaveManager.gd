@@ -79,8 +79,27 @@ func get_profile() -> Dictionary:
 			"character_usage_counts": {},
 			"total_gold_earned": 0,
 			"total_xp_earned": 0,
+			"achievements": {},
 		}
 	return data
+
+# --- Achievements (persist in the same cross-playthrough profile as completed_party_combos) ---
+
+## Marks an achievement earned. Idempotent and safe to call every time its condition is true:
+## returns false (and writes nothing) if it was already unlocked, true the one time it's new — the
+## caller uses that to decide whether to show a toast.
+func unlock_achievement(id: String) -> bool:
+	var profile = get_profile()
+	var achievements: Dictionary = profile.get("achievements", {})
+	if achievements.get(id, false):
+		return false
+	achievements[id] = true
+	profile["achievements"] = achievements
+	_write_json_file(PROFILE_PATH, profile)
+	return true
+
+func is_achievement_unlocked(id: String) -> bool:
+	return get_profile().get("achievements", {}).get(id, false)
 
 ## Called when the party actually wins (reaches the exit with every required item). Records
 ## the party's character-id combination (sorted, same order-independent convention already

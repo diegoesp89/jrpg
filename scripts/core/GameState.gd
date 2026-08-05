@@ -56,6 +56,11 @@ var pending_tier_message: String = ""
 ## a real tier value that happens to match by coincidence.
 var _last_progression_tier: int = -1
 
+## true while nobody in the party has hit 0 HP in any combat this run. Set false exactly once, in
+## BattleController._victory(), and never reverts — unlike real HP, which a rest zone or a level-up
+## can fully restore. Backs the "Nadie se Queda Atrás" achievement, checked at the dungeon exit.
+var run_flawless: bool = true
+
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	_init_inventory()
@@ -465,6 +470,7 @@ func reset() -> void:
 	rest_charges_left = MAX_REST_CHARGES
 	pending_tier_message = ""
 	_last_progression_tier = 0
+	run_flawless = true
 	_init_inventory()
 
 func _init_inventory() -> void:
