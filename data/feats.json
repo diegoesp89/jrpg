@@ -29,7 +29,7 @@
   "mobile": {
     "id": "mobile",
     "name": "Móvil",
-    "description": "Cambiar de posición (adelante/medio/retaguardia) no gasta tu acción del turno — después de moverte, eliges otra acción en el mismo turno.",
+    "description": "Cambiar de posición (adelante/medio/retaguardia) no gasta tu acción del turno: después de moverte, eliges otra acción en el mismo turno.",
     "effect": "free_move"
   },
   "atleta": {
@@ -163,7 +163,7 @@
   "huguito_ultimate": {
     "id": "huguito_ultimate",
     "name": "Vuelo del Búho",
-    "description": "Feat final de Huguito, solo disponible al alcanzar el nivel 5. Sobrevuelas la línea enemiga: alcanzas la Retaguardia aunque esté protegida, cosa que ninguna otra clase cuerpo a cuerpo puede hacer, y además ignoras el peaje de guardia — tus ataques no sufren desventaja y tu magia no se reduce a la mitad contra objetivos protegidos.",
+    "description": "Feat final de Huguito, solo disponible al alcanzar el nivel 5. Sobrevuelas la línea enemiga: alcanzas la Retaguardia aunque esté protegida, cosa que ninguna otra clase cuerpo a cuerpo puede hacer, y además ignoras el peaje de guardia: tus ataques no sufren desventaja y tu magia no se reduce a la mitad contra objetivos protegidos.",
     "effect": "ignore_back_rank"
   },
   "rosa_ultimate": {

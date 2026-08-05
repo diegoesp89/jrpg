@@ -1177,7 +1177,7 @@ func _on_credits_pressed() -> void:
 func _on_credits_save() -> void:
 	_credits = _credits_text_edit.text.split("\n")
 	_credits_panel.visible = false
-	_set_status("Créditos actualizados (%d línea(s)) — se guardan con el mapa" % _credits.size())
+	_set_status("Créditos actualizados (%d línea(s)); se guardan con el mapa" % _credits.size())
 
 # --- Door key-location modal ("Ubicar la llave...") ---
 

@@ -16,7 +16,7 @@ const AchievementsScript = preload("res://scripts/core/Achievements.gd")
 ## Shown after winning the guardian fight (i.e. NOT solving the riddle peacefully) — a warning
 ## that something harsher is waiting further in. Deliberately doesn't name what: same spoiler
 ## discipline as the Ayuda pages, and it's the answer to a puzzle the player just failed.
-const NEW_GUARDIAN_WARNING := "Al vencer a la guardiana, algo más ha despertado en las profundidades para ocupar su lugar. Prepárate — no será tan piadoso como ella."
+const NEW_GUARDIAN_WARNING := "Al vencer a la guardiana, algo más ha despertado en las profundidades para ocupar su lugar. Prepárate: no será tan piadoso como ella."
 
 const FLAG_OPEN := "riddle_gate_open"
 const ACCENTED := "áéíóúñ"

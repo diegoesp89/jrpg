@@ -42,7 +42,7 @@ var pending_level_ups: Array[Dictionary] = []
 ## same spoiler discipline as the Ayuda pages. Tier 3 is the only one that tells the player
 ## anything actionable: leave.
 const TIER_MESSAGES := {
-	1: "El calabozo ha sentido la pérdida de una de sus reliquias. En la oscuridad, algo empieza a removerse — sus criaturas ya no descansan tan tranquilas.",
+	1: "El calabozo ha sentido la pérdida de una de sus reliquias. En la oscuridad, algo empieza a removerse: sus criaturas ya no descansan tan tranquilas.",
 	2: "El calabozo sabe de ti. Refuerza sus fuerzas: sus monstruos son más letales que antes.",
 	3: "El calabozo entero ha despertado en tu contra. Sus monstruos ya no muestran cautela alguna. Es hora de escapar.",
 }

@@ -92,7 +92,7 @@
   "call_lathander": {
     "id": "call_lathander",
     "name": "Llamar a Lathander",
-    "description": "Invoca a Lathander: tira 1d20 aparte — con un 20 natural (y solo fuera de peleas de jefe) elimina instantáneamente a un enemigo al azar; cualquier otro resultado no hace nada.",
+    "description": "Invoca a Lathander: tira 1d20 aparte. Con un 20 natural (y solo fuera de peleas de jefe) elimina instantáneamente a un enemigo al azar; cualquier otro resultado no hace nada.",
     "mp_cost": 12,
     "target_type": "all_enemies",
     "power": 0,

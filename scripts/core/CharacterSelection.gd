@@ -368,7 +368,7 @@ func _show_feat_step() -> void:
 	var char_data = _available_characters[char_index]
 	var pool: Array = char_data.get("feat_pool", [])
 
-	_feat_title.text = "%s — elige un feat" % char_data["name"]
+	_feat_title.text = "%s: elige un feat" % char_data["name"]
 
 	# free() (not queue_free()) — queue_free defers removal to end-of-frame, so the very next
 	# line's get_children() (inside _update_feat_highlight, called below) would still see last
@@ -379,7 +379,7 @@ func _show_feat_step() -> void:
 	for feat_id in pool:
 		var feat = DataLoader.get_feat(feat_id)
 		var label = Label.new()
-		label.text = "%s — %s" % [feat.get("name", feat_id), feat.get("description", "")]
+		label.text = "%s: %s" % [feat.get("name", feat_id), feat.get("description", "")]
 		label.add_theme_font_size_override("font_size", 20)
 		label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		label.custom_minimum_size = Vector2(900, 0)

@@ -224,7 +224,7 @@ func _show_equipment() -> void:
 		# Explicitly typed: Dictionary.get() returns Variant, and inferring from it is a parse
 		# error under this project's warnings-as-errors setting.
 		var wname: String = str(DataLoader.get_item(wid).get("name", "")) if wid != "" else "-"
-		_add_row("%s — %s" % [m["name"], wname], 24)
+		_add_row("%s: %s" % [m["name"], wname], 24)
 	_add_row("Z cambia el arma del personaje marcado. Cada arma la lleva uno solo.", 16)
 	_selected_index = 0
 	_update_highlight()
@@ -265,7 +265,7 @@ func _show_formation() -> void:
 		# rather than letting the player discover it mid-fight.
 		if zone == Combatant.POS_BACK and Combatant.is_melee_class(str(m.get("class", ""))):
 			warning = "  (no alcanza a nadie desde atrás)"
-		_add_row("%s — %s%s" % [m["name"], BattleUI.POSITION_NAMES[zone], warning], 24)
+		_add_row("%s: %s%s" % [m["name"], BattleUI.POSITION_NAMES[zone], warning], 24)
 	_add_row("Z cambia la zona del personaje marcado.", 16)
 	_selected_index = 0
 	_update_highlight()
@@ -303,7 +303,7 @@ func _show_status() -> void:
 		for feat_id in m.get("feats", []):
 			feat_names.append(DataLoader.get_feat(feat_id).get("name", feat_id))
 		var feats_text = ", ".join(feat_names) if not feat_names.is_empty() else "-"
-		_add_row("%s — %s %s (Nivel %d)" % [m["name"], m.get("race", ""), m.get("class", ""), m.get("level", 1)], 22)
+		_add_row("%s: %s %s (Nivel %d)" % [m["name"], m.get("race", ""), m.get("class", ""), m.get("level", 1)], 22)
 		_add_row("HP %d/%d   MP %d/%d   CA %d" % [
 			m.get("hp", 0), m.get("max_hp", 0), m.get("mp", 0), m.get("max_mp", 0), m.get("ca", 10)
 		], 18)

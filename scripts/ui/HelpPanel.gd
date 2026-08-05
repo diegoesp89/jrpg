@@ -235,12 +235,12 @@ func _body_round() -> String:
 		_heading("Antes de los turnos") + \
 		"Al arrancar la ronda se aplica el daño de veneno y quemadura, y bajan un punto los contadores de todos los estados que duran turnos.\n\n" + \
 		_heading("En tu turno") + \
-		"· [b]Atacar[/b] — ataque básico con arma contra un enemigo.\n" + \
-		"· [b]Habilidad[/b] — gasta MP. Cada personaje tiene las suyas; la lista te explica qué hace la que estés marcando.\n" + \
-		"· [b]Objeto[/b] — usa algo del inventario, que es compartido por toda la party.\n" + \
-		"· [b]Defender[/b] — te cubres: todos los ataques contra ti tiran con desventaja hasta el inicio de la próxima ronda.\n" + \
-		"· [b]Mover[/b] — cambias a una zona contigua. Te saca del melee, y eso provoca un ataque de oportunidad de cada enemigo que estaba a melee contigo.\n" + \
-		"· [b]Huir[/b] — intenta escapar. La probabilidad es %d%% base + %d%% por cada personaje que siga en pie, así que huir tarde, con la party ya diezmada, es mucho más difícil. La ves calculada en pantalla, encima de la opción. Hay combates de los que no se puede huir.\n\n" % [Combatant.FLEE_BASE_CHANCE, Combatant.FLEE_CHANCE_PER_MEMBER] + \
+		"· [b]Atacar[/b]: ataque básico con arma contra un enemigo.\n" + \
+		"· [b]Habilidad[/b]: gasta MP. Cada personaje tiene las suyas; la lista te explica qué hace la que estés marcando.\n" + \
+		"· [b]Objeto[/b]: usa algo del inventario, que es compartido por toda la party.\n" + \
+		"· [b]Defender[/b]: te cubres, todos los ataques contra ti tiran con desventaja hasta el inicio de la próxima ronda.\n" + \
+		"· [b]Mover[/b]: cambias a una zona contigua. Te saca del melee, y eso provoca un ataque de oportunidad de cada enemigo que estaba a melee contigo.\n" + \
+		"· [b]Huir[/b]: intenta escapar. La probabilidad es %d%% base + %d%% por cada personaje que siga en pie, así que huir tarde, con la party ya diezmada, es mucho más difícil. La ves calculada en pantalla, encima de la opción. Hay combates de los que no se puede huir.\n\n" % [Combatant.FLEE_BASE_CHANCE, Combatant.FLEE_CHANCE_PER_MEMBER] + \
 		"Si estás aturdido o inmovilizado, tu turno se saltea por completo."
 
 func _body_damage() -> String:
@@ -308,12 +308,12 @@ func _body_positions() -> String:
 
 func _body_status() -> String:
 	return "Todos los estados que duran turnos bajan un punto al inicio de cada ronda.\n\n" + \
-		"[b]Cegado[/b] — Ataca con desventaja, y los ataques contra él tienen ventaja. Dura entre 1 y 3 turnos.\n\n" + \
-		"[b]Envenenado[/b] — %d de daño al inicio de cada ronda, durante %d rondas.\n\n" % [BattleController.POISON_DAMAGE, BattleController.POISON_DURATION] + \
-		"[b]Quemado[/b] — %d de daño al inicio de cada ronda, durante %d rondas.\n\n" % [BattleController.BURN_DAMAGE, BattleController.BURN_DURATION] + \
-		"[b]Aturdido / Inmovilizado[/b] — Pierde su próximo turno completo.\n\n" + \
-		"[b]Marcado[/b] — Recibe un 25% más de daño de cualquier fuente. El Gunslinger marca a su objetivo cada vez que lo golpea, y solo puede haber una marca a la vez.\n\n" + \
-		"[b]Expuesto[/b] — Quien ataca de forma temeraria baja la guardia: los ataques contra él tienen ventaja hasta el inicio de la próxima ronda.\n\n" + \
+		"[b]Cegado[/b]: ataca con desventaja, y los ataques contra él tienen ventaja. Dura entre 1 y 3 turnos.\n\n" + \
+		"[b]Envenenado[/b]: %d de daño al inicio de cada ronda, durante %d rondas.\n\n" % [BattleController.POISON_DAMAGE, BattleController.POISON_DURATION] + \
+		"[b]Quemado[/b]: %d de daño al inicio de cada ronda, durante %d rondas.\n\n" % [BattleController.BURN_DAMAGE, BattleController.BURN_DURATION] + \
+		"[b]Aturdido / Inmovilizado[/b]: pierde su próximo turno completo.\n\n" + \
+		"[b]Marcado[/b]: recibe un 25% más de daño de cualquier fuente. El Gunslinger marca a su objetivo cada vez que lo golpea, y solo puede haber una marca a la vez.\n\n" + \
+		"[b]Expuesto[/b]: quien ataca de forma temeraria baja la guardia, los ataques contra él tienen ventaja hasta el inicio de la próxima ronda.\n\n" + \
 		"El veneno y la quemadura cuentan como daño normal, así que los feats de reducción de daño también los amortiguan."
 
 func _body_progression() -> String:
@@ -347,7 +347,7 @@ func _body_progression() -> String:
 func _body_skills() -> String:
 	var text := "Las habilidades de cada personaje, con lo que cuestan y lo que hacen. Son fijas: se tienen desde el nivel 1 y no se aprenden más con el nivel, aunque algún feat puede sumar una.\n\n"
 	for c in DataLoader.get_all_characters():
-		text += "[color=#e8cc66][b]%s[/b][/color] — %s %s\n" % [
+		text += "[color=#e8cc66][b]%s[/b][/color]: %s %s\n" % [
 			c.get("name", "???"), c.get("race", ""), c.get("class", ""),
 		]
 		var skill_ids: Array = c.get("skills", [])
@@ -358,7 +358,7 @@ func _body_skills() -> String:
 			var skill = DataLoader.get_skill(str(skill_id))
 			if skill.is_empty():
 				continue
-			text += "[b]%s[/b] (%d MP) — %s\n" % [
+			text += "[b]%s[/b] (%d MP): %s\n" % [
 				skill.get("name", "???"), int(skill.get("mp_cost", 0)), skill.get("description", ""),
 			]
 		text += "\n"
@@ -367,14 +367,14 @@ func _body_skills() -> String:
 func _body_feat_list() -> String:
 	var text := "Los feats se agrupan por personaje: cada uno tiene su propio pool de 4, y solo puede elegir de ahí. Algunos feats aparecen en el pool de varios personajes.\n\n"
 	for c in DataLoader.get_all_characters():
-		text += "[color=#e8cc66][b]%s[/b][/color] — %s %s\n" % [
+		text += "[color=#e8cc66][b]%s[/b][/color]: %s %s\n" % [
 			c.get("name", "???"), c.get("race", ""), c.get("class", ""),
 		]
 		for feat_id in c.get("feat_pool", []):
 			var feat = DataLoader.get_feat(str(feat_id))
 			if feat.is_empty():
 				continue
-			text += "[b]%s[/b] — %s\n" % [feat.get("name", "???"), feat.get("description", "")]
+			text += "[b]%s[/b]: %s\n" % [feat.get("name", "???"), feat.get("description", "")]
 		text += "\n"
 	return text
 
@@ -384,7 +384,7 @@ func _body_final_feats() -> String:
 		var feat = DataLoader.get_feat(str(c.get("final_feat", "")))
 		if feat.is_empty():
 			continue
-		text += "[color=#e8cc66][b]%s[/b][/color] — %s %s\n[b]%s[/b]\n%s\n\n" % [
+		text += "[color=#e8cc66][b]%s[/b][/color]: %s %s\n[b]%s[/b]\n%s\n\n" % [
 			c.get("name", "???"), c.get("race", ""), c.get("class", ""),
 			feat.get("name", "???"), feat.get("description", ""),
 		]

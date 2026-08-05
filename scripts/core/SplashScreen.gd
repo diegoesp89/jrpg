@@ -6,7 +6,7 @@ class_name SplashScreen
 
 const MESSAGE := "[b]Antes de empezar...[/b]
 
-Este juego fue diseñado y programado por una sola persona —el DM Strife— como un regalo y un homenaje para sus jugadores y para los personajes que crearon.
+Este juego fue diseñado y programado por una sola persona, el DM Strife, como un regalo y un homenaje para sus jugadores y para los personajes que crearon.
 
 De una lista de siete personajes deberás elegir cuatro para formar tu party. Con ellos recorrerás una mazmorra inspirada y libremente adaptada de La Montaña del Penacho Blanco. Los personajes avanzan del nivel 1 al 5, bajo un sistema de combate al estilo JRPG, muy inspirado en D&D pero con cambios propios pensados para este videojuego.
 

@@ -89,7 +89,7 @@ func _show_next_step() -> void:
 	for feat_id in _current_options:
 		var feat = DataLoader.get_feat(feat_id)
 		var label = Label.new()
-		label.text = "%s — %s" % [feat.get("name", feat_id), feat.get("description", "")]
+		label.text = "%s: %s" % [feat.get("name", feat_id), feat.get("description", "")]
 		label.add_theme_font_size_override("font_size", 20)
 		label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		label.custom_minimum_size = Vector2(900, 0)
