@@ -8,6 +8,7 @@ class_name MapEditor
 const MAPS_DIR := "res://maps/"
 
 const TOOLS := [
+	{"id": "select", "label": "Seleccionar"},
 	{"id": "erase", "label": "Vacío", "tile": 0},
 	{"id": "floor", "label": "Piso", "tile": 1},
 	{"id": "wall", "label": "Pared", "tile": 2},
@@ -303,6 +304,8 @@ func _tool_color(tool: Dictionary) -> Color:
 	if tool.has("tile"):
 		return MapEditorGrid.TILE_COLORS.get(tool["tile"], Color.WHITE)
 	match tool.get("id", ""):
+		"select":
+			return Color(0.5, 0.85, 1.0)
 		"player_start":
 			return MapEditorGrid.PLAYER_START_COLOR
 		"zone":
@@ -334,6 +337,8 @@ func _select_tool(tool: Dictionary, btn: Button) -> void:
 
 func _tool_category(tool: Dictionary) -> String:
 	match tool.get("id", ""):
+		"select":
+			return "select"
 		"erase", "floor", "wall":
 			return "tile"
 		"player_start":
@@ -348,6 +353,8 @@ func _tool_category(tool: Dictionary) -> String:
 func _on_grid_drag_started(row: int, col: int) -> void:
 	_drag_start_cell = Vector2i(col, row)
 	match _tool_category(_current_tool):
+		"select":
+			_inspect_tile(row, col)
 		"tile":
 			_paint_tile(row, col)
 		"entity":
@@ -511,6 +518,70 @@ func _place_zone(start: Vector2i, end: Vector2i) -> void:
 	_entities["random_encounter_zones"] = list
 	_grid.set_data(_tiles, _entities)
 	_open_property_panel("zone", "random_encounter_zones", zone)
+
+## "Seleccionar" tool: click any tile to see what's there, without placing or erasing anything.
+## Entity-owning tiles (door, npc, chest, etc.) get the exact same editable panel as clicking
+## them with their own tool selected. Overlays that share the floor tile instead of owning a
+## distinct tile number (zone, story trigger) reuse their panel too. Player start and plain
+## floor/wall/empty tiles have nothing to edit, so they just get a read-only info line.
+func _inspect_tile(row: int, col: int) -> void:
+	if row < 0 or row >= _tiles.size() or col < 0 or col >= _tiles[row].size():
+		return
+
+	var tile_num: int = _tiles[row][col]
+
+	for tool in TOOLS:
+		if tool.get("tile", -1) == tile_num and tool.has("list"):
+			var existing = _find_entity_at(tool["list"], row, col)
+			if not existing.is_empty():
+				_open_property_panel(tool["id"], tool["list"], existing)
+				_set_status("(%d,%d): %s" % [row, col, tool["label"]])
+				return
+			break
+
+	var player_start = _entities.get("player_start", {})
+	if int(player_start.get("row", -1)) == row and int(player_start.get("col", -1)) == col:
+		_show_read_only_info(row, col, "Inicio del jugador")
+		_set_status("(%d,%d): Inicio del jugador" % [row, col])
+		return
+
+	var zone = _find_zone_at(row, col)
+	if not zone.is_empty():
+		_open_property_panel("zone", "random_encounter_zones", zone)
+		_set_status("(%d,%d): Zona de Encuentros" % [row, col])
+		return
+
+	var story_trigger = _find_entity_at("story_triggers", row, col)
+	if not story_trigger.is_empty():
+		_open_property_panel("story_trigger", "story_triggers", story_trigger)
+		_set_status("(%d,%d): Story Trigger" % [row, col])
+		return
+
+	var label = _tile_type_label(tile_num)
+	_show_read_only_info(row, col, label)
+	_set_status("(%d,%d): %s" % [row, col, label])
+
+## Label for a plain tile (no entity attached) — Vacío/Piso/Pared.
+func _tile_type_label(tile_num: int) -> String:
+	for tool in TOOLS:
+		if tool.get("tile", -1) == tile_num and not tool.has("list"):
+			return str(tool.get("label", "?"))
+	return "?"
+
+func _show_read_only_info(row: int, col: int, label: String) -> void:
+	_selected_kind = ""
+	_selected_list_key = ""
+	_selected_entry = {}
+	_enemies_section = null
+	_event_preview_section = null
+	for child in _props_container.get_children():
+		child.queue_free()
+
+	var header = Label.new()
+	header.text = "%s (%d, %d)" % [label, row, col]
+	header.add_theme_font_size_override("font_size", 18)
+	header.add_theme_color_override("font_color", Color(0.9, 0.8, 0.4))
+	_props_container.add_child(header)
 
 # --- Property panel ---
 

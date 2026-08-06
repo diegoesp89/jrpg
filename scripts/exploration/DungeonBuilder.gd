@@ -180,7 +180,7 @@ func _build_walls_and_entities() -> void:
 				Tile.WALL:
 					_create_wall(pos, col, row)
 				Tile.DOOR:
-					_create_door(pos, _get_entity_at("doors", row, col))
+					_create_door(pos, row, col, _get_entity_at("doors", row, col))
 				Tile.NPC:
 					_create_npc(pos, _get_entity_at("npcs", row, col))
 				Tile.CHEST:
@@ -264,7 +264,14 @@ func _create_wall(pos: Vector3, col: int, row: int) -> void:
 	add_child(wall)
 	_wall_nodes.append(wall)
 
-func _create_door(pos: Vector3, config: Dictionary = {}) -> void:
+## True if (row, col) is a wall tile or off the edge of the map — either way, nothing can walk
+## through it, so it counts as "wall" for the purposes of figuring out a door's orientation below.
+func _is_wall_or_edge(row: int, col: int) -> bool:
+	if row < 0 or row >= dungeon_map.size() or col < 0 or col >= dungeon_map[row].size():
+		return true
+	return dungeon_map[row][col] == Tile.WALL
+
+func _create_door(pos: Vector3, row: int, col: int, config: Dictionary = {}) -> void:
 	var door_scene_script = load("res://scripts/exploration/Door.gd")
 	var door = StaticBody3D.new()
 	door.name = "Door"
@@ -272,9 +279,15 @@ func _create_door(pos: Vector3, config: Dictionary = {}) -> void:
 	door.collision_layer = 1 | 4  # world + interactable
 	door.collision_mask = 0
 
+	# A door sits inside what would otherwise be a wall segment. If its left/right neighbors are
+	# wall (or the map edge), that wall runs north-south, so the door has to block east-west foot
+	# traffic instead — rotate the collision box 90 degrees to match, instead of always assuming
+	# the north-south-blocking orientation.
+	var vertical_wall := _is_wall_or_edge(row, col - 1) and _is_wall_or_edge(row, col + 1)
+
 	var col_shape = CollisionShape3D.new()
 	var box = BoxShape3D.new()
-	box.size = Vector3(TILE_SIZE, 3.0, 0.4)
+	box.size = Vector3(0.4, 3.0, TILE_SIZE) if vertical_wall else Vector3(TILE_SIZE, 3.0, 0.4)
 	col_shape.shape = box
 	col_shape.position = Vector3(0, 1.5, 0)
 	door.add_child(col_shape)
