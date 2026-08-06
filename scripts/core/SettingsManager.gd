@@ -33,6 +33,16 @@ const DEFAULT_KEYS := {
 	"action2": KEY_X,
 }
 
+## Fixed second binding for the movement actions only — the arrow keys always work as a
+## permanent alternative, never rebound and never shown as editable. action1/action2 have no
+## second option at all, so they're absent from this map.
+const SECONDARY_KEYS := {
+	"move_up": KEY_UP,
+	"move_down": KEY_DOWN,
+	"move_left": KEY_LEFT,
+	"move_right": KEY_RIGHT,
+}
+
 var resolution: String = "1920x1080"
 var fullscreen: bool = true
 var volume: float = 1.0
@@ -97,9 +107,17 @@ func get_key_for_action(action: String) -> int:
 func get_key_label(action: String) -> String:
 	return OS.get_keycode_string(get_key_for_action(action))
 
-## Rebinds `action` to a single physical keycode, replacing whatever InputMap events it had
-## before (including any arrow-key dual from project.godot's defaults — once a player rebinds
-## an action, they own its binding from then on, simple 1-key-per-action model).
+## Empty string for actions with no second option (action1/action2). For movement, always the
+## arrow-key label — fixed, regardless of what the player rebinds the first option to.
+func get_secondary_key_label(action: String) -> String:
+	if not SECONDARY_KEYS.has(action):
+		return ""
+	return OS.get_keycode_string(SECONDARY_KEYS[action])
+
+## Rebinds `action`'s first option to a single physical keycode, replacing whatever that first
+## option was before. The fixed arrow-key second option (SECONDARY_KEYS) is re-added right after
+## for movement actions, so rebinding never drops it — action1/action2 have no second option to
+## preserve, so they end up with just the one event, same as before.
 func apply_key_binding(action: String, physical_keycode: int) -> void:
 	key_bindings[action] = physical_keycode
 	_apply_key_binding(action, physical_keycode)
@@ -132,6 +150,10 @@ func _apply_key_binding(action: String, physical_keycode: int) -> void:
 	var ev = InputEventKey.new()
 	ev.physical_keycode = physical_keycode
 	InputMap.action_add_event(action, ev)
+	if SECONDARY_KEYS.has(action):
+		var secondary_ev = InputEventKey.new()
+		secondary_ev.physical_keycode = SECONDARY_KEYS[action]
+		InputMap.action_add_event(action, secondary_ev)
 
 ## Restores the exact InputMap events project.godot originally had for this action (e.g.
 ## move_up's W + Up-arrow dual), from the snapshot taken at _ready().

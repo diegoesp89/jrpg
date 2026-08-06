@@ -121,8 +121,10 @@ func _row_text(row: Dictionary) -> String:
 		RowKind.KEYBIND:
 			var action = row["action"]
 			if _awaiting_rebind_action == action:
-				return "%s: presioná una tecla nueva... (Esc cancela)" % SettingsManager.ACTION_LABELS.get(action, action)
-			return "%s: %s" % [SettingsManager.ACTION_LABELS.get(action, action), SettingsManager.get_key_label(action)]
+				return "%s: presiona una tecla nueva... (Esc cancela)" % SettingsManager.ACTION_LABELS.get(action, action)
+			var secondary := SettingsManager.get_secondary_key_label(action)
+			var suffix := "  |  %s" % secondary if secondary != "" else ""
+			return "%s: %s%s" % [SettingsManager.ACTION_LABELS.get(action, action), SettingsManager.get_key_label(action), suffix]
 		RowKind.RESET:
 			return "Restablecer valores por defecto"
 		RowKind.BACK:
