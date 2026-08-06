@@ -440,9 +440,10 @@ func _on_give_legendary_weapons_pressed() -> void:
 	_refresh_inventory()
 	_set_status("Armas legendarias agregadas.")
 
-## Advances the whole party exactly ONE level per click (not straight to max) — feat choices go
-## into pending_level_ups the same as a real level-up, resolved the next time LevelUpPanel shows
-## after a real battle victory.
+## Advances the whole party exactly ONE level per click (not straight to max). Feat choices go
+## into pending_level_ups the same as a real level-up, and — same as BattleScene's own victory
+## flow — show LevelUpPanel right here if that queued anything, instead of leaving it to surface
+## unexpectedly whenever the next REAL battle happens to end.
 func _on_level_up_pressed() -> void:
 	if GameState.party.is_empty():
 		_set_status("No hay party activa.")
@@ -456,6 +457,12 @@ func _on_level_up_pressed() -> void:
 	GameState.check_level_ups()
 	_refresh_party()
 	_set_status("Party subida a nivel %d." % target_level)
+	if not GameState.pending_level_ups.is_empty():
+		var panel = LevelUpPanel.new()
+		add_child(panel)
+		panel.open()
+		await panel.finished
+		panel.queue_free()
 
 func _on_reload_rests_pressed() -> void:
 	GameState.rest_charges_left = GameState.MAX_REST_CHARGES

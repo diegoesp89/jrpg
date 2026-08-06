@@ -25,3 +25,8 @@ chest_open.png          -> UNUSED/other/chest2_open.png (swapped in on Pickup.in
 floor_item_box.png      -> item/misc/misc_box.png (loose item on the floor, no chest)
 trap_spear.png          -> dc-dngn/dngn_trap_spear.png (Trap.gd's "already sprung" marker,
                            hidden until the trap triggers — see scripts/exploration/Trap.gd)
+door.png                -> hand-drawn placeholder (32x48, matches wall_gray.png's aspect ratio —
+                           see _create_door() in DungeonBuilder.gd for why), not from the DCSS
+                           pack. Textures the two wall-style quad faces of an unlocked door.
+door_locked.png          -> same as door.png, red-tinted variant swapped in while Door.locked is
+                           true (mirrors chest_closed.png/chest_open.png's swap-on-state pattern).

@@ -166,11 +166,13 @@ func _clear_content() -> void:
 	for child in _content_container.get_children():
 		child.queue_free()
 
-func _add_row(text: String, font_size: int = 24) -> void:
+func _add_row(text: String, font_size: int = 24, autowrap: bool = false) -> void:
 	var label = Label.new()
 	label.text = text
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	label.add_theme_font_size_override("font_size", font_size)
+	if autowrap:
+		label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_content_container.add_child(label)
 
 # --- Main menu ---
@@ -223,8 +225,12 @@ func _show_equipment() -> void:
 		var wid := str(m.get("weapon", ""))
 		# Explicitly typed: Dictionary.get() returns Variant, and inferring from it is a parse
 		# error under this project's warnings-as-errors setting.
-		var wname: String = str(DataLoader.get_item(wid).get("name", "")) if wid != "" else "-"
+		var witem: Dictionary = DataLoader.get_item(wid) if wid != "" else {}
+		var wname: String = str(witem.get("name", "")) if wid != "" else "-"
 		_add_row("%s: %s" % [m["name"], wname], 24)
+		var wdesc: String = str(witem.get("description", ""))
+		if wdesc != "":
+			_add_row(wdesc, 15, true)
 	_add_row("Z cambia el arma del personaje marcado. Cada arma la lleva uno solo.", 16)
 	_selected_index = 0
 	_update_highlight()

@@ -15,8 +15,6 @@ const TILE_SIZE: float = 2.0
 enum Tile { EMPTY = 0, FLOOR = 1, WALL = 2, DOOR = 3, NPC = 4, CHEST = 5, COMBAT_TRIGGER = 6, TRAP = 7, BOSS_TRIGGER = 8, EXIT = 9, RIDDLE_GATE = 10, FLOOR_ITEM = 11, REST_ZONE = 12 }
 
 # Colors for placeholder sprites not yet reskinned with real/downloaded art
-const DOOR_COLOR = Color(0.55, 0.35, 0.15)
-const DOOR_LOCKED_COLOR = Color(0.75, 0.15, 0.15)
 const REST_ZONE_COLOR = Color(1.0, 0.85, 0.4)
 const REST_ZONE_BORDER = Color(0.7, 0.55, 0.1)
 
@@ -47,6 +45,8 @@ var _chest_closed_texture: Texture2D = null
 var _chest_open_texture: Texture2D = null
 var _floor_item_texture: Texture2D = null
 var _trap_texture: Texture2D = null
+var _door_texture: Texture2D = null
+var _door_locked_texture: Texture2D = null
 
 # Shared shader instances (created once, reused)
 var _fog_shader_color: Shader = null
@@ -94,6 +94,8 @@ func _build_dungeon() -> void:
 	_chest_open_texture = load("res://assets/sprites/dungeon/chest_open.png")
 	_floor_item_texture = load("res://assets/sprites/dungeon/floor_item_box.png")
 	_trap_texture = load("res://assets/sprites/dungeon/trap_spear.png")
+	_door_texture = load("res://assets/sprites/dungeon/door.png")
+	_door_locked_texture = load("res://assets/sprites/dungeon/door_locked.png")
 	_build_floor()
 	_build_walls_and_entities()
 	_create_random_encounter_zones()
@@ -297,8 +299,9 @@ func _create_door(pos: Vector3, row: int, col: int, config: Dictionary = {}) -> 
 	door.add_child(col_shape)
 
 	# Looks like a wall (same quad-face geometry _create_wall gives an exposed wall face), just
-	# tinted brown/red instead of textured stone — one face on each side actually facing the
-	# corridor, matching whichever pair of neighbors the box above just blocked traffic between.
+	# textured with door.png/door_locked.png instead of stone — one face on each side actually
+	# facing the corridor, matching whichever pair of neighbors the box above just blocked
+	# traffic between.
 	var face_configs: Array
 	if vertical_wall:
 		face_configs = [
@@ -311,8 +314,8 @@ func _create_door(pos: Vector3, row: int, col: int, config: Dictionary = {}) -> 
 			{"offset": Vector3(0, 1.5,  TILE_SIZE / 2.0), "rot": 0.0},
 		]
 
-	var unlocked_material = _make_fog_color_material(DOOR_COLOR)
-	var locked_material = _make_fog_color_material(DOOR_LOCKED_COLOR)
+	var unlocked_material = _make_fog_textured_material(_door_texture)
+	var locked_material = _make_fog_textured_material(_door_locked_texture)
 
 	for i in range(face_configs.size()):
 		var fc = face_configs[i]
