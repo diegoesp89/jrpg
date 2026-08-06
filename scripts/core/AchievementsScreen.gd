@@ -5,7 +5,10 @@ class_name AchievementsScreen
 ## ContinueScreen's "Logros". None of the 15 descriptions contain spoilers, so locked rows show
 ## their full text too — just dimmed, rather than hidden.
 
+const SCROLL_STEP := 70
+
 var _root: Control
+var _scroll: ScrollContainer
 
 func _ready() -> void:
 	_build_ui()
@@ -37,18 +40,18 @@ func _build_ui() -> void:
 	title.offset_bottom = 90
 	_root.add_child(title)
 
-	var scroll = ScrollContainer.new()
-	scroll.set_anchors_preset(Control.PRESET_FULL_RECT)
-	scroll.offset_left = 200
-	scroll.offset_right = -200
-	scroll.offset_top = 110
-	scroll.offset_bottom = -70
-	_root.add_child(scroll)
+	_scroll = ScrollContainer.new()
+	_scroll.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_scroll.offset_left = 200
+	_scroll.offset_right = -200
+	_scroll.offset_top = 110
+	_scroll.offset_bottom = -70
+	_root.add_child(_scroll)
 
 	var list = VBoxContainer.new()
 	list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	list.add_theme_constant_override("separation", 10)
-	scroll.add_child(list)
+	_scroll.add_child(list)
 
 	# Sorted by difficulty (Fácil -> Muy difícil) so the list reads as an easy-to-hard ladder,
 	# rather than the arbitrary order they happen to sit in the data file.
@@ -61,7 +64,7 @@ func _build_ui() -> void:
 		_add_row(list, a, unlocked.get(id, false))
 
 	var hint = Label.new()
-	hint.text = "Z / Esc: Volver"
+	hint.text = "Arriba/Abajo: Desplazar  |  Z / Esc: Volver"
 	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	hint.add_theme_font_size_override("font_size", 18)
 	hint.add_theme_color_override("font_color", Color(0.5, 0.5, 0.5))
@@ -119,6 +122,13 @@ func _add_row(parent: VBoxContainer, achievement: Dictionary, is_unlocked: bool)
 	vbox.add_child(desc_label)
 
 func _unhandled_input(event: InputEvent) -> void:
-	if event.is_action_pressed("action1") or event.is_action_pressed("action2") or event.is_action_pressed("ui_cancel"):
+	# allow_echo so holding the key keeps scrolling instead of needing repeated taps.
+	if event.is_action_pressed("move_up", true):
+		_scroll.scroll_vertical -= SCROLL_STEP
+	elif event.is_action_pressed("move_down", true):
+		_scroll.scroll_vertical += SCROLL_STEP
+	elif event.is_action_pressed("action1") or event.is_action_pressed("action2") or event.is_action_pressed("ui_cancel"):
 		SceneFlow.change_scene("res://scenes/boot/ContinueScreen.tscn")
-		get_viewport().set_input_as_handled()
+	else:
+		return
+	get_viewport().set_input_as_handled()
