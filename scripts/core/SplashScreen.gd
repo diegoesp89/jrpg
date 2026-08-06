@@ -6,15 +6,15 @@ class_name SplashScreen
 
 const MESSAGE := "[b]Antes de empezar...[/b]
 
-Este juego fue diseñado y programado por una sola persona, el DM Strife, como un regalo y un homenaje para sus jugadores y para los personajes que crearon.
+Acércate, muchacho, y escucha bien, porque este juego no fue creado por un gran estudio ni por un ejército de programadores. Lo hizo una sola persona: el DM Strife, como regalo para sus jugadores y homenaje a los personajes que tantas aventuras le han regalado.
 
-De una lista de siete personajes deberás elegir cuatro para formar tu party. Con ellos recorrerás una mazmorra inspirada y libremente adaptada de La Montaña del Penacho Blanco. Los personajes avanzan del nivel 1 al 5, bajo un sistema de combate al estilo JRPG, muy inspirado en D&D pero con cambios propios pensados para este videojuego.
+De una lista de siete héroes deberás escoger cuatro para formar tu grupo y adentrarte en una mazmorra basada en [i]La Montaña del Penacho Blanco[/i]. Comenzarán en nivel 1 y, si sobreviven, alcanzarán el nivel 5, enfrentando peligros mediante un sistema de exploración y combate al estilo JRPG, nacido de las reglas de [i]Dungeons & Dragons[/i], pero adaptado a este pequeño videojuego.
 
-Hay un detalle que vale la pena contar: en ciertos momentos de la aventura los personajes conversan entre sí, y existe una conversación distinta para cada combinación posible de party. Adaptar la personalidad, las aptitudes y los gustos de cada personaje a todas esas combinaciones fue un trabajo caótico y un esfuerzo casi sobrehumano.
+Hay, además, algo especial. Cada combinación de personajes tiene conversaciones diferentes, escritas según sus personalidades, gustos, manías y aptitudes. Aquello fue un caos considerable y, posiblemente, una pésima decisión para la cordura de su creador.
 
-Este proyecto avanzó tras bambalinas durante poco más de ocho meses, a fuerza de ratos libres: algunas veces en medio de reuniones de mi propio trabajo, otras mientras regaba o hacía tareas en el campo, escribiendo desde el celular.
+El proyecto permaneció oculto durante más de ocho meses, construido en ratos libres, reuniones de trabajo y momentos robados al campo, a veces tecleando desde un teléfono mientras regaba.
 
-Gracias por leer hasta acá. Quiero que sepas que te quiero mucho, que aceptes y abraces los bugs, que encuentres mecánicas y combinaciones rotas, y que consigas terminarlo al menos una vez. Y si alguna vez llegas a completarlo con todas las combinaciones posibles de party, me saco el sombrero: te invito un café o una cerveza, lo que prefieras."
+Gracias por jugar. Te quiero mucho. Abraza los bugs, encuentra combinaciones rotas y termina la aventura. Si logras completarla con todos los grupos posibles, me quitaré el sombrero y te invitaré un café o una cerveza."
 
 var _finished: bool = false
 
