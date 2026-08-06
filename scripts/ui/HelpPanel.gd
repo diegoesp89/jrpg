@@ -218,6 +218,7 @@ func _body_basics() -> String:
 		"· Z (o Enter) confirma e interactúa con lo que tengas delante.\n" + \
 		"· X (o Esc) cancela y vuelve atrás.\n" + \
 		"· Esc o Enter durante la exploración abre este menú.\n" + \
+		"· Q y E cambian qué personaje ves caminando por la mazmorra. Es solo estético (una animación bastante rudimentaria): no afecta a la party, ni al orden de turnos, ni a nada de la jugabilidad.\n" + \
 		"Puedes reasignar todas las teclas desde Opciones.\n\n" + \
 		_heading("Tu party") + \
 		"Eliges 4 personajes de los 7 disponibles. Cada combinación distinta que termine la aventura queda marcada con una estrella en la pantalla de selección.\n\n" + \

@@ -34,9 +34,9 @@ func _build_ui() -> void:
 
 	var scroll = ScrollContainer.new()
 	scroll.set_anchors_preset(Control.PRESET_FULL_RECT)
-	scroll.offset_left = 160
-	scroll.offset_right = -160
-	scroll.offset_top = 70
+	scroll.offset_left = 220
+	scroll.offset_right = -220
+	scroll.offset_top = 60
 	scroll.offset_bottom = -70
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	root.add_child(scroll)
@@ -45,9 +45,9 @@ func _build_ui() -> void:
 	body.bbcode_enabled = true
 	body.fit_content = true
 	body.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	body.add_theme_font_size_override("normal_font_size", 22)
-	body.add_theme_font_size_override("bold_font_size", 28)
-	body.add_theme_constant_override("line_separation", 8)
+	body.add_theme_font_size_override("normal_font_size", 24)
+	body.add_theme_font_size_override("bold_font_size", 30)
+	body.add_theme_constant_override("line_separation", 10)
 	body.add_theme_color_override("default_color", Color(0.92, 0.92, 0.92))
 	body.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.6))
 	body.text = MESSAGE
