@@ -68,6 +68,15 @@ func delete_save() -> void:
 		DirAccess.remove_absolute(PROFILE_PATH)
 	GameState.reset()
 
+## Called when a run finishes (CreditsScreen dismissal) so ContinueScreen's "Continuar partida"
+## can't dangle, offering to resume into a dungeon that's already been reset. Deliberately
+## narrower than delete_save(): leaves the profile alone (accumulated achievements/party combos
+## are earned progress, not part of the run that just ended) and doesn't touch GameState — the
+## caller already resets that itself right after finishing.
+func clear_active_save() -> void:
+	if FileAccess.file_exists(SAVE_PATH):
+		DirAccess.remove_absolute(SAVE_PATH)
+
 # --- Profile (persists across saves/resets) ---
 
 func get_profile() -> Dictionary:

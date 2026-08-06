@@ -4,6 +4,11 @@ class_name CreditsBackdrop
 ## trees scrolling right-to-left so the party (drawn on top by CreditsScreen) reads as walking
 ## right forever. Same "drawn, not painted" approach as BattleBackdrop.gd — no road/grass/tree art
 ## exists in the project, so this is fully procedural, no PNG to fall back from.
+##
+## The front tree layer is a separate Control (see take_front_layer()) rather than part of the
+## same draw pass as everything else here: CreditsScreen re-parents it to sit AFTER the walking
+## party sprites, so the "front" in "front trees" is real — they actually pass in front of the
+## party — instead of the whole backdrop (this node) always drawing behind sprites added later.
 
 const SKY_HORIZON := 0.42   # fraction of height where sky meets grass
 const PATH_TOP := 0.70      # fraction of height where the path band starts
@@ -25,7 +30,8 @@ const BACK_LEAVES := Color(0.22, 0.44, 0.22)
 const FRONT_TRUNK := Color(0.36, 0.24, 0.14)
 const FRONT_LEAVES := Color(0.17, 0.48, 0.19)
 
-var _content: Control = null
+var _back_layer: Control = null
+var _front_layer: Control = null
 ## Each entry: {x: float, scale: float}. Re-rolled on wraparound so the loop never reads as an
 ## obviously repeating single tree.
 var _back_trees: Array = []
@@ -44,13 +50,30 @@ func _build() -> void:
 	sky.texture = _linear_gradient([[0.0, SKY_TOP], [1.0, SKY_BOTTOM]])
 	add_child(sky)
 
-	_content = Control.new()
-	_content.set_anchors_preset(Control.PRESET_FULL_RECT)
-	_content.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_content.draw.connect(_draw_scene)
-	add_child(_content)
+	_back_layer = Control.new()
+	_back_layer.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_back_layer.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_back_layer.draw.connect(_draw_back)
+	add_child(_back_layer)
+
+	# Built here (so it shares _seed_trees/_process with everything else) but handed off via
+	# take_front_layer() — see the class doc comment on why it can't just stay a child of this
+	# node like _back_layer above.
+	_front_layer = Control.new()
+	_front_layer.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_front_layer.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_front_layer.draw.connect(_draw_front)
+	add_child(_front_layer)
 
 	resized.connect(_seed_trees)
+
+## Detaches the front-tree layer so the caller can re-add it later in the tree, above whatever
+## else is already there (the walking party sprites, specifically). Safe to call once, right
+## after this backdrop is added to the scene — the layer keeps scrolling/redrawing wherever it
+## ends up, since _process() below holds its own reference regardless of its parent.
+func take_front_layer() -> Control:
+	remove_child(_front_layer)
+	return _front_layer
 
 func _seed_trees() -> void:
 	var w := maxf(size.x, 100.0)
@@ -75,7 +98,8 @@ func _process(delta: float) -> void:
 		return
 	_scroll_row(_back_trees, BACK_TREE_SPEED, delta, w)
 	_scroll_row(_front_trees, FRONT_TREE_SPEED, delta, w)
-	_content.queue_redraw()
+	_back_layer.queue_redraw()
+	_front_layer.queue_redraw()
 
 func _scroll_row(row: Array, speed: float, delta: float, w: float) -> void:
 	for t in row:
@@ -84,7 +108,7 @@ func _scroll_row(row: Array, speed: float, delta: float, w: float) -> void:
 			t["x"] += w + 160.0
 			t["scale"] = randf_range(0.8, 1.25)
 
-func _draw_scene() -> void:
+func _draw_back() -> void:
 	var w := size.x
 	var h := size.y
 	if w < 10.0 or h < 10.0:
@@ -94,30 +118,38 @@ func _draw_scene() -> void:
 	var path_top_y := h * PATH_TOP
 	var path_bottom_y := h * PATH_BOTTOM
 
-	_content.draw_rect(Rect2(0, horizon_y, w, path_top_y - horizon_y), GRASS_FAR, true)
-	_content.draw_rect(Rect2(0, path_top_y - 4, w, 4), PATH_EDGE, true)
-	_content.draw_rect(Rect2(0, path_top_y, w, path_bottom_y - path_top_y), PATH_COLOR, true)
-	_content.draw_rect(Rect2(0, path_bottom_y, w, 4), PATH_EDGE, true)
-	_content.draw_rect(Rect2(0, path_bottom_y + 4, w, h - (path_bottom_y + 4)), GRASS_NEAR, true)
+	_back_layer.draw_rect(Rect2(0, horizon_y, w, path_top_y - horizon_y), GRASS_FAR, true)
+	_back_layer.draw_rect(Rect2(0, path_top_y - 4, w, 4), PATH_EDGE, true)
+	_back_layer.draw_rect(Rect2(0, path_top_y, w, path_bottom_y - path_top_y), PATH_COLOR, true)
+	_back_layer.draw_rect(Rect2(0, path_bottom_y, w, 4), PATH_EDGE, true)
+	_back_layer.draw_rect(Rect2(0, path_bottom_y + 4, w, h - (path_bottom_y + 4)), GRASS_NEAR, true)
 
 	for t in _back_trees:
-		_draw_tree(t, horizon_y + 6.0, 0.75, BACK_TRUNK, BACK_LEAVES)
+		_draw_tree(_back_layer, t, horizon_y + 6.0, 0.75, BACK_TRUNK, BACK_LEAVES)
+
+## Front trees only — everything else on this layer is left transparent, since it sits on top of
+## the walking party once take_front_layer() moves it there.
+func _draw_front() -> void:
+	var h := size.y
+	if size.x < 10.0 or h < 10.0:
+		return
+	var path_bottom_y := h * PATH_BOTTOM
 	for t in _front_trees:
-		_draw_tree(t, path_bottom_y + 10.0, 1.35, FRONT_TRUNK, FRONT_LEAVES)
+		_draw_tree(_front_layer, t, path_bottom_y + 10.0, 1.35, FRONT_TRUNK, FRONT_LEAVES)
 
 ## Trunk = a rect, canopy = three overlapping circles — cheap, but reads fine at credits-scroll
 ## viewing distance and stays perfectly crisp (no texture, so filtering never enters into it).
-func _draw_tree(t: Dictionary, base_y: float, base_scale: float, trunk_color: Color, leaves_color: Color) -> void:
+func _draw_tree(canvas: CanvasItem, t: Dictionary, base_y: float, base_scale: float, trunk_color: Color, leaves_color: Color) -> void:
 	var s: float = base_scale * float(t.get("scale", 1.0))
 	var x: float = float(t.get("x", 0.0))
 	var trunk_w := 8.0 * s
 	var trunk_h := 34.0 * s
-	_content.draw_rect(Rect2(x - trunk_w * 0.5, base_y - trunk_h, trunk_w, trunk_h), trunk_color, true)
+	canvas.draw_rect(Rect2(x - trunk_w * 0.5, base_y - trunk_h, trunk_w, trunk_h), trunk_color, true)
 	var canopy_r := 26.0 * s
 	var canopy_y := base_y - trunk_h - canopy_r * 0.5
-	_content.draw_circle(Vector2(x, canopy_y), canopy_r, leaves_color)
-	_content.draw_circle(Vector2(x - canopy_r * 0.5, canopy_y + canopy_r * 0.35), canopy_r * 0.7, leaves_color)
-	_content.draw_circle(Vector2(x + canopy_r * 0.5, canopy_y + canopy_r * 0.35), canopy_r * 0.7, leaves_color)
+	canvas.draw_circle(Vector2(x, canopy_y), canopy_r, leaves_color)
+	canvas.draw_circle(Vector2(x - canopy_r * 0.5, canopy_y + canopy_r * 0.35), canopy_r * 0.7, leaves_color)
+	canvas.draw_circle(Vector2(x + canopy_r * 0.5, canopy_y + canopy_r * 0.35), canopy_r * 0.7, leaves_color)
 
 func _linear_gradient(stops: Array) -> GradientTexture2D:
 	# Assigning offsets/colors wholesale rather than removing the default 2 stops — see the

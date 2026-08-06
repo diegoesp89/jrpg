@@ -48,6 +48,13 @@ func _build_ui() -> void:
 	_root.add_child(backdrop)
 
 	_build_walkers()
+
+	# Added AFTER the walkers so the front tree layer actually passes in front of the party
+	# instead of always drawing behind it like the rest of the backdrop.
+	var front_trees = backdrop.take_front_layer()
+	front_trees.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_root.add_child(front_trees)
+
 	_build_credits_crawl()
 
 	var hint = Label.new()
@@ -151,5 +158,6 @@ func _finish() -> void:
 	if _finished:
 		return
 	_finished = true
+	SaveManager.clear_active_save()
 	GameState.reset()
 	SceneFlow.change_scene("res://scenes/boot/ContinueScreen.tscn")
