@@ -6,7 +6,7 @@ class_name SplashScreen
 
 const MESSAGE := "[b]Antes de empezar...[/b]
 
-Acércate, muchacho, y escucha bien, porque este juego no fue creado por un gran estudio ni por un ejército de programadores. Lo hizo una sola persona: el DM Strife, como regalo para sus jugadores y homenaje a los personajes que tantas aventuras le han regalado.
+Acércate, muchach@, y escucha bien, porque este juego no fue creado por un gran estudio ni por un ejército de programadores. Lo hizo una sola persona: el DM Strife, como regalo para sus jugadores y homenaje a los personajes que tantas aventuras le han regalado.
 
 De una lista de siete héroes deberás escoger cuatro para formar tu grupo y adentrarte en una mazmorra basada en [i]La Montaña del Penacho Blanco[/i]. Comenzarán en nivel 1 y, si sobreviven, alcanzarán el nivel 5, enfrentando peligros mediante un sistema de exploración y combate al estilo JRPG, nacido de las reglas de [i]Dungeons & Dragons[/i], pero adaptado a este pequeño videojuego.
 
