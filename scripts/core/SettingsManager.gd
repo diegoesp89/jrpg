@@ -33,14 +33,16 @@ const DEFAULT_KEYS := {
 	"action2": KEY_X,
 }
 
-## Fixed second binding for the movement actions only — the arrow keys always work as a
-## permanent alternative, never rebound and never shown as editable. action1/action2 have no
-## second option at all, so they're absent from this map.
+## Fixed second binding for every rebindable action — always works as a permanent alternative,
+## never rebound and never shown as editable. Movement keeps the arrow keys; action1/action2 get
+## Enter/Escape, matching the "Z (o Enter)" / "X (o Esc)" wording already used in Ayuda.
 const SECONDARY_KEYS := {
 	"move_up": KEY_UP,
 	"move_down": KEY_DOWN,
 	"move_left": KEY_LEFT,
 	"move_right": KEY_RIGHT,
+	"action1": KEY_ENTER,
+	"action2": KEY_ESCAPE,
 }
 
 var resolution: String = "1920x1080"
@@ -66,6 +68,10 @@ func _ready() -> void:
 				dup.append(e.duplicate())
 			_original_events[action] = dup
 	load_settings()
+	# action1/action2 have no arrow-key-style dual in project.godot (unlike movement), so their
+	# fixed second option has to be injected here to exist from the very first launch, not only
+	# after the player rebinds them once.
+	_ensure_secondary_bindings()
 
 func load_settings() -> void:
 	var data = _read_json_file(SETTINGS_PATH)
@@ -107,17 +113,15 @@ func get_key_for_action(action: String) -> int:
 func get_key_label(action: String) -> String:
 	return OS.get_keycode_string(get_key_for_action(action))
 
-## Empty string for actions with no second option (action1/action2). For movement, always the
-## arrow-key label — fixed, regardless of what the player rebinds the first option to.
+## Every rebindable action has a fixed second option (SECONDARY_KEYS) — this returns its label.
 func get_secondary_key_label(action: String) -> String:
 	if not SECONDARY_KEYS.has(action):
 		return ""
 	return OS.get_keycode_string(SECONDARY_KEYS[action])
 
 ## Rebinds `action`'s first option to a single physical keycode, replacing whatever that first
-## option was before. The fixed arrow-key second option (SECONDARY_KEYS) is re-added right after
-## for movement actions, so rebinding never drops it — action1/action2 have no second option to
-## preserve, so they end up with just the one event, same as before.
+## option was before. The fixed second option (SECONDARY_KEYS) is re-added right after, so
+## rebinding the first option never drops it.
 func apply_key_binding(action: String, physical_keycode: int) -> void:
 	key_bindings[action] = physical_keycode
 	_apply_key_binding(action, physical_keycode)
@@ -132,6 +136,7 @@ func reset_to_defaults() -> void:
 	_apply_fullscreen()
 	for action in REBINDABLE_ACTIONS:
 		_restore_original_binding(action)
+	_ensure_secondary_bindings()
 	save_settings()
 	volume_changed.emit(volume)
 
@@ -154,6 +159,23 @@ func _apply_key_binding(action: String, physical_keycode: int) -> void:
 		var secondary_ev = InputEventKey.new()
 		secondary_ev.physical_keycode = SECONDARY_KEYS[action]
 		InputMap.action_add_event(action, secondary_ev)
+
+## Makes sure every action in SECONDARY_KEYS actually has that event bound, without duplicating
+## it if it's already there (movement's arrow keys come from project.godot itself; action1's
+## Enter and action2's Escape don't, so they'd otherwise be missing until the player rebinds).
+func _ensure_secondary_bindings() -> void:
+	for action in SECONDARY_KEYS:
+		if not InputMap.has_action(action):
+			continue
+		var already_bound := false
+		for e in InputMap.action_get_events(action):
+			if e is InputEventKey and e.physical_keycode == SECONDARY_KEYS[action]:
+				already_bound = true
+				break
+		if not already_bound:
+			var ev = InputEventKey.new()
+			ev.physical_keycode = SECONDARY_KEYS[action]
+			InputMap.action_add_event(action, ev)
 
 ## Restores the exact InputMap events project.godot originally had for this action (e.g.
 ## move_up's W + Up-arrow dual), from the snapshot taken at _ready().
