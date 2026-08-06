@@ -450,6 +450,7 @@ func _apply_default_props(kind: String, entry: Dictionary) -> void:
 			entry["door_id"] = "door_%d_%d" % [entry["row"], entry["col"]]
 			entry["locked"] = false
 			entry["required_item_id"] = ""
+			entry["vertical"] = _auto_detect_door_vertical(int(entry["row"]), int(entry["col"]))
 		"floor_item":
 			entry["item_id"] = _pending_key_item_id if _pending_key_item_id != "" else "potion"
 			entry["quantity"] = 1
@@ -473,6 +474,19 @@ func _apply_default_props(kind: String, entry: Dictionary) -> void:
 			entry["requires_flag"] = ""
 		"exit":
 			entry["requires_items"] = []
+
+## Sensible starting value for a freshly-placed door's "vertical" checkbox — true if its
+## left/right neighbors are already wall (or the map edge), meaning that wall runs north-south
+## and this door has to block east-west traffic instead. Mirrors DungeonBuilder's own fallback
+## for doors placed before this field existed, so a new door's default matches what it would
+## have auto-detected anyway.
+func _auto_detect_door_vertical(row: int, col: int) -> bool:
+	return _is_wall_tile(row, col - 1) and _is_wall_tile(row, col + 1)
+
+func _is_wall_tile(row: int, col: int) -> bool:
+	if row < 0 or row >= _tiles.size() or col < 0 or col >= _tiles[row].size():
+		return true
+	return int(_tiles[row][col]) == 2
 
 func _place_or_select_entity(tool: Dictionary, row: int, col: int) -> void:
 	var kind = tool["id"]
@@ -624,6 +638,7 @@ func _open_property_panel(kind: String, list_key: String, entry: Dictionary) -> 
 			_add_option_field("item_id", "Item", DataLoader.get_all_item_ids(), str(entry.get("item_id", "")))
 			_add_text_field("quantity", "Cantidad", str(entry.get("quantity", 1)))
 		"door":
+			_add_bool_field("vertical", "Pared vertical (bloquea tránsito este-oeste)", bool(entry.get("vertical", false)))
 			_add_bool_field("locked", "Bloqueada", bool(entry.get("locked", false)))
 			_add_text_field("required_item_id", "ID de la llave requerida", str(entry.get("required_item_id", "")))
 			var gen_key_btn = Button.new()

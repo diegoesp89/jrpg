@@ -5,6 +5,7 @@ class_name Pickup
 ## Preloaded by path rather than through its class_name — see the note in DungeonBuilder.gd on why
 ## a class_name added in the same change as the code using it can't be trusted yet.
 const NarrativeToastScript = preload("res://scripts/ui/NarrativeToast.gd")
+const ItemPickupToastScript = preload("res://scripts/ui/ItemPickupToast.gd")
 
 @export var item_id: String = "potion"
 @export var item_quantity: int = 1
@@ -41,6 +42,7 @@ func interact() -> void:
 	var item_data = DataLoader.get_item(item_id)
 	var item_name = item_data.get("name", item_id) if item_data else item_id
 	print("Obtained: %s x%d!" % [item_name, item_quantity])
+	ItemPickupToastScript.show_at(self, item_id, item_quantity)
 	_hide_chest()
 
 	# A floor pickup never changes scenes, so — unlike a boss drop — nothing will reload this map

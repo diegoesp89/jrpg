@@ -16,9 +16,7 @@ enum Tile { EMPTY = 0, FLOOR = 1, WALL = 2, DOOR = 3, NPC = 4, CHEST = 5, COMBAT
 
 # Colors for placeholder sprites not yet reskinned with real/downloaded art
 const DOOR_COLOR = Color(0.55, 0.35, 0.15)
-const DOOR_BORDER = Color(0.35, 0.2, 0.05)
 const DOOR_LOCKED_COLOR = Color(0.75, 0.15, 0.15)
-const DOOR_LOCKED_BORDER = Color(0.4, 0.05, 0.05)
 const REST_ZONE_COLOR = Color(1.0, 0.85, 0.4)
 const REST_ZONE_BORDER = Color(0.7, 0.55, 0.1)
 
@@ -279,11 +277,17 @@ func _create_door(pos: Vector3, row: int, col: int, config: Dictionary = {}) -> 
 	door.collision_layer = 1 | 4  # world + interactable
 	door.collision_mask = 0
 
-	# A door sits inside what would otherwise be a wall segment. If its left/right neighbors are
-	# wall (or the map edge), that wall runs north-south, so the door has to block east-west foot
-	# traffic instead — rotate the collision box 90 degrees to match, instead of always assuming
-	# the north-south-blocking orientation.
-	var vertical_wall := _is_wall_or_edge(row, col - 1) and _is_wall_or_edge(row, col + 1)
+	# A door sits inside what would otherwise be a wall segment. The Map Editor's "Pared vertical"
+	# checkbox lets a mapper set this explicitly (config["vertical"]); if it's absent (older maps,
+	# or a door placed by hand outside the editor) fall back to auto-detecting from neighbor
+	# tiles — if the door's left/right neighbors are wall (or the map edge), that wall runs
+	# north-south, so the door has to block east-west foot traffic instead of the default
+	# north-south-blocking orientation.
+	var vertical_wall: bool
+	if config.has("vertical"):
+		vertical_wall = bool(config["vertical"])
+	else:
+		vertical_wall = _is_wall_or_edge(row, col - 1) and _is_wall_or_edge(row, col + 1)
 
 	var col_shape = CollisionShape3D.new()
 	var box = BoxShape3D.new()
@@ -292,27 +296,46 @@ func _create_door(pos: Vector3, row: int, col: int, config: Dictionary = {}) -> 
 	col_shape.position = Vector3(0, 1.5, 0)
 	door.add_child(col_shape)
 
-	var unlocked_texture = _create_rect_texture(DOOR_COLOR, DOOR_BORDER, 32, 48)
-	var locked_texture = _create_rect_texture(DOOR_LOCKED_COLOR, DOOR_LOCKED_BORDER, 32, 48)
+	# Looks like a wall (same quad-face geometry _create_wall gives an exposed wall face), just
+	# tinted brown/red instead of textured stone — one face on each side actually facing the
+	# corridor, matching whichever pair of neighbors the box above just blocked traffic between.
+	var face_configs: Array
+	if vertical_wall:
+		face_configs = [
+			{"offset": Vector3(-TILE_SIZE / 2.0, 1.5, 0), "rot": PI / 2.0},
+			{"offset": Vector3( TILE_SIZE / 2.0, 1.5, 0), "rot": PI / 2.0},
+		]
+	else:
+		face_configs = [
+			{"offset": Vector3(0, 1.5, -TILE_SIZE / 2.0), "rot": 0.0},
+			{"offset": Vector3(0, 1.5,  TILE_SIZE / 2.0), "rot": 0.0},
+		]
 
-	var sprite = Sprite3D.new()
-	sprite.name = "Sprite3D"
-	sprite.pixel_size = 0.03
-	sprite.billboard = BaseMaterial3D.BILLBOARD_ENABLED
-	sprite.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST
-	sprite.alpha_cut = SpriteBase3D.ALPHA_CUT_OPAQUE_PREPASS
-	sprite.position = Vector3(0, 1.2, 0)
-	door.add_child(sprite)
+	var unlocked_material = _make_fog_color_material(DOOR_COLOR)
+	var locked_material = _make_fog_color_material(DOOR_LOCKED_COLOR)
+
+	for i in range(face_configs.size()):
+		var fc = face_configs[i]
+		var mesh_instance = MeshInstance3D.new()
+		mesh_instance.name = "DoorFace_%d" % i
+		var quad = QuadMesh.new()
+		quad.size = Vector2(TILE_SIZE, 3.0)
+		mesh_instance.mesh = quad
+		mesh_instance.position = fc["offset"]
+		mesh_instance.rotation.y = fc["rot"]
+		door.add_child(mesh_instance)
 
 	if door_scene_script:
 		door.set_script(door_scene_script)
 		door.door_id = config.get("door_id", "")
 		door.locked = bool(config.get("locked", false))
 		door.required_item_id = config.get("required_item_id", "")
-		door.unlocked_texture = unlocked_texture
-		door.locked_texture = locked_texture
+		door.unlocked_material = unlocked_material
+		door.locked_material = locked_material
 	else:
-		sprite.texture = unlocked_texture
+		for child in door.get_children():
+			if child is MeshInstance3D:
+				child.material_override = unlocked_material
 
 	add_child(door)
 	_debug_entities.append({"node": door, "kind": "door", "config": config})

@@ -10,20 +10,20 @@ var is_open: bool = false
 @export var required_item_id: String = ""
 
 ## Set by DungeonBuilder right after construction (plain vars, not @export — these are
-## generated ImageTextures, not map-editor config data).
-var unlocked_texture: Texture2D = null
-var locked_texture: Texture2D = null
+## generated ShaderMaterials, not map-editor config data). Looks like a wall segment (same quad
+## faces DungeonBuilder gives a WALL tile), just tinted brown/red instead of the stone texture.
+var unlocked_material: Material = null
+var locked_material: Material = null
 
 @onready var _collision: CollisionShape3D = null
-@onready var _sprite: Sprite3D = null
+var _faces: Array[MeshInstance3D] = []
 
 func _ready() -> void:
-	# Find child nodes
 	for child in get_children():
 		if child is CollisionShape3D:
 			_collision = child
-		elif child is Sprite3D:
-			_sprite = child
+		elif child is MeshInstance3D:
+			_faces.append(child)
 
 	if locked and door_id != "" and GameState.get_flag(door_id + "_unlocked"):
 		locked = false
@@ -50,8 +50,8 @@ func _open() -> void:
 	is_open = true
 	if _collision:
 		_collision.disabled = true
-	if _sprite:
-		_sprite.modulate = Color(1, 1, 1, 0.3)
+	for face in _faces:
+		face.visible = false
 	AudioManager.play_sfx("door_open")
 	print("Door opened!")
 
@@ -59,26 +59,23 @@ func _close() -> void:
 	is_open = false
 	if _collision:
 		_collision.disabled = false
-	if _sprite:
-		_sprite.modulate = Color(1, 1, 1, 1.0)
+	for face in _faces:
+		face.visible = true
 	print("Door closed!")
 
-## Swaps the sprite to the locked (red) or unlocked (brown) texture to match current state.
-## Called on _ready and again the instant a key unlocks the door, so the color change is
+## Swaps the wall-face material to the locked (red) or unlocked (brown) variant to match current
+## state. Called on _ready and again the instant a key unlocks the door, so the color change is
 ## immediate instead of only visible after a scene reload.
 func _update_lock_visual() -> void:
-	if _sprite == null:
+	var mat = locked_material if (locked and locked_material) else unlocked_material
+	if mat == null:
 		return
-	if locked and locked_texture:
-		_sprite.texture = locked_texture
-	elif unlocked_texture:
-		_sprite.texture = unlocked_texture
+	for face in _faces:
+		face.material_override = mat
 
 func get_prompt_text() -> String:
 	if locked:
-		var item = DataLoader.get_item(required_item_id)
-		var item_name = item.get("name", required_item_id) if item else required_item_id
-		return "Necesitas: %s" % item_name
+		return "Necesitas una llave"
 	if is_open:
 		return "Z: Cerrar puerta"
 	return "Z: Abrir puerta"
