@@ -486,9 +486,11 @@ func _init_inventory() -> void:
 	inventory.clear()
 	var items = DataLoader.get_all_items()
 	for item in items:
-		# Quest items (e.g. the legendary weapons) must be found in the dungeon, not
-		# handed to the player for free at the start — skip them here.
-		if item.get("effect", "") == "quest_item":
+		# Quest items (e.g. the legendary weapons) and keys must be found in the dungeon, not
+		# handed to the player for free at the start — skip them here. Every key the Map
+		# Editor's "Generar llave nueva" creates has effect "key"; without this exclusion it
+		# slipped through and got handed out 3-of-each at the start of every run.
+		if item.get("effect", "") in ["quest_item", "key"]:
 			continue
 		inventory.append({
 			"id": item["id"],
