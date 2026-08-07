@@ -288,6 +288,12 @@ func add_item_definition(item_id: String, data: Dictionary) -> void:
 	_items[item_id] = data
 	_write_json_file(ITEMS_PATH, _items)
 
+## Removes an item definition entirely and writes items.json back to disk, same rationale as
+## delete_enemy. Used to clean up a door's auto-generated key when the door itself is deleted.
+func delete_item_definition(item_id: String) -> void:
+	_items.erase(item_id)
+	_write_json_file(ITEMS_PATH, _items)
+
 ## Writes map_data as the .map at path (used by the in-game map editor). Only works when
 ## running from the Godot editor / a local dev environment — res:// is read-only once exported.
 func save_map(path: String, map_data: Dictionary) -> bool:

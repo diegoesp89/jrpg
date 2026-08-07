@@ -813,6 +813,8 @@ func _delete_selected_entity() -> void:
 	var list: Array = _entities.get(_selected_list_key, [])
 	list.erase(_selected_entry)
 	_entities[_selected_list_key] = list
+	if _selected_kind == "door":
+		_maybe_delete_orphaned_key(_selected_entry)
 	if _selected_kind in ["npc", "chest", "door", "floor_item", "rest_zone", "trap", "combat_trigger", "boss_trigger", "riddle_gate", "exit"]:
 		var row = int(_selected_entry.get("row", -1))
 		var col = int(_selected_entry.get("col", -1))
@@ -821,6 +823,27 @@ func _delete_selected_entity() -> void:
 	_grid.set_data(_tiles, _entities)
 	_set_status("Eliminado")
 	_show_no_selection()
+
+## Deletes a door's auto-generated key item definition when the door that used it is deleted,
+## so "Generar llave nueva" leftovers don't linger in items.json forever (a stale key definition
+## is one exclusion-list change away from being handed out for free at the start of every run,
+## like the free-keys bug). Only removes item_ids matching the exact "key_<row>_<col>" pattern
+## the generator itself produces, and only if no other remaining door still references it, so a
+## hand-authored or shared key item is never touched.
+func _maybe_delete_orphaned_key(door_entry: Dictionary) -> void:
+	var item_id: String = str(door_entry.get("required_item_id", ""))
+	if item_id == "" or not _is_auto_generated_key_id(item_id):
+		return
+	for other in _entities.get("doors", []):
+		if str(other.get("required_item_id", "")) == item_id:
+			return
+	DataLoader.delete_item_definition(item_id)
+
+func _is_auto_generated_key_id(item_id: String) -> bool:
+	var parts = item_id.split("_")
+	if parts.size() != 3 or parts[0] != "key":
+		return false
+	return parts[1].is_valid_int() and parts[2].is_valid_int()
 
 # --- Enemies-in-encounter list + Enemy Editor modal (combat_trigger / boss_trigger) ---
 
