@@ -12,7 +12,8 @@ const TOOLS := [
 	{"id": "erase", "label": "Vacío", "tile": 0},
 	{"id": "floor", "label": "Piso", "tile": 1},
 	{"id": "wall", "label": "Pared", "tile": 2},
-	{"id": "door", "label": "Puerta", "tile": 3, "list": "doors"},
+	{"id": "door_h", "label": "Puerta —", "tile": 3, "list": "doors"},
+	{"id": "door_v", "label": "Puerta |", "tile": 3, "list": "doors"},
 	{"id": "npc", "label": "NPC", "tile": 4, "list": "npcs"},
 	{"id": "chest", "label": "Cofre", "tile": 5, "list": "chests"},
 	{"id": "combat_trigger", "label": "Trigger Combate", "tile": 6, "list": "combat_triggers"},
@@ -446,11 +447,14 @@ func _apply_default_props(kind: String, entry: Dictionary) -> void:
 			entry["item_id"] = "potion"
 			entry["quantity"] = 1
 			entry["chest_id"] = "chest_%d_%d" % [entry["row"], entry["col"]]
-		"door":
+		"door_h", "door_v":
 			entry["door_id"] = "door_%d_%d" % [entry["row"], entry["col"]]
 			entry["locked"] = false
 			entry["required_item_id"] = ""
-			entry["vertical"] = _auto_detect_door_vertical(int(entry["row"]), int(entry["col"]))
+			# The tool picked at placement time IS the orientation — "Puerta —" (blocks
+			# north-south, the wall it's set into runs east-west) or "Puerta |" (blocks
+			# east-west, wall runs north-south). No more guessing from neighbor tiles.
+			entry["vertical"] = (kind == "door_v")
 		"floor_item":
 			entry["item_id"] = _pending_key_item_id if _pending_key_item_id != "" else "potion"
 			entry["quantity"] = 1
@@ -475,18 +479,14 @@ func _apply_default_props(kind: String, entry: Dictionary) -> void:
 		"exit":
 			entry["requires_items"] = []
 
-## Sensible starting value for a freshly-placed door's "vertical" checkbox — true if its
-## ABOVE/BELOW neighbors are already wall (or the map edge): those wall tiles differ only by
-## row, so the wall itself runs north-south, and the gap in it (this door) is crossed by walking
-## east-west. Mirrors DungeonBuilder's own fallback for doors placed before this field existed,
-## so a new door's default matches what it would have auto-detected anyway.
-func _auto_detect_door_vertical(row: int, col: int) -> bool:
-	return _is_wall_tile(row - 1, col) and _is_wall_tile(row + 1, col)
-
-func _is_wall_tile(row: int, col: int) -> bool:
-	if row < 0 or row >= _tiles.size() or col < 0 or col >= _tiles[row].size():
-		return true
-	return int(_tiles[row][col]) == 2
+## "door_h"/"door_v" are two placement tools for the same "doors" list — the tool used only
+## decides a new door's initial orientation (see _apply_default_props), it isn't a distinct
+## entity kind. Normalize to plain "door" before touching the property panel or anything else
+## that expects the kinds already used elsewhere ("chest", "npc", etc.).
+func _normalize_kind(kind: String) -> String:
+	if kind == "door_h" or kind == "door_v":
+		return "door"
+	return kind
 
 func _place_or_select_entity(tool: Dictionary, row: int, col: int) -> void:
 	var kind = tool["id"]
@@ -503,7 +503,7 @@ func _place_or_select_entity(tool: Dictionary, row: int, col: int) -> void:
 		elif row < _tiles.size() and col < _tiles[row].size() and _tiles[row][col] == 0:
 			_tiles[row][col] = 1
 	_grid.set_data(_tiles, _entities)
-	_open_property_panel(kind, list_key, existing)
+	_open_property_panel(_normalize_kind(kind), list_key, existing)
 
 func _set_player_start(row: int, col: int) -> void:
 	if row < _tiles.size() and col < _tiles[row].size() and _tiles[row][col] == 0:
@@ -548,8 +548,13 @@ func _inspect_tile(row: int, col: int) -> void:
 		if tool.get("tile", -1) == tile_num and tool.has("list"):
 			var existing = _find_entity_at(tool["list"], row, col)
 			if not existing.is_empty():
-				_open_property_panel(tool["id"], tool["list"], existing)
-				_set_status("(%d,%d): %s" % [row, col, tool["label"]])
+				# door_h/door_v share one tile number and list — whichever of the two matches
+				# first here isn't necessarily this door's actual orientation, so normalize the
+				# kind and use a generic label rather than trusting the matched tool's own.
+				var kind = _normalize_kind(tool["id"])
+				var label: String = "Puerta" if kind == "door" else str(tool["label"])
+				_open_property_panel(kind, tool["list"], existing)
+				_set_status("(%d,%d): %s" % [row, col, label])
 				return
 			break
 
