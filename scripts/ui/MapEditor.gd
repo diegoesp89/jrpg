@@ -780,7 +780,7 @@ func _apply_property_changes() -> void:
 		else:
 			raw = field.text
 		match key:
-			"locked":
+			"locked", "vertical":
 				_selected_entry[key] = (raw == "Sí")
 			"quantity", "damage", "dc":
 				_selected_entry[key] = int(raw) if raw.is_valid_int() else 0
