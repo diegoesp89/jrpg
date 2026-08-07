@@ -282,14 +282,16 @@ func _create_door(pos: Vector3, row: int, col: int, config: Dictionary = {}) -> 
 	# A door sits inside what would otherwise be a wall segment. The Map Editor's "Pared vertical"
 	# checkbox lets a mapper set this explicitly (config["vertical"]); if it's absent (older maps,
 	# or a door placed by hand outside the editor) fall back to auto-detecting from neighbor
-	# tiles — if the door's left/right neighbors are wall (or the map edge), that wall runs
-	# north-south, so the door has to block east-west foot traffic instead of the default
-	# north-south-blocking orientation.
+	# tiles — if the door's ABOVE/BELOW neighbors are wall (or the map edge), that wall's solid
+	# tiles only differ by row, so the wall itself runs north-south, and the gap in it is crossed
+	# by walking east-west. Door blocks east-west traffic in that case, not the default
+	# north-south-blocking orientation (which is for a wall whose solid tiles differ by column —
+	# LEFT/RIGHT neighbors — i.e. a wall that runs east-west, crossed by walking north-south).
 	var vertical_wall: bool
 	if config.has("vertical"):
 		vertical_wall = bool(config["vertical"])
 	else:
-		vertical_wall = _is_wall_or_edge(row, col - 1) and _is_wall_or_edge(row, col + 1)
+		vertical_wall = _is_wall_or_edge(row - 1, col) and _is_wall_or_edge(row + 1, col)
 
 	var col_shape = CollisionShape3D.new()
 	var box = BoxShape3D.new()

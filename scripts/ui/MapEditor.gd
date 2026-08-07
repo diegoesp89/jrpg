@@ -476,12 +476,12 @@ func _apply_default_props(kind: String, entry: Dictionary) -> void:
 			entry["requires_items"] = []
 
 ## Sensible starting value for a freshly-placed door's "vertical" checkbox — true if its
-## left/right neighbors are already wall (or the map edge), meaning that wall runs north-south
-## and this door has to block east-west traffic instead. Mirrors DungeonBuilder's own fallback
-## for doors placed before this field existed, so a new door's default matches what it would
-## have auto-detected anyway.
+## ABOVE/BELOW neighbors are already wall (or the map edge): those wall tiles differ only by
+## row, so the wall itself runs north-south, and the gap in it (this door) is crossed by walking
+## east-west. Mirrors DungeonBuilder's own fallback for doors placed before this field existed,
+## so a new door's default matches what it would have auto-detected anyway.
 func _auto_detect_door_vertical(row: int, col: int) -> bool:
-	return _is_wall_tile(row, col - 1) and _is_wall_tile(row, col + 1)
+	return _is_wall_tile(row - 1, col) and _is_wall_tile(row + 1, col)
 
 func _is_wall_tile(row: int, col: int) -> bool:
 	if row < 0 or row >= _tiles.size() or col < 0 or col >= _tiles[row].size():
