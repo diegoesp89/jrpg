@@ -451,6 +451,7 @@ func _apply_default_props(kind: String, entry: Dictionary) -> void:
 			entry["door_id"] = "door_%d_%d" % [entry["row"], entry["col"]]
 			entry["locked"] = false
 			entry["required_item_id"] = ""
+			entry["edge"] = "center"
 			# The tool picked at placement time IS the orientation — "Puerta —" (blocks
 			# north-south, the wall it's set into runs east-west) or "Puerta |" (blocks
 			# east-west, wall runs north-south). No more guessing from neighbor tiles.
@@ -643,7 +644,9 @@ func _open_property_panel(kind: String, list_key: String, entry: Dictionary) -> 
 			_add_option_field("item_id", "Item", DataLoader.get_all_item_ids(), str(entry.get("item_id", "")))
 			_add_text_field("quantity", "Cantidad", str(entry.get("quantity", 1)))
 		"door":
-			_add_bool_field("vertical", "Pared vertical (bloquea tránsito este-oeste)", bool(entry.get("vertical", false)))
+			# No "vertical" toggle here — that's fixed by which tool ("Puerta —" / "Puerta |")
+			# placed this door in the first place, not something to flip afterward.
+			_add_option_field("edge", "Posición en el tile", ["center", "top", "bottom", "left", "right"], str(entry.get("edge", "center")))
 			_add_bool_field("locked", "Bloqueada", bool(entry.get("locked", false)))
 			_add_text_field("required_item_id", "ID de la llave requerida", str(entry.get("required_item_id", "")))
 			var gen_key_btn = Button.new()

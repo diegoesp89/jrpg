@@ -271,6 +271,23 @@ func _is_wall_or_edge(row: int, col: int) -> bool:
 		return true
 	return dungeon_map[row][col] == Tile.WALL
 
+## How far a "pegada" (flush) door position nudges it toward that edge, while still keeping it
+## inside the tile — half the tile minus half the door's own thin (0.4) dimension.
+const DOOR_EDGE_SHIFT := (TILE_SIZE - 0.4) / 2.0
+
+func _door_edge_offset(edge: String) -> Vector3:
+	match edge:
+		"top":
+			return Vector3(0, 0, -DOOR_EDGE_SHIFT)
+		"bottom":
+			return Vector3(0, 0, DOOR_EDGE_SHIFT)
+		"left":
+			return Vector3(-DOOR_EDGE_SHIFT, 0, 0)
+		"right":
+			return Vector3(DOOR_EDGE_SHIFT, 0, 0)
+		_:
+			return Vector3.ZERO
+
 func _create_door(pos: Vector3, row: int, col: int, config: Dictionary = {}) -> void:
 	var door_scene_script = load("res://scripts/exploration/Door.gd")
 	var door = StaticBody3D.new()
@@ -293,42 +310,31 @@ func _create_door(pos: Vector3, row: int, col: int, config: Dictionary = {}) -> 
 	else:
 		vertical_wall = _is_wall_or_edge(row - 1, col) and _is_wall_or_edge(row + 1, col)
 
+	# One tile, one door: centered by default, or nudged toward one edge via the Map Editor's
+	# "Posición en el tile" dropdown (config["edge"]) — e.g. to line it up flush against a
+	# neighboring wall corner instead of floating in the middle.
+	var edge_offset := _door_edge_offset(str(config.get("edge", "center")))
+
 	var col_shape = CollisionShape3D.new()
 	var box = BoxShape3D.new()
 	box.size = Vector3(0.4, 3.0, TILE_SIZE) if vertical_wall else Vector3(TILE_SIZE, 3.0, 0.4)
 	col_shape.shape = box
-	col_shape.position = Vector3(0, 1.5, 0)
+	col_shape.position = Vector3(0, 1.5, 0) + edge_offset
 	door.add_child(col_shape)
 
-	# Looks like a wall (same quad-face geometry _create_wall gives an exposed wall face), just
-	# textured with door.png/door_locked.png instead of stone — one face on each side actually
-	# facing the corridor, matching whichever pair of neighbors the box above just blocked
-	# traffic between.
-	var face_configs: Array
-	if vertical_wall:
-		face_configs = [
-			{"offset": Vector3(-TILE_SIZE / 2.0, 1.5, 0), "rot": PI / 2.0},
-			{"offset": Vector3( TILE_SIZE / 2.0, 1.5, 0), "rot": PI / 2.0},
-		]
-	else:
-		face_configs = [
-			{"offset": Vector3(0, 1.5, -TILE_SIZE / 2.0), "rot": 0.0},
-			{"offset": Vector3(0, 1.5,  TILE_SIZE / 2.0), "rot": 0.0},
-		]
-
+	# Looks like a wall (same quad geometry _create_wall gives an exposed wall face), just
+	# textured with door.png/door_locked.png instead of stone.
 	var unlocked_material = _make_fog_textured_material(_door_texture)
 	var locked_material = _make_fog_textured_material(_door_locked_texture)
 
-	for i in range(face_configs.size()):
-		var fc = face_configs[i]
-		var mesh_instance = MeshInstance3D.new()
-		mesh_instance.name = "DoorFace_%d" % i
-		var quad = QuadMesh.new()
-		quad.size = Vector2(TILE_SIZE, 3.0)
-		mesh_instance.mesh = quad
-		mesh_instance.position = fc["offset"]
-		mesh_instance.rotation.y = fc["rot"]
-		door.add_child(mesh_instance)
+	var mesh_instance = MeshInstance3D.new()
+	mesh_instance.name = "DoorFace"
+	var quad = QuadMesh.new()
+	quad.size = Vector2(TILE_SIZE, 3.0)
+	mesh_instance.mesh = quad
+	mesh_instance.position = Vector3(0, 1.5, 0) + edge_offset
+	mesh_instance.rotation.y = PI / 2.0 if vertical_wall else 0.0
+	door.add_child(mesh_instance)
 
 	if door_scene_script:
 		door.set_script(door_scene_script)
