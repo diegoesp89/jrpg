@@ -40,6 +40,18 @@ const BURN_DAMAGE := 6
 func _ready() -> void:
 	_turn_system = TurnSystem.new()
 	add_child(_turn_system)
+	# Single choke point for the run summary's "golpes conectados" stat: damage_dealt already
+	# fires at every landed hit/spell across every attack path in this file (basic attack,
+	# skills, reckless/flurry/recoil/shadow, the Alerta feat...), so counting it here avoids
+	# instrumenting each of those call sites individually.
+	damage_dealt.connect(_on_damage_dealt)
+
+## target.has("base_id") is the same "this is an enemy, not a party member" check already used by
+## _check_enemy_kill_achievements() — party members never carry that key (see
+## GameState.create_party_member). Heals and 0-damage entries don't count as a landed hit.
+func _on_damage_dealt(target: Dictionary, amount: int, is_heal: bool) -> void:
+	if not is_heal and amount > 0 and target.has("base_id"):
+		GameState.run_stats["hits_landed"] = int(GameState.run_stats.get("hits_landed", 0)) + 1
 
 func start_battle(encounter_id: String) -> void:
 	_encounter_data = DataLoader.get_encounter(encounter_id)
@@ -179,6 +191,10 @@ func _setup_enemies() -> void:
 			"max_mp": 999,
 		}
 		_enemies.append(battle_enemy)
+		# Marks the enemy seen for the Bestiario the moment it actually appears in a fight — not
+		# when the encounter is merely defined in data — so an unseen entry always means the
+		# player genuinely hasn't met that creature yet.
+		SaveManager.mark_enemy_seen(enemy_data["id"])
 
 func _start_round() -> void:
 	# Reset defend flags and per-round status effects
@@ -813,6 +829,8 @@ func _do_call_lathander(caster: Dictionary) -> void:
 func _next_turn() -> void:
 	if not _battle_active:
 		return
+
+	GameState.run_stats["turns"] = int(GameState.run_stats.get("turns", 0)) + 1
 
 	if _all_enemies_dead():
 		_victory()

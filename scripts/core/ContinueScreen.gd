@@ -101,6 +101,7 @@ func _show_main() -> void:
 	_options.append("Nueva partida")
 	_options.append("Ver perfil")
 	_options.append("Logros")
+	_options.append("Bestiario")
 	_options.append("Ayuda")
 	_options.append("Opciones")
 	_options.append("Resetear progreso")
@@ -191,6 +192,8 @@ func _select_main(option: String) -> void:
 			SceneFlow.change_scene("res://scenes/boot/ProfileScreen.tscn")
 		"Logros":
 			SceneFlow.change_scene("res://scenes/boot/AchievementsScreen.tscn")
+		"Bestiario":
+			SceneFlow.change_scene("res://scenes/boot/BestiaryScreen.tscn")
 		"Ayuda":
 			_help_panel.open()
 		"Opciones":

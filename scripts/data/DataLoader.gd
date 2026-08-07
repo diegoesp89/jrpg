@@ -109,6 +109,9 @@ func get_character_by_name(char_name: String) -> Dictionary:
 func get_enemy(enemy_id: String) -> Dictionary:
 	return _enemies.get(enemy_id, {})
 
+func get_all_enemies() -> Array:
+	return _enemies.values()
+
 func get_skill(skill_id: String) -> Dictionary:
 	return _skills.get(skill_id, {})
 

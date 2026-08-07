@@ -89,8 +89,26 @@ func get_profile() -> Dictionary:
 			"total_gold_earned": 0,
 			"total_xp_earned": 0,
 			"achievements": {},
+			"seen_enemies": [],
 		}
 	return data
+
+# --- Bestiary (persists in the same cross-playthrough profile as achievements) ---
+
+## Marks an enemy definition id as encountered at least once. Idempotent, same shape as
+## unlock_achievement — returns true only the first time a given enemy is newly recorded.
+func mark_enemy_seen(enemy_id: String) -> bool:
+	var profile = get_profile()
+	var seen: Array = profile.get("seen_enemies", [])
+	if seen.has(enemy_id):
+		return false
+	seen.append(enemy_id)
+	profile["seen_enemies"] = seen
+	_write_json_file(PROFILE_PATH, profile)
+	return true
+
+func is_enemy_seen(enemy_id: String) -> bool:
+	return get_profile().get("seen_enemies", []).has(enemy_id)
 
 # --- Achievements (persist in the same cross-playthrough profile as completed_party_combos) ---
 

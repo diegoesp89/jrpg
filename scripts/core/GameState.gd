@@ -70,8 +70,18 @@ var admin_mode: bool = false
 ## reset()-exempt convention as admin_mode — a developer toggle for the session, not save progress.
 var invincible_mode: bool = false
 
+## Cross-battle counters for the post-run summary screen (RunSummaryScreen), reset alongside
+## everything else in reset() — a "run" is the stretch between resets, same boundary
+## run_flawless already uses. Not persisted in save.json: this is a lightweight, in-session
+## flavor stat, not a rigorous playtime tracker, so it does not survive a save/quit/continue
+## across process launches.
+var run_stats: Dictionary = {"turns": 0, "hits_landed": 0}
+## Time.get_ticks_msec() baseline for the summary's elapsed-time readout.
+var run_start_time_msec: int = 0
+
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
+	run_start_time_msec = Time.get_ticks_msec()
 	_init_inventory()
 
 func _get_modifier(attribute_value: int) -> int:
@@ -480,6 +490,8 @@ func reset() -> void:
 	pending_tier_message = ""
 	_last_progression_tier = 0
 	run_flawless = true
+	run_stats = {"turns": 0, "hits_landed": 0}
+	run_start_time_msec = Time.get_ticks_msec()
 	_init_inventory()
 
 func _init_inventory() -> void:

@@ -5,8 +5,11 @@ class_name CreditsScreen
 ## credits crawl up from the map's own data (DataLoader.get_current_map()["credits"]), so they're
 ## editable placeholder text rather than something baked into code.
 ##
-## GameState.reset() happens HERE, not before — DungeonBuilder used to reset on dismissing the
-## victory screen, but this scene needs GameState.party intact to know who to draw walking.
+## GameState.reset() does NOT happen here — it happens in RunSummaryScreen, reached right after
+## this scene finishes. DungeonBuilder used to reset on dismissing the victory screen, and this
+## scene used to reset itself on dismissal in turn, but both needed GameState.party intact to
+## know who to draw/summarize, so the reset keeps getting pushed to the next screen that still
+## needs the run's real data.
 
 ## Preloaded by path rather than through its class_name — see the note in DungeonBuilder.gd on why
 ## a class_name added this same session can't be trusted by its bare identifier yet.
@@ -158,6 +161,4 @@ func _finish() -> void:
 	if _finished:
 		return
 	_finished = true
-	SaveManager.clear_active_save()
-	GameState.reset()
-	SceneFlow.change_scene("res://scenes/boot/ContinueScreen.tscn")
+	SceneFlow.change_scene("res://scenes/boot/RunSummaryScreen.tscn")
